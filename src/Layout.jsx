@@ -1,0 +1,245 @@
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "./utils";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import {
+  LayoutDashboard,
+  Users,
+  Clock,
+  FileText,
+  Receipt,
+  Mail,
+  ShieldCheck,
+  Bell,
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+  Building2
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+
+export default function Layout({ children, currentPageName }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [employeeData, setEmployeeData] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await base44.auth.me();
+        setUser(userData);
+        const employees = await base44.entities.Employee.filter({ email: userData.email });
+        if (employees.length > 0) {
+          setEmployeeData(employees[0]);
+        }
+      } catch (error) {
+        console.log("User not logged in");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', user?.email],
+    queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }),
+    enabled: !!user?.email,
+  });
+
+  const userRole = employeeData?.role || user?.role || 'employee';
+
+  const getNavItems = () => {
+    const items = [];
+    
+    if (userRole === 'hr') {
+      items.push(
+        { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
+        { name: "Employees", icon: Users, page: "Employees" },
+        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
+        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
+        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
+        { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
+      );
+    } else if (userRole === 'department_head') {
+      items.push(
+        { name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" },
+        { name: "Team", icon: Users, page: "TeamView" },
+        { name: "Expense Approval", icon: Receipt, page: "ExpenseApproval" },
+      );
+    } else {
+      items.push(
+        { name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" },
+        { name: "My Attendance", icon: Clock, page: "MyAttendance" },
+        { name: "My Payslips", icon: FileText, page: "MyPayslips" },
+        { name: "Expenses", icon: Receipt, page: "MyExpenses" },
+      );
+    }
+    
+    return items;
+  };
+
+  const navItems = getNavItems();
+
+  if (currentPageName === "Registration") {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <style>{`
+        :root {
+          --primary: 222.2 47.4% 11.2%;
+          --primary-foreground: 210 40% 98%;
+          --accent: 210 40% 96.1%;
+        }
+      `}</style>
+
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
+        <button onClick={() => setSidebarOpen(true)} className="p-2">
+          <Menu className="w-6 h-6 text-slate-700" />
+        </button>
+        <div className="flex items-center gap-2">
+          <Building2 className="w-7 h-7 text-indigo-600" />
+          <span className="font-bold text-lg text-slate-800">HRMS</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to={createPageUrl("Notifications")} className="relative p-2">
+            <Bell className="w-5 h-5 text-slate-600" />
+            {notifications.length > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500">
+                {notifications.length}
+              </Badge>
+            )}
+          </Link>
+        </div>
+      </header>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 h-full w-72 bg-white border-r border-slate-200 z-50
+        transform transition-transform duration-300 ease-in-out
+        lg:translate-x-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-8 h-8 text-indigo-600" />
+              <span className="font-bold text-xl text-slate-800">HRMS</span>
+            </div>
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2">
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </div>
+
+          {/* User Info */}
+          <div className="px-4 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                {user?.full_name?.[0] || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{user?.full_name || 'User'}</p>
+                <p className="text-xs text-slate-500 capitalize">{userRole.replace('_', ' ')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            {navItems.map((item) => {
+              const isActive = currentPageName === item.page;
+              return (
+                <Link
+                  key={item.page}
+                  to={createPageUrl(item.page)}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    ${isActive 
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                      : 'text-slate-600 hover:bg-slate-100'
+                    }
+                  `}
+                >
+                  <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-100">
+            <button
+              onClick={() => base44.auth.logout()}
+              className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="lg:ml-72 min-h-screen pt-16 lg:pt-0">
+        {/* Desktop Header */}
+        <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center justify-between px-8">
+          <h1 className="text-xl font-semibold text-slate-800">
+            {navItems.find(item => item.page === currentPageName)?.name || currentPageName}
+          </h1>
+          <div className="flex items-center gap-4">
+            <Link to={createPageUrl("Notifications")} className="relative p-2 hover:bg-slate-100 rounded-lg">
+              <Bell className="w-5 h-5 text-slate-600" />
+              {notifications.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-xs">
+                  {notifications.length}
+                </Badge>
+              )}
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                    {user?.full_name?.[0] || 'U'}
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-slate-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => base44.auth.logout()}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+
+        <div className="p-4 lg:p-8">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
