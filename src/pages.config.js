@@ -8,6 +8,11 @@ import MyExpenses from './pages/MyExpenses';
 import ExpenseApproval from './pages/ExpenseApproval';
 import OfferLetterManagement from './pages/OfferLetterManagement';
 import BackgroundVerification from './pages/BackgroundVerification';
+import AttendanceManagement from './pages/AttendanceManagement';
+import PayslipManagement from './pages/PayslipManagement';
+import Notifications from './pages/Notifications';
+import DeptHeadDashboard from './pages/DeptHeadDashboard';
+import TeamView from './pages/TeamView';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +27,11 @@ export const PAGES = {
     "ExpenseApproval": ExpenseApproval,
     "OfferLetterManagement": OfferLetterManagement,
     "BackgroundVerification": BackgroundVerification,
+    "AttendanceManagement": AttendanceManagement,
+    "PayslipManagement": PayslipManagement,
+    "Notifications": Notifications,
+    "DeptHeadDashboard": DeptHeadDashboard,
+    "TeamView": TeamView,
 }
 
 export const pagesConfig = {
