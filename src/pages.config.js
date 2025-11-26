@@ -13,6 +13,7 @@ import PayslipManagement from './pages/PayslipManagement';
 import Notifications from './pages/Notifications';
 import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import TeamView from './pages/TeamView';
+import OnboardingManagement from './pages/OnboardingManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "DeptHeadDashboard": DeptHeadDashboard,
     "TeamView": TeamView,
+    "OnboardingManagement": OnboardingManagement,
 }
 
 export const pagesConfig = {
