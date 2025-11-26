@@ -16,7 +16,8 @@ import {
   X,
   LogOut,
   ChevronDown,
-  Building2
+  Building2,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +64,7 @@ export default function Layout({ children, currentPageName }) {
       items.push(
         { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
         { name: "Employees", icon: Users, page: "Employees" },
+        { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
