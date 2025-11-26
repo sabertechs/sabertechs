@@ -159,17 +159,11 @@ export default function PayslipManagement() {
     setShowCreateDialog(true);
   };
 
-  const sendPayslipEmail = async (payslip) => {
-    await base44.integrations.Core.SendEmail({
-      to: payslip.employee_email,
-      subject: `Payslip - ${payslip.month} ${payslip.year}`,
-      body: `Dear ${payslip.employee_name},\n\nYour payslip for ${payslip.month} ${payslip.year} is ready.\n\nGross Salary: ₹${payslip.gross_salary?.toLocaleString()}\nNet Salary: ₹${payslip.net_salary?.toLocaleString()}\n\nBest regards,\nHR Team`
-    });
-
+  const sendPayslipNotification = async (payslip) => {
     await base44.entities.Notification.create({
       recipient_email: payslip.employee_email,
       title: 'Payslip Available',
-      message: `Your payslip for ${payslip.month} ${payslip.year} is now available.`,
+      message: `Your payslip for ${payslip.month} ${payslip.year} is now available. Gross: ₹${payslip.gross_salary?.toLocaleString()}, Net: ₹${payslip.net_salary?.toLocaleString()}`,
       type: 'info'
     });
   };
@@ -258,7 +252,7 @@ export default function PayslipManagement() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => sendPayslipEmail(payslip)}>
+                        <Button size="sm" variant="outline" onClick={() => sendPayslipNotification(payslip)}>
                           <Send className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleEdit(payslip)}>

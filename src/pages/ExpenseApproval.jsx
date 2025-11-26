@@ -44,7 +44,7 @@ export default function ExpenseApproval() {
     onSuccess: async (_, { id, data }) => {
       queryClient.invalidateQueries(['expenses']);
       
-      // Send email notification
+      // Create in-app notification
       const expense = expenses.find(e => e.id === id);
       if (expense) {
         const subject = data.status === 'approved' 
@@ -53,14 +53,7 @@ export default function ExpenseApproval() {
         const body = data.status === 'approved'
           ? `Your expense claim of ₹${expense.amount} for ${expense.expense_type} has been approved.`
           : `Your expense claim of ₹${expense.amount} for ${expense.expense_type} has been rejected. Reason: ${data.rejection_reason}`;
-        
-        await base44.integrations.Core.SendEmail({
-          to: expense.employee_email,
-          subject,
-          body
-        });
 
-        // Create notification
         await base44.entities.Notification.create({
           recipient_email: expense.employee_email,
           title: subject,

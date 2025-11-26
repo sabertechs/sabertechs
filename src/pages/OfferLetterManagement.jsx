@@ -100,17 +100,10 @@ export default function OfferLetterManagement() {
     for (const letterId of selectedLetters) {
       const letter = offerLetters.find(l => l.id === letterId);
       if (letter) {
-        // Send email
-        await base44.integrations.Core.SendEmail({
-          to: letter.employee_email,
-          subject: `Offer Letter - ${letter.designation}`,
-          body: `Dear ${letter.employee_name},\n\nPlease find attached your offer letter for the position of ${letter.designation}.\n\nJoining Date: ${letter.joining_date}\nSalary: ₹${letter.salary?.toLocaleString()}\n\n${letter.terms || ''}\n\nBest regards,\nHR Team`
-        });
-
         // Update status
         await base44.entities.OfferLetter.update(letterId, { status: 'sent' });
 
-        // Create notification
+        // Create in-app notification
         await base44.entities.Notification.create({
           recipient_email: letter.employee_email,
           title: 'Offer Letter Received',
@@ -249,12 +242,13 @@ export default function OfferLetterManagement() {
                             size="sm"
                             variant="outline"
                             onClick={async () => {
-                              await base44.integrations.Core.SendEmail({
-                                to: letter.employee_email,
-                                subject: `Offer Letter - ${letter.designation}`,
-                                body: `Dear ${letter.employee_name},\n\nPlease find your offer letter for the position of ${letter.designation}.\n\nJoining Date: ${letter.joining_date}\nSalary: ₹${letter.salary?.toLocaleString()}\n\n${letter.terms || ''}\n\nBest regards,\nHR Team`
-                              });
                               updateMutation.mutate({ id: letter.id, data: { status: 'sent' }});
+                              await base44.entities.Notification.create({
+                                recipient_email: letter.employee_email,
+                                title: 'Offer Letter Received',
+                                message: `Your offer letter for ${letter.designation} position has been sent.`,
+                                type: 'info'
+                              });
                             }}
                           >
                             <Send className="w-4 h-4" />
