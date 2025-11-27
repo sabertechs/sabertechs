@@ -15,6 +15,7 @@ import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import TeamView from './pages/TeamView';
 import OnboardingManagement from './pages/OnboardingManagement';
 import RoleSelection from './pages/RoleSelection';
+import EmployeeUpload from './pages/EmployeeUpload';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "TeamView": TeamView,
     "OnboardingManagement": OnboardingManagement,
     "RoleSelection": RoleSelection,
+    "EmployeeUpload": EmployeeUpload,
 }
 
 export const pagesConfig = {

@@ -64,6 +64,7 @@ export default function Layout({ children, currentPageName }) {
       items.push(
         { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
         { name: "Employees", icon: Users, page: "Employees" },
+        { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
         { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },

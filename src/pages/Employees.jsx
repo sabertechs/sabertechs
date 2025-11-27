@@ -15,7 +15,11 @@ import {
   Download,
   FileText,
   ShieldCheck,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  FileSpreadsheet,
+  UserCheck,
+  UserX
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,8 +49,15 @@ export default function Employees() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [bgvFilter, setBgvFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [designationFilter, setDesignationFilter] = useState("all");
+  const [joiningDateFrom, setJoiningDateFrom] = useState("");
+  const [joiningDateTo, setJoiningDateTo] = useState("");
+  const [sortField, setSortField] = useState("created_date");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showBulkActionDialog, setShowBulkActionDialog] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [downloading, setDownloading] = useState(false);
@@ -497,10 +508,114 @@ export default function Employees() {
     const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
     const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
     const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
-    return matchesSearch && matchesStatus && matchesBgv && matchesDept;
+    const matchesDesignation = designationFilter === "all" || emp.designation === designationFilter;
+    
+    let matchesJoiningDate = true;
+    if (joiningDateFrom && emp.date_of_joining) {
+      matchesJoiningDate = matchesJoiningDate && emp.date_of_joining >= joiningDateFrom;
+    }
+    if (joiningDateTo && emp.date_of_joining) {
+      matchesJoiningDate = matchesJoiningDate && emp.date_of_joining <= joiningDateTo;
+    }
+    
+    return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesJoiningDate;
+  }).sort((a, b) => {
+    let aVal = a[sortField] || '';
+    let bVal = b[sortField] || '';
+    
+    if (sortField === 'salary') {
+      aVal = parseFloat(aVal) || 0;
+      bVal = parseFloat(bVal) || 0;
+    }
+    
+    if (sortOrder === 'asc') {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
   });
 
   const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
+  const designations = [...new Set(employees.map(e => e.designation).filter(Boolean))];
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkStatus || selectedEmployees.length === 0) return;
+    
+    for (const empId of selectedEmployees) {
+      await base44.entities.Employee.update(empId, { status: bulkStatus });
+    }
+    
+    queryClient.invalidateQueries(['employees']);
+    setSelectedEmployees([]);
+    setShowBulkActionDialog(false);
+    setBulkStatus("");
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
+      "Address", "Locality", "City", "State", "Pincode",
+      "Aadhaar Number", "PAN Number", "Department", "Designation",
+      "Date of Joining", "Salary", "Role", "Status", "BGV Status"
+    ];
+    
+    const dataToExport = selectedEmployees.length > 0 
+      ? filteredEmployees.filter(emp => selectedEmployees.includes(emp.id))
+      : filteredEmployees;
+    
+    const rows = dataToExport.map(emp => [
+      emp.full_name || '',
+      emp.father_name || '',
+      emp.email || '',
+      emp.phone || '',
+      emp.date_of_birth || '',
+      emp.gender || '',
+      emp.address || '',
+      emp.locality || '',
+      emp.city || '',
+      emp.state || '',
+      emp.pincode || '',
+      emp.aadhaar_number || '',
+      emp.pan_number || '',
+      emp.department || '',
+      emp.designation || '',
+      emp.date_of_joining || '',
+      emp.salary || '',
+      emp.role || '',
+      emp.status || '',
+      emp.bg_verification_status || ''
+    ].map(val => `"${val}"`).join(','));
+    
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `employees_export_${format(new Date(), 'yyyyMMdd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setBgvFilter("all");
+    setDepartmentFilter("all");
+    setDesignationFilter("all");
+    setJoiningDateFrom("");
+    setJoiningDateTo("");
+    setSortField("created_date");
+    setSortOrder("desc");
+  };
 
   const bgvStatusIcon = (status) => {
     switch (status) {
@@ -519,21 +634,14 @@ export default function Employees() {
           <p className="text-slate-500">Manage your organization's employees</p>
         </div>
         <div className="flex gap-2">
-          {selectedEmployees.length > 0 && (
-            <Button 
-              onClick={downloadBulkZip} 
-              disabled={downloading}
-              variant="outline"
-              className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-            >
-              {downloading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 mr-2" />
-              )}
-              Download Selected ({selectedEmployees.length})
-            </Button>
-          )}
+          <Button 
+            variant="outline"
+            onClick={exportToCSV}
+            className="border-green-600 text-green-600 hover:bg-green-50"
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
           <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Employee
@@ -543,7 +651,7 @@ export default function Employees() {
 
       {/* Filters */}
       <Card className="border-0 shadow-sm">
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -588,8 +696,113 @@ export default function Employees() {
               </SelectContent>
             </Select>
           </div>
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            <Select value={designationFilter} onValueChange={setDesignationFilter}>
+              <SelectTrigger className="w-full md:w-44">
+                <SelectValue placeholder="Designation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Designations</SelectItem>
+                {designations.map(des => (
+                  <SelectItem key={des} value={des}>{des}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-slate-500 whitespace-nowrap">Joining:</Label>
+              <Input
+                type="date"
+                value={joiningDateFrom}
+                onChange={(e) => setJoiningDateFrom(e.target.value)}
+                className="w-36"
+                placeholder="From"
+              />
+              <span className="text-slate-400">to</span>
+              <Input
+                type="date"
+                value={joiningDateTo}
+                onChange={(e) => setJoiningDateTo(e.target.value)}
+                className="w-36"
+                placeholder="To"
+              />
+            </div>
+            <Select value={`${sortField}-${sortOrder}`} onValueChange={(v) => {
+              const [field, order] = v.split('-');
+              setSortField(field);
+              setSortOrder(order);
+            }}>
+              <SelectTrigger className="w-full md:w-44">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_date-desc">Newest First</SelectItem>
+                <SelectItem value="created_date-asc">Oldest First</SelectItem>
+                <SelectItem value="full_name-asc">Name A-Z</SelectItem>
+                <SelectItem value="full_name-desc">Name Z-A</SelectItem>
+                <SelectItem value="date_of_joining-desc">Joining (Latest)</SelectItem>
+                <SelectItem value="date_of_joining-asc">Joining (Earliest)</SelectItem>
+                <SelectItem value="salary-desc">Salary (High-Low)</SelectItem>
+                <SelectItem value="salary-asc">Salary (Low-High)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Actions */}
+      {selectedEmployees.length > 0 && (
+        <Card className="border-0 shadow-sm bg-indigo-50">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-indigo-700 font-medium">
+                {selectedEmployees.length} employee(s) selected
+              </span>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setShowBulkActionDialog(true)}
+                  className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                >
+                  <UserCheck className="w-4 h-4 mr-1" />
+                  Update Status
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={exportToCSV}
+                  className="border-green-300 text-green-700 hover:bg-green-100"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-1" />
+                  Export CSV
+                </Button>
+                <Button 
+                  onClick={downloadBulkZip} 
+                  disabled={downloading}
+                  size="sm"
+                  variant="outline"
+                  className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                >
+                  {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                  Download Docs
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  onClick={() => setSelectedEmployees([])}
+                  className="text-slate-500"
+                >
+                  Clear Selection
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Employee List */}
       <Card className="border-0 shadow-sm">
@@ -604,11 +817,22 @@ export default function Employees() {
                       onCheckedChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Employee</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500 cursor-pointer hover:text-indigo-600" onClick={() => handleSort('full_name')}>
+                    <div className="flex items-center gap-1">
+                      Employee
+                      {sortField === 'full_name' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                  </th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Department</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Designation</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">BGV Status</th>
-                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Joined</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500 cursor-pointer hover:text-indigo-600" onClick={() => handleSort('date_of_joining')}>
+                    <div className="flex items-center gap-1">
+                      Joined
+                      {sortField === 'date_of_joining' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                  </th>
                   <th className="text-right px-4 py-4 text-sm font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
@@ -637,6 +861,7 @@ export default function Employees() {
                       </div>
                     </td>
                     <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
+                    <td className="px-4 py-4 text-slate-600">{emp.designation || '-'}</td>
                     <td className="px-4 py-4">
                       <Badge className={
                         emp.status === 'active' ? 'bg-green-100 text-green-700' :
@@ -803,6 +1028,41 @@ export default function Employees() {
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
             <Button onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-700">
               {selectedEmployee ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Status Update Dialog */}
+      <Dialog open={showBulkActionDialog} onOpenChange={setShowBulkActionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Employee Status</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-slate-600">
+              Update status for {selectedEmployees.length} selected employee(s)
+            </p>
+            <Select value={bulkStatus} onValueChange={setBulkStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select new status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="terminated">Terminated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkActionDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleBulkStatusUpdate} 
+              disabled={!bulkStatus}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              Update Status
             </Button>
           </DialogFooter>
         </DialogContent>
