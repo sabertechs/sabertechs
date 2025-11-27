@@ -965,12 +965,16 @@ export default function Employees() {
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="engineering">Engineering</SelectItem>
-                  <SelectItem value="hr">Human Resources</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
+                  <SelectItem value="proctor_online">Proctor Online</SelectItem>
+                  <SelectItem value="proctor_cbt">Proctor CBT</SelectItem>
+                  <SelectItem value="team_leader">Team Leader</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="cce">C.C.E</SelectItem>
+                  <SelectItem value="wfm">WFM</SelectItem>
+                  <SelectItem value="hr_manager">HR Manager</SelectItem>
+                  <SelectItem value="hr_associate">HR Associate</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="quality_analyst">Quality Analyst</SelectItem>
                 </SelectContent>
               </Select>
             </div>
