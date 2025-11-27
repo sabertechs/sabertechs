@@ -47,19 +47,12 @@ export default function BackgroundVerification() {
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
-        // Send notification
+        // Send in-app notification only
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Approved',
-          message: 'Your background verification has been completed and approved.',
+          message: 'Your background verification has been completed and approved. You are now an active employee.',
           type: 'success'
-        });
-        
-        // Send email
-        await base44.integrations.Core.SendEmail({
-          to: emp.email,
-          subject: 'Background Verification Approved',
-          body: `Dear ${emp.full_name},\n\nYour background verification has been completed and approved. You are now an active employee.\n\nBest regards,\nHR Team`
         });
       }
     }
