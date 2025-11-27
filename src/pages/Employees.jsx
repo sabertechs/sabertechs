@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   Search,
   Plus,
@@ -19,7 +20,8 @@ import {
   ArrowUpDown,
   FileSpreadsheet,
   UserCheck,
-  UserX
+  UserX,
+  FolderDown
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,7 @@ export default function Employees() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState({});
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -150,7 +153,99 @@ export default function Employees() {
 
   const getOfferLetter = (email) => offerLetters.find(ol => ol.employee_email === email);
 
-  const generateOfferLetterPDF = (emp, standalone = true) => {
+  // Generate PDF using PDFMonkey
+  const generatePDFWithMonkey = async (emp, docType) => {
+    const empKey = `${emp.id}-${docType}`;
+    setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
+    
+    try {
+      const offerLetter = getOfferLetter(emp.email);
+      const folderName = emp.email?.replace('@', '_at_').replace(/\./g, '_');
+      
+      // Prepare payload based on document type
+      let payload;
+      if (docType === 'offer') {
+        payload = {
+          employee_name: emp.full_name,
+          designation: emp.designation || offerLetter?.designation || 'Employee',
+          department: emp.department || offerLetter?.department || 'Company',
+          date_of_joining: emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) 
+            ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') 
+            : 'the date of joining',
+          salary: (emp.salary || offerLetter?.salary || 0).toLocaleString(),
+          current_date: format(new Date(), 'MMMM d, yyyy'),
+        };
+      } else {
+        // BGV Report
+        const calculateAge = (dob) => {
+          if (!dob) return 'N/A';
+          const birthDate = new Date(dob);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+          return age;
+        };
+        const age = calculateAge(emp.date_of_birth);
+        
+        payload = {
+          employee_name: emp.full_name,
+          employee_id: emp.employee_id || emp.id,
+          phone: emp.phone || 'N/A',
+          date_of_birth: emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) 
+            ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') 
+            : 'N/A',
+          father_name: emp.father_name || 'N/A',
+          address: [emp.address, emp.locality, emp.city, emp.state, emp.pincode].filter(Boolean).join(', ') || 'N/A',
+          aadhaar_number: emp.aadhaar_number || 'N/A',
+          pan_number: emp.pan_number || 'N/A',
+          gender: emp.gender ? emp.gender.charAt(0).toUpperCase() + emp.gender.slice(1) : 'N/A',
+          age: age,
+          state: emp.state || 'N/A',
+          bgv_status: emp.bg_verification_status === 'approved' ? 'Success' : emp.bg_verification_status === 'rejected' ? 'Failed' : 'Pending',
+          verification_date: format(new Date(), 'dd-MM-yyyy'),
+          verification_time: format(new Date(), 'hh:mm a'),
+          profile_photo: emp.profile_photo || '',
+        };
+      }
+
+      // For now, fall back to HTML generation since PDFMonkey requires template setup
+      // Once templates are created in PDFMonkey dashboard, uncomment below:
+      /*
+      const response = await base44.functions.invoke('pdfMonkey', {
+        action: 'generate',
+        templateId: docType === 'offer' ? 'YOUR_OFFER_TEMPLATE_ID' : 'YOUR_BGV_TEMPLATE_ID',
+        payload: payload
+      });
+      
+      if (response.data?.document?.download_url) {
+        window.open(response.data.document.download_url, '_blank');
+      }
+      */
+      
+      // Fallback to current HTML generation
+      if (docType === 'offer') {
+        generateOfferLetterHTML(emp, true);
+      } else {
+        generateBGVHTML(emp, true);
+      }
+      
+      toast.success(`${docType === 'offer' ? 'Offer Letter' : 'BGV Report'} ready for download`);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF. Using fallback method.');
+      // Fallback to HTML generation
+      if (docType === 'offer') {
+        generateOfferLetterHTML(emp, true);
+      } else {
+        generateBGVHTML(emp, true);
+      }
+    } finally {
+      setGeneratingPdf(prev => ({ ...prev, [empKey]: false }));
+    }
+  };
+
+  const generateOfferLetterHTML = (emp, standalone = true) => {
     const offerLetter = getOfferLetter(emp.email);
     const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
     const fileName = standalone ? `${folderName}/Offer_Letter.pdf` : `Offer_Letter_${folderName}.pdf`;
@@ -240,7 +335,11 @@ export default function Employees() {
     return content;
   };
 
-  const generateBGVPDF = (emp, standalone = true) => {
+  const generateOfferLetterPDF = (emp) => {
+    generatePDFWithMonkey(emp, 'offer');
+  };
+
+  const generateBGVHTML = (emp, standalone = true) => {
     const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
     const fileName = standalone ? `${folderName}/BGV_Report.pdf` : `BGV_Report_${folderName}.pdf`;
     const logoImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
@@ -476,13 +575,21 @@ export default function Employees() {
     return content;
   };
 
-  const downloadBothDocuments = (emp) => {
-    // Generate combined HTML with both documents for printing as PDF
-    const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
-    const offerContent = generateOfferLetterPDF(emp, false);
-    const bgvContent = generateBGVPDF(emp, false);
+  const generateBGVPDF = (emp) => {
+    generatePDFWithMonkey(emp, 'bgv');
+  };
+
+  const downloadBothDocuments = async (emp) => {
+    const empKey = `${emp.id}-all`;
+    setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
     
-    const combinedContent = `
+    try {
+      // Generate combined HTML with both documents for printing as PDF
+      const folderName = emp.email?.replace('@', '_at_').replace(/\./g, '_');
+      const offerContent = generateOfferLetterHTML(emp, false);
+      const bgvContent = generateBGVHTML(emp, false);
+      
+      const combinedContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -504,11 +611,11 @@ export default function Employees() {
 <body>
   <div class="instructions no-print">
     <h2>📁 Documents for: ${emp.full_name} (${emp.email})</h2>
-    <p>To save as PDF files in a folder named "${folderName}":</p>
+    <p>To save as PDF files, create a folder named "<strong>${folderName}</strong>" and save the documents inside:</p>
     <ol>
       <li>Press <strong>Ctrl+P</strong> (or Cmd+P on Mac)</li>
       <li>Select <strong>"Save as PDF"</strong> as the destination</li>
-      <li>Save the file in a folder named: <strong>${folderName}</strong></li>
+      <li>Save as: <strong>Offer_Letter.pdf</strong> and <strong>BGV_Report.pdf</strong></li>
     </ol>
     <p>This document contains: <strong>Offer Letter</strong> and <strong>BGV Report</strong></p>
     <hr style="margin-top: 20px;">
@@ -527,10 +634,15 @@ export default function Employees() {
   </div>
 </body>
 </html>`;
-    
-    const newWindow = window.open('', '_blank');
-    newWindow.document.write(combinedContent);
-    newWindow.document.close();
+      
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(combinedContent);
+      newWindow.document.close();
+      
+      toast.success('Documents ready - save as PDF in folder: ' + folderName);
+    } finally {
+      setGeneratingPdf(prev => ({ ...prev, [empKey]: false }));
+    }
   };
 
   const downloadBulkZip = async () => {
@@ -966,14 +1078,17 @@ export default function Employees() {
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)}>
-                            <Download className="w-4 h-4 mr-2" /> Download All Documents
+                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)} disabled={generatingPdf[`${emp.id}-all`]}>
+                            {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
+                            Download All Documents
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp, true)}>
-                            <FileText className="w-4 h-4 mr-2" /> Download Offer Letter
+                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
+                            {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                            Download Offer Letter
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateBGVPDF(emp, true)}>
-                            <ShieldCheck className="w-4 h-4 mr-2" /> Download BGV
+                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)} disabled={generatingPdf[`${emp.id}-bgv`]}>
+                            {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                            Download BGV Report
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
@@ -1176,11 +1291,17 @@ export default function Employees() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)}>
-                    <Download className="w-4 h-4 mr-1" /> Offer Letter
+                  <Button size="sm" variant="outline" onClick={() => downloadBothDocuments(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-all`]}>
+                    {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
+                    All Docs
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)}>
-                    <Download className="w-4 h-4 mr-1" /> BGV
+                  <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
+                    {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                    Offer Letter
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
+                    {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                    BGV
                   </Button>
                 </div>
               </div>
