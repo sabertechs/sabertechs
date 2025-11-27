@@ -884,7 +884,7 @@ export default function Employees() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
-                      {emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}
+                      {emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}
                     </td>
                     <td className="px-4 py-4 text-right">
                       <DropdownMenu>
