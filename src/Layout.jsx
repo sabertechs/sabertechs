@@ -17,7 +17,8 @@ import {
   LogOut,
   ChevronDown,
   Building2,
-  UserPlus
+  UserPlus,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,7 +61,7 @@ export default function Layout({ children, currentPageName }) {
   const getNavItems = () => {
     const items = [];
     
-    if (userRole === 'hr') {
+    if (userRole === 'hr' || userRole === 'manager') {
       items.push(
         { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
         { name: "Employees", icon: Users, page: "Employees" },
@@ -68,6 +69,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
+        { name: "Access Control", icon: Shield, page: "AccessControl" },
       );
     } else if (userRole === 'department_head') {
       items.push(
@@ -85,7 +87,7 @@ export default function Layout({ children, currentPageName }) {
 
   const navItems = getNavItems();
 
-  if (currentPageName === "Registration") {
+  if (currentPageName === "Registration" || currentPageName === "Login") {
     return <>{children}</>;
   }
 
