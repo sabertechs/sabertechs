@@ -150,9 +150,10 @@ export default function Employees() {
 
   const getOfferLetter = (email) => offerLetters.find(ol => ol.employee_email === email);
 
-  const generateOfferLetterPDF = (emp) => {
+  const generateOfferLetterPDF = (emp, standalone = true) => {
     const offerLetter = getOfferLetter(emp.email);
-    const fileName = `${emp.email?.replace('@', '_at_')}.html`;
+    const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
+    const fileName = standalone ? `${folderName}/Offer_Letter.pdf` : `Offer_Letter_${folderName}.pdf`;
     const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
     
@@ -227,17 +228,21 @@ export default function Employees() {
 </body>
 </html>`;
     
-    const blob = new Blob([content], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (standalone) {
+      // Open in new window for PDF printing
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(content);
+      newWindow.document.close();
+      newWindow.onload = () => {
+        newWindow.print();
+      };
+    }
+    return content;
   };
 
-  const generateBGVPDF = (emp) => {
-    const fileName = `BGV_${emp.email?.replace('@', '_at_')}.html`;
+  const generateBGVPDF = (emp, standalone = true) => {
+    const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
+    const fileName = standalone ? `${folderName}/BGV_Report.pdf` : `BGV_Report_${folderName}.pdf`;
     const logoImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     const verificationDate = format(new Date(), 'dd-MM-yyyy');
     const verificationTime = format(new Date(), 'hh:mm a');
@@ -459,13 +464,73 @@ export default function Employees() {
 </body>
 </html>`;
     
-    const blob = new Blob([content], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (standalone) {
+      // Open in new window for PDF printing
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(content);
+      newWindow.document.close();
+      newWindow.onload = () => {
+        newWindow.print();
+      };
+    }
+    return content;
+  };
+
+  const downloadBothDocuments = (emp) => {
+    // Generate combined HTML with both documents for printing as PDF
+    const folderName = emp.email?.replace('@', '_at_').replace('.', '_');
+    const offerContent = generateOfferLetterPDF(emp, false);
+    const bgvContent = generateBGVPDF(emp, false);
+    
+    const combinedContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Documents - ${emp.full_name}</title>
+  <style>
+    @media print {
+      .page-break { page-break-before: always; }
+      .no-print { display: none; }
+    }
+    body { margin: 0; padding: 0; }
+    .document-section { margin-bottom: 20px; }
+    .instructions { padding: 20px; background: #f5f5f5; margin: 20px; border-radius: 8px; font-family: Arial, sans-serif; }
+    .instructions h2 { color: #333; }
+    .instructions p { color: #666; }
+    .instructions ol { color: #333; }
+  </style>
+</head>
+<body>
+  <div class="instructions no-print">
+    <h2>📁 Documents for: ${emp.full_name} (${emp.email})</h2>
+    <p>To save as PDF files in a folder named "${folderName}":</p>
+    <ol>
+      <li>Press <strong>Ctrl+P</strong> (or Cmd+P on Mac)</li>
+      <li>Select <strong>"Save as PDF"</strong> as the destination</li>
+      <li>Save the file in a folder named: <strong>${folderName}</strong></li>
+    </ol>
+    <p>This document contains: <strong>Offer Letter</strong> and <strong>BGV Report</strong></p>
+    <hr style="margin-top: 20px;">
+  </div>
+  
+  <!-- Offer Letter -->
+  <div class="document-section">
+    ${offerContent.replace('<!DOCTYPE html>', '').replace('<html>', '').replace('</html>', '').replace(/<head>[\s\S]*?<\/head>/, '')}
+  </div>
+  
+  <div class="page-break"></div>
+  
+  <!-- BGV Report -->
+  <div class="document-section">
+    ${bgvContent.replace('<!DOCTYPE html>', '').replace('<html>', '').replace('</html>', '').replace(/<head>[\s\S]*?<\/head>/, '')}
+  </div>
+</body>
+</html>`;
+    
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(combinedContent);
+    newWindow.document.close();
   };
 
   const downloadBulkZip = async () => {
@@ -901,10 +966,13 @@ export default function Employees() {
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)}>
+                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)}>
+                            <Download className="w-4 h-4 mr-2" /> Download All Documents
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp, true)}>
                             <FileText className="w-4 h-4 mr-2" /> Download Offer Letter
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)}>
+                          <DropdownMenuItem onClick={() => generateBGVPDF(emp, true)}>
                             <ShieldCheck className="w-4 h-4 mr-2" /> Download BGV
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
