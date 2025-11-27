@@ -65,9 +65,6 @@ export default function Layout({ children, currentPageName }) {
         { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
         { name: "Employees", icon: Users, page: "Employees" },
         { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
-        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
-        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
-        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
       );
@@ -75,14 +72,10 @@ export default function Layout({ children, currentPageName }) {
       items.push(
         { name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" },
         { name: "Team", icon: Users, page: "TeamView" },
-        { name: "Expense Approval", icon: Receipt, page: "ExpenseApproval" },
       );
     } else {
       items.push(
         { name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" },
-        { name: "My Attendance", icon: Clock, page: "MyAttendance" },
-        { name: "My Payslips", icon: FileText, page: "MyPayslips" },
-        { name: "Expenses", icon: Receipt, page: "MyExpenses" },
       );
     }
     

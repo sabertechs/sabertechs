@@ -226,127 +226,224 @@ export default function Employees() {
   };
 
   const generateBGVPDF = (emp) => {
-    const fileName = `BGV_${emp.full_name?.replace(/\s+/g, '_')}_${emp.phone || 'NA'}.html`;
+    const fileName = `BGV_${emp.email?.replace('@', '_at_')}.html`;
+    const logoImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
+    const verificationDate = format(new Date(), 'dd-MM-yyyy');
+    const verificationTime = format(new Date(), 'hh:mm a');
+    
+    // Calculate age from DOB
+    const calculateAge = (dob) => {
+      if (!dob) return 'N/A';
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+      return age;
+    };
+
+    const age = calculateAge(emp.date_of_birth);
+    const ageBand = age !== 'N/A' ? `${Math.floor(age/10)*10}-${Math.floor(age/10)*10 + 10}` : 'N/A';
+    const maskedAadhaar = emp.aadhaar_number ? 'XXXXXXXX' + emp.aadhaar_number.slice(-4) : 'N/A';
+    const genderShort = emp.gender === 'male' ? 'M' : emp.gender === 'female' ? 'F' : 'O';
+    const fullAddress = [emp.address, emp.locality, emp.city, emp.state, emp.pincode].filter(Boolean).join(', ') || 'N/A';
+    const bgvStatus = emp.bg_verification_status === 'approved' ? 'Success' : emp.bg_verification_status === 'rejected' ? 'Failed' : 'Pending';
+    const statusColor = emp.bg_verification_status === 'approved' ? '#7cb342' : emp.bg_verification_status === 'rejected' ? '#e53935' : '#ffa000';
     
     const content = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Background Verification - ${emp.full_name}</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #4F46E5; }
-    .title { font-size: 20px; margin-top: 20px; }
-    .status { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin: 20px 0; }
-    .status.approved { background: #dcfce7; color: #166534; }
-    .status.pending { background: #fef3c7; color: #92400e; }
-    .status.rejected { background: #fee2e2; color: #991b1b; }
-    .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-    .detail-row { display: flex; margin: 10px 0; }
-    .detail-label { font-weight: bold; width: 200px; }
-    .section { margin: 30px 0; }
-    .section-title { font-size: 16px; font-weight: bold; color: #4F46E5; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
-    .signature { margin-top: 60px; }
-    .date { color: #666; }
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+    .page { width: 210mm; min-height: 297mm; padding: 0; margin: 0 auto; background: white; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .logo-header { text-align: center; padding: 15px 0; }
+    .logo-header img { height: 60px; }
+    .title-bar { background: #f57c00; color: white; text-align: center; padding: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+    .profile-section { display: flex; padding: 20px 30px; border: 1px solid #e0e0e0; margin: 20px 30px; border-radius: 8px; }
+    .profile-photo { width: 120px; height: 140px; background: #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 30px; overflow: hidden; }
+    .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-info { flex: 1; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-item { margin: 5px 0; }
+    .info-label { color: #666; font-size: 11px; }
+    .info-value { font-weight: bold; font-size: 13px; }
+    .name-section { margin-top: 15px; }
+    .emp-name { font-size: 18px; font-weight: bold; }
+    .emp-id { color: #666; font-size: 11px; margin-top: 3px; }
+    .status-bar { display: flex; justify-content: space-around; padding: 15px 30px; background: #f5f5f5; margin: 0 30px; border-radius: 8px; }
+    .status-item { text-align: center; }
+    .status-label { color: #666; font-size: 11px; }
+    .status-value { font-size: 16px; font-weight: bold; margin-top: 5px; }
+    .status-success { color: #7cb342; }
+    .status-pending { color: #ffa000; }
+    .status-failed { color: #e53935; }
+    .verification-table { margin: 20px 30px; border-collapse: collapse; width: calc(100% - 60px); }
+    .verification-table th, .verification-table td { border: 1px solid #e0e0e0; padding: 12px 15px; text-align: left; }
+    .verification-table th { background: #f5f5f5; font-weight: bold; color: #333; }
+    .verification-table td.success { color: #7cb342; font-weight: bold; }
+    .verification-table td.pending { color: #ffa000; font-weight: bold; }
+    .verification-table td.failed { color: #e53935; font-weight: bold; }
+    
+    /* Page 2 & 3 Styles */
+    .report-title { background: #8bc34a; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; }
+    .section-title { background: #f5f5f5; padding: 10px 15px; font-weight: bold; margin: 20px 30px 0; border-left: 4px solid #f57c00; }
+    .data-table { margin: 0 30px 20px; border-collapse: collapse; width: calc(100% - 60px); }
+    .data-table td { border: 1px solid #e0e0e0; padding: 12px 15px; }
+    .data-table td:first-child { background: #fafafa; font-weight: bold; width: 40%; }
+    .result-row { background: #8bc34a !important; }
+    .result-row td { color: white !important; font-weight: bold !important; }
+    .result-row td:first-child { background: #8bc34a !important; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">HRMS Portal</div>
-    <div class="title">BACKGROUND VERIFICATION CERTIFICATE</div>
-  </div>
-  
-  <p class="date">Date: ${format(new Date(), 'MMMM d, yyyy')}</p>
-  
-  <div class="status ${emp.bg_verification_status || 'pending'}">
-    Status: ${(emp.bg_verification_status || 'pending').toUpperCase()}
-  </div>
-  
-  <div class="section">
-    <div class="section-title">Personal Information</div>
-    <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Full Name:</span>
-        <span>${emp.full_name}</span>
+  <!-- PAGE 1: VERIFICATIONS SUMMARY -->
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
+    </div>
+    
+    <div class="title-bar">VERIFICATIONS SUMMARY</div>
+    
+    <div class="profile-section">
+      <div class="profile-photo">
+        ${emp.profile_photo ? `<img src="${emp.profile_photo}" alt="Profile" />` : `<span style="color:#999;font-size:40px;">${emp.full_name?.[0] || 'E'}</span>`}
       </div>
-      <div class="detail-row">
-        <span class="detail-label">Father's Name:</span>
-        <span>${emp.father_name || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Email:</span>
-        <span>${emp.email}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Phone:</span>
-        <span>${emp.phone || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Date of Birth:</span>
-        <span>${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'MMMM d, yyyy') : 'N/A'}</span>
+      <div class="profile-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Staff ID</div>
+            <div class="info-value">${emp.employee_id || emp.id || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Mobile</div>
+            <div class="info-value">${emp.phone || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Date of Birth</div>
+            <div class="info-value">${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Father's/Guardian's name</div>
+            <div class="info-value">${emp.father_name || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Current Address</div>
+            <div class="info-value">${fullAddress}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Permanent Address</div>
+            <div class="info-value">${fullAddress}</div>
+          </div>
+        </div>
+        <div class="name-section">
+          <div class="emp-name">${emp.full_name}</div>
+          <div class="emp-id">Individual ID ${emp.employee_id || emp.id || 'N/A'}</div>
+          <div class="emp-id">Community/Sub-Community</div>
+        </div>
       </div>
     </div>
-  </div>
-  
-  <div class="section">
-    <div class="section-title">Identity Documents</div>
-    <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Aadhaar Number:</span>
-        <span>${emp.aadhaar_number || 'N/A'}</span>
+    
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-label">Overall Status</div>
+        <div class="status-value" style="color: ${statusColor}">${bgvStatus}</div>
       </div>
-      <div class="detail-row">
-        <span class="detail-label">PAN Number:</span>
-        <span>${emp.pan_number || 'N/A'}</span>
+      <div class="status-item">
+        <div class="status-label">Initiation Date</div>
+        <div class="status-value">${verificationDate}</div>
       </div>
     </div>
+    
+    <table class="verification-table">
+      <thead>
+        <tr>
+          <th>Verifications</th>
+          <th>Created Date</th>
+          <th>Updated Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Aadhaar Verification</td>
+          <td>${verificationDate}</td>
+          <td>${verificationDate}</td>
+          <td class="${emp.bg_verification_status === 'approved' ? 'success' : emp.bg_verification_status === 'rejected' ? 'failed' : 'pending'}">${bgvStatus}</td>
+        </tr>
+        <tr>
+          <td>PAN Card Verification</td>
+          <td>${verificationDate}</td>
+          <td>${verificationDate}</td>
+          <td class="${emp.bg_verification_status === 'approved' ? 'success' : emp.bg_verification_status === 'rejected' ? 'failed' : 'pending'}">${bgvStatus}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   
-  <div class="section">
-    <div class="section-title">Address Information</div>
-    <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Address:</span>
-        <span>${emp.address || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">City:</span>
-        <span>${emp.city || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">State:</span>
-        <span>${emp.state || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Pincode:</span>
-        <span>${emp.pincode || 'N/A'}</span>
-      </div>
+  <!-- PAGE 2: AADHAAR VERIFICATION REPORT -->
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
     </div>
+    
+    <div class="report-title">AADHAAR VERIFICATION REPORT</div>
+    
+    <div class="section-title">GIVEN INFORMATION</div>
+    <table class="data-table">
+      <tr><td>AADHAAR NUMBER</td><td>${emp.aadhaar_number || 'N/A'}</td></tr>
+      <tr><td>LOCATION</td><td>${emp.state || 'N/A'}</td></tr>
+      <tr><td>GENDER</td><td>${emp.gender ? emp.gender.charAt(0).toUpperCase() + emp.gender.slice(1) : 'N/A'}</td></tr>
+      <tr><td>AGE</td><td>${age}</td></tr>
+    </table>
+    
+    <div class="section-title">VERIFIED INFORMATION*</div>
+    <table class="data-table">
+      <tr><td>AADHAAR NUMBER</td><td>${maskedAadhaar}</td></tr>
+      <tr><td>GENDER</td><td>${genderShort}</td></tr>
+      <tr><td>STATE</td><td>${emp.state || 'N/A'}</td></tr>
+      <tr><td>AGE BAND</td><td>${ageBand}</td></tr>
+    </table>
+    
+    <table class="data-table">
+      <tr class="result-row"><td>RESULT</td><td>${bgvStatus}</td></tr>
+      <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
+      <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
+    </table>
   </div>
   
-  <div class="section">
-    <div class="section-title">Employment Details</div>
-    <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Department:</span>
-        <span>${emp.department || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Designation:</span>
-        <span>${emp.designation || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Date of Joining:</span>
-        <span>${emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'N/A'}</span>
-      </div>
+  <!-- PAGE 3: PAN CARD VERIFICATION REPORT -->
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
     </div>
-  </div>
-  
-  <div class="signature">
-    <p>Verified By,</p>
-    <p><strong>HR Department</strong></p>
-    <p>HRMS Portal</p>
+    
+    <div class="report-title">PAN CARD VERIFICATION REPORT</div>
+    
+    <div class="section-title">GIVEN INFORMATION</div>
+    <table class="data-table">
+      <tr><td>NAME ON PAN CARD</td><td>${emp.full_name}</td></tr>
+      <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
+      <tr><td>DATE OF BIRTH</td><td>${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
+    </table>
+    
+    <div class="section-title">VERIFIED INFORMATION*</div>
+    <table class="data-table">
+      <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
+      <tr><td>NAME</td><td>${emp.full_name?.toUpperCase()}</td></tr>
+      <tr><td>CATEGORY</td><td>Individual</td></tr>
+    </table>
+    
+    <table class="data-table">
+      <tr class="result-row"><td>RESULT</td><td>${bgvStatus}</td></tr>
+      <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
+      <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
+    </table>
   </div>
 </body>
 </html>`;
