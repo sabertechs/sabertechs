@@ -194,7 +194,7 @@ export default function Employees() {
     
     <p class="salutation">Dear <span class="employee-name">${emp.full_name}</span>,</p>
     
-    <p>With reference to your application and subsequent interview, we are pleased to appoint you as <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> in our organization with effect from <strong>${emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'the date of joining'}</strong>.</p>
+    <p>With reference to your application and subsequent interview, we are pleased to appoint you as <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> in our organization with effect from <strong>${emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'the date of joining'}</strong>.</p>
     
     <p>Your appointment is subject to the following terms and conditions:</p>
     
@@ -342,7 +342,7 @@ export default function Employees() {
           </div>
           <div class="info-item">
             <div class="info-label">Date of Birth</div>
-            <div class="info-value">${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div>
+            <div class="info-value">${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Father's/Guardian's name</div>
@@ -445,7 +445,7 @@ export default function Employees() {
     <table class="data-table">
       <tr><td>NAME ON PAN CARD</td><td>${emp.full_name}</td></tr>
       <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
-      <tr><td>DATE OF BIRTH</td><td>${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
+      <tr><td>DATE OF BIRTH</td><td>${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
     </table>
     
     <div class="section-title">VERIFIED INFORMATION*</div>
