@@ -141,7 +141,7 @@ export default function Employees() {
 
   const generateOfferLetterPDF = (emp) => {
     const offerLetter = getOfferLetter(emp.email);
-    const fileName = `${emp.email?.replace('@', '_at_')}.pdf`;
+    const fileName = `${emp.email?.replace('@', '_at_')}.html`;
     const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
     
