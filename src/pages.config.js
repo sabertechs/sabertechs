@@ -16,6 +16,7 @@ import TeamView from './pages/TeamView';
 import OnboardingManagement from './pages/OnboardingManagement';
 import EmployeeUpload from './pages/EmployeeUpload';
 import AccessControl from './pages/AccessControl';
+import AuthRedirect from './pages/AuthRedirect';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "OnboardingManagement": OnboardingManagement,
     "EmployeeUpload": EmployeeUpload,
     "AccessControl": AccessControl,
+    "AuthRedirect": AuthRedirect,
 }
 
 export const pagesConfig = {
