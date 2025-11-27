@@ -4,23 +4,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Search,
-  Filter,
   Plus,
   MoreVertical,
   Edit,
   Trash2,
   Eye,
-  Mail,
-  Phone,
-  Building,
   CheckCircle,
+  Clock,
   XCircle,
-  Clock
+  Download,
+  FileText,
+  ShieldCheck,
+  Loader2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -33,19 +34,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 export default function Employees() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [bgvFilter, setBgvFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [downloading, setDownloading] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -59,9 +63,14 @@ export default function Employees() {
     role: "employee"
   });
 
-  const { data: employees = [], isLoading } = useQuery({
+  const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
+  });
+
+  const { data: offerLetters = [] } = useQuery({
+    queryKey: ['offerLetters'],
+    queryFn: () => base44.entities.OfferLetter.list(),
   });
 
   const createMutation = useMutation({
@@ -128,15 +137,284 @@ export default function Employees() {
     }
   };
 
+  const getOfferLetter = (email) => offerLetters.find(ol => ol.employee_email === email);
+
+  const generateOfferLetterPDF = (emp) => {
+    const offerLetter = getOfferLetter(emp.email);
+    const fileName = `OfferLetter_${emp.full_name?.replace(/\s+/g, '_')}_${emp.phone || 'NA'}.html`;
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Offer Letter - ${emp.full_name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
+    .logo { font-size: 24px; font-weight: bold; color: #4F46E5; }
+    .title { font-size: 20px; margin-top: 20px; }
+    .content { line-height: 1.8; }
+    .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .detail-row { display: flex; margin: 10px 0; }
+    .detail-label { font-weight: bold; width: 200px; }
+    .signature { margin-top: 60px; }
+    .date { color: #666; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">HRMS Portal</div>
+    <div class="title">OFFER LETTER</div>
+  </div>
+  
+  <div class="content">
+    <p class="date">Date: ${format(new Date(), 'MMMM d, yyyy')}</p>
+    
+    <p>Dear <strong>${emp.full_name}</strong>,</p>
+    
+    <p>We are pleased to offer you the position of <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> 
+    at our organization. We believe your skills and experience will be a valuable asset to our team.</p>
+    
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Full Name:</span>
+        <span>${emp.full_name}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email:</span>
+        <span>${emp.email}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone:</span>
+        <span>${emp.phone || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Department:</span>
+        <span>${emp.department || offerLetter?.department || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Designation:</span>
+        <span>${emp.designation || offerLetter?.designation || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Salary:</span>
+        <span>₹${(emp.salary || offerLetter?.salary || 0).toLocaleString()} per month</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Joining Date:</span>
+        <span>${emp.date_of_joining || offerLetter?.joining_date ? format(new Date(emp.date_of_joining || offerLetter?.joining_date), 'MMMM d, yyyy') : 'To be confirmed'}</span>
+      </div>
+    </div>
+    
+    ${offerLetter?.terms ? `<p><strong>Terms & Conditions:</strong><br/>${offerLetter.terms}</p>` : ''}
+    
+    <p>We look forward to welcoming you to our team!</p>
+    
+    <div class="signature">
+      <p>Best Regards,</p>
+      <p><strong>HR Department</strong></p>
+      <p>HRMS Portal</p>
+    </div>
+  </div>
+</body>
+</html>`;
+    
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const generateBGVPDF = (emp) => {
+    const fileName = `BGV_${emp.full_name?.replace(/\s+/g, '_')}_${emp.phone || 'NA'}.html`;
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Verification - ${emp.full_name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
+    .logo { font-size: 24px; font-weight: bold; color: #4F46E5; }
+    .title { font-size: 20px; margin-top: 20px; }
+    .status { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin: 20px 0; }
+    .status.approved { background: #dcfce7; color: #166534; }
+    .status.pending { background: #fef3c7; color: #92400e; }
+    .status.rejected { background: #fee2e2; color: #991b1b; }
+    .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .detail-row { display: flex; margin: 10px 0; }
+    .detail-label { font-weight: bold; width: 200px; }
+    .section { margin: 30px 0; }
+    .section-title { font-size: 16px; font-weight: bold; color: #4F46E5; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 15px; }
+    .signature { margin-top: 60px; }
+    .date { color: #666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">HRMS Portal</div>
+    <div class="title">BACKGROUND VERIFICATION CERTIFICATE</div>
+  </div>
+  
+  <p class="date">Date: ${format(new Date(), 'MMMM d, yyyy')}</p>
+  
+  <div class="status ${emp.bg_verification_status || 'pending'}">
+    Status: ${(emp.bg_verification_status || 'pending').toUpperCase()}
+  </div>
+  
+  <div class="section">
+    <div class="section-title">Personal Information</div>
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Full Name:</span>
+        <span>${emp.full_name}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Father's Name:</span>
+        <span>${emp.father_name || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email:</span>
+        <span>${emp.email}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone:</span>
+        <span>${emp.phone || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date of Birth:</span>
+        <span>${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'MMMM d, yyyy') : 'N/A'}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">Identity Documents</div>
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Aadhaar Number:</span>
+        <span>${emp.aadhaar_number || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">PAN Number:</span>
+        <span>${emp.pan_number || 'N/A'}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">Address Information</div>
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Address:</span>
+        <span>${emp.address || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">City:</span>
+        <span>${emp.city || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">State:</span>
+        <span>${emp.state || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Pincode:</span>
+        <span>${emp.pincode || 'N/A'}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">Employment Details</div>
+    <div class="details">
+      <div class="detail-row">
+        <span class="detail-label">Department:</span>
+        <span>${emp.department || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Designation:</span>
+        <span>${emp.designation || 'N/A'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date of Joining:</span>
+        <span>${emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'N/A'}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="signature">
+    <p>Verified By,</p>
+    <p><strong>HR Department</strong></p>
+    <p>HRMS Portal</p>
+  </div>
+</body>
+</html>`;
+    
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadBulkZip = async () => {
+    if (selectedEmployees.length === 0) return;
+    
+    setDownloading(true);
+    
+    // Since we can't use JSZip, we'll download files sequentially
+    for (const empId of selectedEmployees) {
+      const emp = employees.find(e => e.id === empId);
+      if (emp) {
+        generateOfferLetterPDF(emp);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        generateBGVPDF(emp);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    setDownloading(false);
+    setSelectedEmployees([]);
+  };
+
+  const toggleSelectEmployee = (empId) => {
+    setSelectedEmployees(prev => 
+      prev.includes(empId) ? prev.filter(id => id !== empId) : [...prev, empId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEmployees.length === filteredEmployees.length) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(filteredEmployees.map(e => e.id));
+    }
+  };
+
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
                          emp.email?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
+    const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
     const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
-    return matchesSearch && matchesStatus && matchesDept;
+    return matchesSearch && matchesStatus && matchesBgv && matchesDept;
   });
 
   const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
+
+  const bgvStatusIcon = (status) => {
+    switch (status) {
+      case 'approved': return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'rejected': return <XCircle className="w-4 h-4 text-red-600" />;
+      default: return <Clock className="w-4 h-4 text-amber-600" />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -146,10 +424,27 @@ export default function Employees() {
           <h2 className="text-2xl font-bold text-slate-800">Employees</h2>
           <p className="text-slate-500">Manage your organization's employees</p>
         </div>
-        <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Employee
-        </Button>
+        <div className="flex gap-2">
+          {selectedEmployees.length > 0 && (
+            <Button 
+              onClick={downloadBulkZip} 
+              disabled={downloading}
+              variant="outline"
+              className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Download Selected ({selectedEmployees.length})
+            </Button>
+          )}
+          <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Employee
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -166,7 +461,7 @@ export default function Employees() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-40">
+              <SelectTrigger className="w-full md:w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -174,6 +469,17 @@ export default function Employees() {
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={bgvFilter} onValueChange={setBgvFilter}>
+              <SelectTrigger className="w-full md:w-36">
+                <SelectValue placeholder="BGV Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All BGV</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
@@ -198,18 +504,30 @@ export default function Employees() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Employee</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Department</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Role</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Joined</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-slate-500">Actions</th>
+                  <th className="text-left px-4 py-4">
+                    <Checkbox 
+                      checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Employee</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Department</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Status</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">BGV Status</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Joined</th>
+                  <th className="text-right px-4 py-4 text-sm font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredEmployees.map((emp) => (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
+                      <Checkbox 
+                        checked={selectedEmployees.includes(emp.id)}
+                        onCheckedChange={() => toggleSelectEmployee(emp.id)}
+                      />
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         {emp.profile_photo ? (
                           <img src={emp.profile_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
@@ -224,9 +542,8 @@ export default function Employees() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
-                    <td className="px-6 py-4 capitalize text-slate-600">{emp.role?.replace('_', ' ') || 'Employee'}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
+                    <td className="px-4 py-4">
                       <Badge className={
                         emp.status === 'active' ? 'bg-green-100 text-green-700' :
                         emp.status === 'pending' ? 'bg-amber-100 text-amber-700' :
@@ -235,10 +552,22 @@ export default function Employees() {
                         {emp.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        {bgvStatusIcon(emp.bg_verification_status)}
+                        <Badge className={
+                          emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
+                          emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          'bg-amber-100 text-amber-700'
+                        }>
+                          {emp.bg_verification_status || 'pending'}
+                        </Badge>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
                       {emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -252,6 +581,14 @@ export default function Employees() {
                           <DropdownMenuItem onClick={() => handleEdit(emp)}>
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)}>
+                            <FileText className="w-4 h-4 mr-2" /> Download Offer Letter
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)}>
+                            <ShieldCheck className="w-4 h-4 mr-2" /> Download BGV
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
                           </DropdownMenuItem>
@@ -393,15 +730,32 @@ export default function Employees() {
                     {selectedEmployee.full_name?.[0] || 'E'}
                   </div>
                 )}
-                <div>
+                <div className="flex-1">
                   <h3 className="text-xl font-bold text-slate-800">{selectedEmployee.full_name}</h3>
                   <p className="text-slate-500">{selectedEmployee.designation}</p>
-                  <Badge className={
-                    selectedEmployee.status === 'active' ? 'bg-green-100 text-green-700 mt-2' :
-                    'bg-amber-100 text-amber-700 mt-2'
-                  }>
-                    {selectedEmployee.status}
-                  </Badge>
+                  <div className="flex gap-2 mt-2">
+                    <Badge className={
+                      selectedEmployee.status === 'active' ? 'bg-green-100 text-green-700' :
+                      'bg-amber-100 text-amber-700'
+                    }>
+                      {selectedEmployee.status}
+                    </Badge>
+                    <Badge className={
+                      selectedEmployee.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
+                      selectedEmployee.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-amber-100 text-amber-700'
+                    }>
+                      BGV: {selectedEmployee.bg_verification_status || 'pending'}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)}>
+                    <Download className="w-4 h-4 mr-1" /> Offer Letter
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)}>
+                    <Download className="w-4 h-4 mr-1" /> BGV
+                  </Button>
                 </div>
               </div>
 
@@ -434,7 +788,7 @@ export default function Employees() {
                   <p className="text-sm text-slate-500">Address</p>
                   <p className="font-medium">
                     {selectedEmployee.address ? 
-                      `${selectedEmployee.address}, ${selectedEmployee.city || ''}, ${selectedEmployee.state || ''} - ${selectedEmployee.pincode || ''}` 
+                      `${selectedEmployee.address}, ${selectedEmployee.locality || ''}, ${selectedEmployee.city || ''}, ${selectedEmployee.state || ''} - ${selectedEmployee.pincode || ''}` 
                       : '-'}
                   </p>
                 </div>

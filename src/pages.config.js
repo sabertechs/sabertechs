@@ -14,6 +14,7 @@ import Notifications from './pages/Notifications';
 import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import TeamView from './pages/TeamView';
 import OnboardingManagement from './pages/OnboardingManagement';
+import RoleSelection from './pages/RoleSelection';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "DeptHeadDashboard": DeptHeadDashboard,
     "TeamView": TeamView,
     "OnboardingManagement": OnboardingManagement,
+    "RoleSelection": RoleSelection,
 }
 
 export const pagesConfig = {

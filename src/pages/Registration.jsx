@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Upload, CheckCircle, Loader2, User, Briefcase, FileText } from "lucide-react";
+import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Registration() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(null);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -23,23 +23,27 @@ export default function Registration() {
     phone: "",
     date_of_birth: "",
     gender: "",
+    // Current Address
     address: "",
+    locality: "",
     city: "",
     state: "",
     pincode: "",
+    // Documents
     aadhaar_number: "",
     pan_number: "",
     aadhaar_document: "",
     pan_document: "",
     education_certificates: [],
-    department: "",
-    designation: "",
-    date_of_joining: "",
     profile_photo: ""
   });
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user types
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
   };
 
   const handleFileUpload = async (file, field) => {
@@ -53,13 +57,70 @@ export default function Registration() {
     } else {
       setFormData(prev => ({ ...prev, [field]: file_url }));
     }
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: null }));
+    }
     setUploadingDoc(null);
   };
 
+  const validateStep1 = () => {
+    const newErrors = {};
+    if (!formData.full_name.trim()) newErrors.full_name = "Full name is required";
+    if (!formData.father_name.trim()) newErrors.father_name = "Father's name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (!formData.date_of_birth) newErrors.date_of_birth = "Date of birth is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.locality.trim()) newErrors.locality = "Locality is required";
+    if (!formData.city.trim()) newErrors.city = "City is required";
+    if (!formData.state.trim()) newErrors.state = "State is required";
+    if (!formData.pincode.trim()) newErrors.pincode = "Pincode is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors = {};
+    
+    // Aadhaar validation - 12 digits
+    if (!formData.aadhaar_number.trim()) {
+      newErrors.aadhaar_number = "Aadhaar number is required";
+    } else if (!/^\d{12}$/.test(formData.aadhaar_number.replace(/\s/g, ''))) {
+      newErrors.aadhaar_number = "Aadhaar must be exactly 12 digits";
+    }
+    
+    // PAN validation - 10 characters
+    if (!formData.pan_number.trim()) {
+      newErrors.pan_number = "PAN number is required";
+    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan_number.toUpperCase())) {
+      newErrors.pan_number = "PAN must be 10 characters (e.g., ABCDE1234F)";
+    }
+    
+    if (!formData.aadhaar_document) newErrors.aadhaar_document = "Aadhaar document is required";
+    if (!formData.pan_document) newErrors.pan_document = "PAN document is required";
+    if (formData.education_certificates.length === 0) newErrors.education_certificates = "At least one education certificate is required";
+    if (!formData.profile_photo) newErrors.profile_photo = "Profile photo is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (!validateStep2()) return;
+    
     setLoading(true);
     await base44.entities.Employee.create({
       ...formData,
+      pan_number: formData.pan_number.toUpperCase(),
+      aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
       status: "pending",
       role: "employee",
       bg_verification_status: "pending"
@@ -70,9 +131,27 @@ export default function Registration() {
 
   const steps = [
     { num: 1, title: "Personal Info", icon: User },
-    { num: 2, title: "Professional", icon: Briefcase },
-    { num: 3, title: "Documents", icon: FileText }
+    { num: 2, title: "Documents", icon: FileText }
   ];
+
+  const InputWithError = ({ label, field, type = "text", placeholder, ...props }) => (
+    <div className="space-y-2">
+      <Label>{label} *</Label>
+      <Input
+        type={type}
+        value={formData[field]}
+        onChange={(e) => handleChange(field, e.target.value)}
+        placeholder={placeholder}
+        className={errors[field] ? "border-red-500" : ""}
+        {...props}
+      />
+      {errors[field] && (
+        <p className="text-red-500 text-xs flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" /> {errors[field]}
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
@@ -123,51 +202,15 @@ export default function Registration() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <InputWithError label="Full Name" field="full_name" placeholder="Enter your full name" />
+                  <InputWithError label="Father's Name" field="father_name" placeholder="Enter father's name" />
+                  <InputWithError label="Email" field="email" type="email" placeholder="your.email@company.com" />
+                  <InputWithError label="Phone" field="phone" placeholder="+91 XXXXX XXXXX" />
+                  <InputWithError label="Date of Birth" field="date_of_birth" type="date" />
                   <div className="space-y-2">
-                    <Label>Full Name *</Label>
-                    <Input
-                      value={formData.full_name}
-                      onChange={(e) => handleChange("full_name", e.target.value)}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Father's Name *</Label>
-                    <Input
-                      value={formData.father_name}
-                      onChange={(e) => handleChange("father_name", e.target.value)}
-                      placeholder="Enter father's name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email *</Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      placeholder="your.email@company.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone *</Label>
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      placeholder="+91 XXXXX XXXXX"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Date of Birth</Label>
-                    <Input
-                      type="date"
-                      value={formData.date_of_birth}
-                      onChange={(e) => handleChange("date_of_birth", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Gender</Label>
+                    <Label>Gender *</Label>
                     <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -176,95 +219,46 @@ export default function Registration() {
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.gender && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.gender}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Address</Label>
-                  <Textarea
-                    value={formData.address}
-                    onChange={(e) => handleChange("address", e.target.value)}
-                    placeholder="Enter your complete address"
-                    rows={3}
-                  />
-                </div>
+                {/* Current Address Section */}
+                <div className="border-t pt-6 mt-6">
+                  <h4 className="font-semibold text-slate-700 mb-4">Current Address</h4>
+                  
+                  <div className="space-y-2 mb-4">
+                    <Label>Address *</Label>
+                    <Textarea
+                      value={formData.address}
+                      onChange={(e) => handleChange("address", e.target.value)}
+                      placeholder="Enter your complete address"
+                      rows={3}
+                      className={errors.address ? "border-red-500" : ""}
+                    />
+                    {errors.address && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.address}
+                      </p>
+                    )}
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label>City</Label>
-                    <Input
-                      value={formData.city}
-                      onChange={(e) => handleChange("city", e.target.value)}
-                      placeholder="City"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>State</Label>
-                    <Input
-                      value={formData.state}
-                      onChange={(e) => handleChange("state", e.target.value)}
-                      placeholder="State"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Pincode</Label>
-                    <Input
-                      value={formData.pincode}
-                      onChange={(e) => handleChange("pincode", e.target.value)}
-                      placeholder="XXXXXX"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputWithError label="Locality" field="locality" placeholder="Locality / Area" />
+                    <InputWithError label="City" field="city" placeholder="City" />
+                    <InputWithError label="State" field="state" placeholder="State" />
+                    <InputWithError label="Pincode" field="pincode" placeholder="XXXXXX" />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 2: Professional Info */}
+            {/* Step 2: Documents */}
             {step === 2 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold text-slate-800">Professional Information</h3>
-                  <p className="text-slate-500">Enter your work details</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Department</Label>
-                    <Select value={formData.department} onValueChange={(v) => handleChange("department", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="engineering">Engineering</SelectItem>
-                        <SelectItem value="hr">Human Resources</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="operations">Operations</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Designation</Label>
-                    <Input
-                      value={formData.designation}
-                      onChange={(e) => handleChange("designation", e.target.value)}
-                      placeholder="Job title"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Date of Joining</Label>
-                    <Input
-                      type="date"
-                      value={formData.date_of_joining}
-                      onChange={(e) => handleChange("date_of_joining", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Documents */}
-            {step === 3 && (
               <div className="space-y-6">
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-semibold text-slate-800">Document Upload</h3>
@@ -273,27 +267,43 @@ export default function Registration() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Aadhaar Number *</Label>
+                    <Label>Aadhaar Number * (12 digits)</Label>
                     <Input
                       value={formData.aadhaar_number}
-                      onChange={(e) => handleChange("aadhaar_number", e.target.value)}
+                      onChange={(e) => handleChange("aadhaar_number", e.target.value.replace(/\D/g, '').slice(0, 12))}
                       placeholder="XXXX XXXX XXXX"
+                      className={errors.aadhaar_number ? "border-red-500" : ""}
+                      maxLength={12}
                     />
+                    {errors.aadhaar_number && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.aadhaar_number}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>PAN Number *</Label>
+                    <Label>PAN Number * (10 characters)</Label>
                     <Input
                       value={formData.pan_number}
-                      onChange={(e) => handleChange("pan_number", e.target.value)}
+                      onChange={(e) => handleChange("pan_number", e.target.value.toUpperCase().slice(0, 10))}
                       placeholder="ABCDE1234F"
+                      className={errors.pan_number ? "border-red-500" : ""}
+                      maxLength={10}
                     />
+                    {errors.pan_number && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.pan_number}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Aadhaar Document</Label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors">
+                    <Label>Aadhaar Document *</Label>
+                    <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
+                      errors.aadhaar_document ? 'border-red-500' : 'border-slate-200'
+                    }`}>
                       {formData.aadhaar_document ? (
                         <div className="flex items-center justify-center gap-2 text-green-600">
                           <CheckCircle className="w-5 h-5" />
@@ -318,11 +328,18 @@ export default function Registration() {
                         </label>
                       )}
                     </div>
+                    {errors.aadhaar_document && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.aadhaar_document}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label>PAN Document</Label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors">
+                    <Label>PAN Document *</Label>
+                    <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
+                      errors.pan_document ? 'border-red-500' : 'border-slate-200'
+                    }`}>
                       {formData.pan_document ? (
                         <div className="flex items-center justify-center gap-2 text-green-600">
                           <CheckCircle className="w-5 h-5" />
@@ -347,12 +364,19 @@ export default function Registration() {
                         </label>
                       )}
                     </div>
+                    {errors.pan_document && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.pan_document}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Education Certificates</Label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors">
+                  <Label>Education Certificates *</Label>
+                  <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
+                    errors.education_certificates ? 'border-red-500' : 'border-slate-200'
+                  }`}>
                     <label className="cursor-pointer">
                       <input
                         type="file"
@@ -381,11 +405,18 @@ export default function Registration() {
                       </div>
                     )}
                   </div>
+                  {errors.education_certificates && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.education_certificates}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Profile Photo</Label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors">
+                  <Label>Profile Photo *</Label>
+                  <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
+                    errors.profile_photo ? 'border-red-500' : 'border-slate-200'
+                  }`}>
                     {formData.profile_photo ? (
                       <div className="flex flex-col items-center gap-2">
                         <img src={formData.profile_photo} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
@@ -410,6 +441,11 @@ export default function Registration() {
                       </label>
                     )}
                   </div>
+                  {errors.profile_photo && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.profile_photo}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -425,9 +461,9 @@ export default function Registration() {
                 Previous
               </Button>
               
-              {step < 3 ? (
+              {step < 2 ? (
                 <Button
-                  onClick={() => setStep(step + 1)}
+                  onClick={handleNext}
                   className="px-8 bg-indigo-600 hover:bg-indigo-700"
                 >
                   Next
@@ -435,7 +471,7 @@ export default function Registration() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={loading || !formData.full_name || !formData.email}
+                  disabled={loading}
                   className="px-8 bg-indigo-600 hover:bg-indigo-700"
                 >
                   {loading ? (
