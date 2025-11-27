@@ -142,79 +142,76 @@ export default function Employees() {
   const generateOfferLetterPDF = (emp) => {
     const offerLetter = getOfferLetter(emp.email);
     const fileName = `OfferLetter_${emp.full_name?.replace(/\s+/g, '_')}_${emp.phone || 'NA'}.html`;
+    const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
+    const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     
     const content = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Offer Letter - ${emp.full_name}</title>
+  <meta charset="utf-8">
+  <title>Appointment Letter - ${emp.full_name}</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #4F46E5; }
-    .title { font-size: 20px; margin-top: 20px; }
-    .content { line-height: 1.8; }
-    .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-    .detail-row { display: flex; margin: 10px 0; }
-    .detail-label { font-weight: bold; width: 200px; }
-    .signature { margin-top: 60px; }
-    .date { color: #666; margin-top: 20px; }
+    @page { margin: 0; }
+    body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; font-size: 12pt; line-height: 1.5; }
+    .header { width: 100%; text-align: center; }
+    .header img { width: 100%; max-height: 120px; object-fit: contain; }
+    .footer { width: 100%; position: fixed; bottom: 0; text-align: center; }
+    .footer img { width: 100%; max-height: 80px; object-fit: contain; }
+    .content { padding: 20px 60px; min-height: calc(100vh - 250px); }
+    .date { text-align: right; margin-bottom: 20px; }
+    .subject { text-align: center; font-weight: bold; text-decoration: underline; margin: 20px 0; }
+    .salutation { margin: 20px 0; }
+    p { text-align: justify; margin: 10px 0; }
+    .terms { margin: 20px 0; }
+    .terms ol { margin-left: 20px; }
+    .terms li { margin: 8px 0; text-align: justify; }
+    .signature { margin-top: 40px; }
+    .employee-name { font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="logo">HRMS Portal</div>
-    <div class="title">OFFER LETTER</div>
+    <img src="${headerImg}" alt="Company Header" />
   </div>
   
   <div class="content">
     <p class="date">Date: ${format(new Date(), 'MMMM d, yyyy')}</p>
     
-    <p>Dear <strong>${emp.full_name}</strong>,</p>
+    <p class="subject">APPOINTMENT LETTER</p>
     
-    <p>We are pleased to offer you the position of <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> 
-    at our organization. We believe your skills and experience will be a valuable asset to our team.</p>
+    <p class="salutation">Dear <span class="employee-name">${emp.full_name}</span>,</p>
     
-    <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Full Name:</span>
-        <span>${emp.full_name}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Email:</span>
-        <span>${emp.email}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Phone:</span>
-        <span>${emp.phone || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Department:</span>
-        <span>${emp.department || offerLetter?.department || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Designation:</span>
-        <span>${emp.designation || offerLetter?.designation || 'N/A'}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Salary:</span>
-        <span>₹${(emp.salary || offerLetter?.salary || 0).toLocaleString()} per month</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Joining Date:</span>
-        <span>${emp.date_of_joining || offerLetter?.joining_date ? format(new Date(emp.date_of_joining || offerLetter?.joining_date), 'MMMM d, yyyy') : 'To be confirmed'}</span>
-      </div>
+    <p>With reference to your application and subsequent interview, we are pleased to appoint you as <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> in our organization with effect from <strong>${emp.date_of_joining ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'the date of joining'}</strong>.</p>
+    
+    <p>Your appointment is subject to the following terms and conditions:</p>
+    
+    <div class="terms">
+      <ol>
+        <li><strong>Designation:</strong> You will be designated as ${emp.designation || offerLetter?.designation || 'Employee'} in the ${emp.department || offerLetter?.department || 'Company'}.</li>
+        <li><strong>Salary:</strong> Your gross salary will be ₹${(emp.salary || offerLetter?.salary || 0).toLocaleString()} per month. The salary structure and other benefits will be as per company policy.</li>
+        <li><strong>Probation Period:</strong> You will be on probation for a period of six months from the date of joining. During this period, either party can terminate the employment by giving 15 days' notice or salary in lieu thereof.</li>
+        <li><strong>Working Hours:</strong> You will be required to work as per the company's standard working hours and follow all rules and regulations of the company.</li>
+        <li><strong>Confidentiality:</strong> You shall maintain strict confidentiality regarding all company matters, trade secrets, and proprietary information both during and after your employment.</li>
+        <li><strong>Notice Period:</strong> After confirmation, either party may terminate the employment by giving one month's notice or salary in lieu thereof.</li>
+        <li><strong>Other Terms:</strong> You will be governed by all other terms and conditions as applicable to employees of your grade as per company policy from time to time.</li>
+      </ol>
     </div>
     
-    ${offerLetter?.terms ? `<p><strong>Terms & Conditions:</strong><br/>${offerLetter.terms}</p>` : ''}
+    <p>We are confident that you will contribute positively to the growth of the organization. Please sign the duplicate copy of this letter as a token of your acceptance of the above terms and conditions.</p>
     
-    <p>We look forward to welcoming you to our team!</p>
+    <p>We welcome you to our organization and wish you a successful career with us.</p>
     
     <div class="signature">
-      <p>Best Regards,</p>
-      <p><strong>HR Department</strong></p>
-      <p>HRMS Portal</p>
+      <p>Yours sincerely,</p>
+      <p><strong>For Saber Technologies Pvt. Ltd.</strong></p>
+      <br/><br/>
+      <p>Authorized Signatory</p>
     </div>
+  </div>
+  
+  <div class="footer">
+    <img src="${footerImg}" alt="Company Footer" />
   </div>
 </body>
 </html>`;
