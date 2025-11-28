@@ -62,6 +62,269 @@ Deno.serve(async (req) => {
     }
 });
 
+function generateOfferLetterPDF(emp, offerLetter) {
+    const doc = new jsPDF();
+    const currentDate = format(new Date(), 'MMMM d, yyyy');
+    const joiningDate = emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) 
+        ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') 
+        : 'the date of joining';
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SABER TECHNOLOGIES PVT. LTD.', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.text('APPOINTMENT LETTER', 105, 35, { align: 'center' });
+    
+    // Date
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${currentDate}`, 180, 50, { align: 'right' });
+    
+    // Salutation
+    doc.text(`Dear ${emp.full_name},`, 20, 65);
+    
+    // Body
+    const bodyText = `With reference to your application and subsequent interview, we are pleased to appoint you as ${emp.designation || offerLetter?.designation || 'Employee'} in our organization with effect from ${joiningDate}.`;
+    const splitBody = doc.splitTextToSize(bodyText, 170);
+    doc.text(splitBody, 20, 80);
+    
+    doc.text('Your appointment is subject to the following terms and conditions:', 20, 100);
+    
+    // Terms
+    const terms = [
+        `1. Designation: You will be designated as ${emp.designation || offerLetter?.designation || 'Employee'} in the ${emp.department || offerLetter?.department || 'Company'}.`,
+        `2. Salary: Your gross salary will be Rs. ${(emp.salary || offerLetter?.salary || 0).toLocaleString()} per month.`,
+        '3. Probation Period: You will be on probation for six months.',
+        '4. Working Hours: As per company standard working hours.',
+        '5. Confidentiality: Maintain strict confidentiality regarding company matters.',
+        '6. Notice Period: One month after confirmation.',
+        '7. Other Terms: As per company policy.'
+    ];
+    
+    let yPos = 115;
+    terms.forEach(term => {
+        const splitTerm = doc.splitTextToSize(term, 170);
+        doc.text(splitTerm, 20, yPos);
+        yPos += splitTerm.length * 7 + 3;
+    });
+    
+    // Closing
+    doc.text('We welcome you to our organization and wish you a successful career with us.', 20, yPos + 10);
+    
+    doc.text('Yours sincerely,', 20, yPos + 30);
+    doc.setFont('helvetica', 'bold');
+    doc.text('For Saber Technologies Pvt. Ltd.', 20, yPos + 40);
+    doc.text('Authorized Signatory', 20, yPos + 55);
+    
+    // Employee signature
+    doc.setFont('helvetica', 'italic');
+    doc.text(emp.full_name, 180, 280, { align: 'right' });
+    
+    return doc.output('arraybuffer');
+}
+
+function generateBGVPDF(emp) {
+    const doc = new jsPDF();
+    const verificationDate = format(new Date(), 'dd-MM-yyyy');
+    const verificationTime = format(new Date(), 'hh:mm a');
+    
+    const calculateAge = (dob) => {
+        if (!dob) return 'N/A';
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        return age;
+    };
+    
+    const age = calculateAge(emp.date_of_birth);
+    const fullAddress = [emp.address, emp.locality, emp.city, emp.state, emp.pincode].filter(Boolean).join(', ') || 'N/A';
+    const bgvStatus = emp.bg_verification_status === 'approved' ? 'Success' : emp.bg_verification_status === 'rejected' ? 'Failed' : 'Pending';
+    
+    // Page 1 - Summary
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SABER TECHNOLOGIES PVT. LTD.', 105, 20, { align: 'center' });
+    
+    doc.setFillColor(245, 124, 0);
+    doc.rect(0, 30, 210, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.text('VERIFICATIONS SUMMARY', 105, 38, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    
+    // Employee details
+    const details = [
+        ['Name:', emp.full_name],
+        ['Staff ID:', emp.employee_id || emp.id || 'N/A'],
+        ['Mobile:', emp.phone || 'N/A'],
+        ['Date of Birth:', emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'],
+        ["Father's Name:", emp.father_name || 'N/A'],
+        ['Address:', fullAddress.substring(0, 60) + (fullAddress.length > 60 ? '...' : '')]
+    ];
+    
+    let yPos = 55;
+    details.forEach(([label, value]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(label, 20, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.text(value, 60, yPos);
+        yPos += 10;
+    });
+    
+    // Status
+    doc.setFont('helvetica', 'bold');
+    doc.text('Overall Status:', 20, yPos + 10);
+    doc.setTextColor(bgvStatus === 'Success' ? 76 : bgvStatus === 'Failed' ? 229 : 255, bgvStatus === 'Success' ? 175 : bgvStatus === 'Failed' ? 57 : 160, bgvStatus === 'Success' ? 80 : bgvStatus === 'Failed' ? 53 : 0);
+    doc.text(bgvStatus, 60, yPos + 10);
+    doc.setTextColor(0, 0, 0);
+    
+    // Verification table
+    doc.setFont('helvetica', 'bold');
+    doc.text('Verification', 20, yPos + 30);
+    doc.text('Date', 100, yPos + 30);
+    doc.text('Status', 150, yPos + 30);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text('Aadhaar Verification', 20, yPos + 40);
+    doc.text(verificationDate, 100, yPos + 40);
+    doc.text(bgvStatus, 150, yPos + 40);
+    
+    doc.text('PAN Card Verification', 20, yPos + 50);
+    doc.text(verificationDate, 100, yPos + 50);
+    doc.text(bgvStatus, 150, yPos + 50);
+    
+    // Employee signature
+    doc.setFont('helvetica', 'italic');
+    doc.text(emp.full_name, 180, 280, { align: 'right' });
+    
+    // Page 2 - Aadhaar
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SABER TECHNOLOGIES PVT. LTD.', 105, 20, { align: 'center' });
+    
+    doc.setFillColor(139, 195, 74);
+    doc.rect(0, 30, 210, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.text('AADHAAR VERIFICATION REPORT', 105, 38, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('GIVEN INFORMATION', 20, 55);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Aadhaar Number: ${emp.aadhaar_number || 'N/A'}`, 20, 65);
+    doc.text(`Location: ${emp.state || 'N/A'}`, 20, 75);
+    doc.text(`Gender: ${emp.gender ? emp.gender.charAt(0).toUpperCase() + emp.gender.slice(1) : 'N/A'}`, 20, 85);
+    doc.text(`Age: ${age}`, 20, 95);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('RESULT', 20, 115);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Status: ${bgvStatus}`, 20, 125);
+    doc.text(`Date of Verification: ${verificationDate}`, 20, 135);
+    doc.text(`Time of Verification: ${verificationTime}`, 20, 145);
+    
+    doc.setFont('helvetica', 'italic');
+    doc.text(emp.full_name, 180, 280, { align: 'right' });
+    
+    // Page 3 - PAN
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SABER TECHNOLOGIES PVT. LTD.', 105, 20, { align: 'center' });
+    
+    doc.setFillColor(139, 195, 74);
+    doc.rect(0, 30, 210, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.text('PAN CARD VERIFICATION REPORT', 105, 38, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('GIVEN INFORMATION', 20, 55);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name on PAN Card: ${emp.full_name}`, 20, 65);
+    doc.text(`PAN Number: ${emp.pan_number || 'N/A'}`, 20, 75);
+    doc.text(`Date of Birth: ${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}`, 20, 85);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('RESULT', 20, 105);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Status: ${bgvStatus}`, 20, 115);
+    doc.text(`Date of Verification: ${verificationDate}`, 20, 125);
+    doc.text(`Time of Verification: ${verificationTime}`, 20, 135);
+    
+    doc.setFont('helvetica', 'italic');
+    doc.text(emp.full_name, 180, 280, { align: 'right' });
+    
+    return doc.output('arraybuffer');
+}
+
+function generatePolicyPDF(emp) {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SABER TECHNOLOGIES PVT. LTD.', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.text('POLICY AGREEMENT', 105, 35, { align: 'center' });
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Employee: ${emp.full_name}`, 20, 55);
+    doc.text(`Date: ${format(new Date(), 'dd-MM-yyyy')}`, 20, 65);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Policy for Proctor/Assessors', 20, 85);
+    
+    doc.setFont('helvetica', 'normal');
+    const policies = [
+        '1. All proctors must maintain strict confidentiality of exam content.',
+        '2. Proctors shall not engage in any form of malpractice.',
+        '3. All technical equipment must be handled with care.',
+        '4. Proctors must be present at the designated location on time.',
+        '5. Any suspicious activity must be reported immediately.',
+        '6. Proctors must follow the dress code as specified.',
+        '7. Mobile phones are prohibited during proctoring sessions.',
+        '8. All assessment data must be handled securely.',
+        '9. Proctors must not leave the examination hall without permission.',
+        '10. Any violation of these policies may result in termination.'
+    ];
+    
+    let yPos = 100;
+    policies.forEach(policy => {
+        const splitPolicy = doc.splitTextToSize(policy, 170);
+        doc.text(splitPolicy, 20, yPos);
+        yPos += splitPolicy.length * 7 + 5;
+    });
+    
+    doc.text('I acknowledge that I have read and understood the above policies.', 20, yPos + 20);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Employee Signature:', 20, yPos + 45);
+    doc.setFont('helvetica', 'italic');
+    doc.text(emp.full_name, 70, yPos + 45);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${format(new Date(), 'dd-MM-yyyy')}`, 20, yPos + 55);
+    
+    return doc.output('arraybuffer');
+}
+
 function generateOfferLetterHTML(emp, offerLetter) {
     const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
