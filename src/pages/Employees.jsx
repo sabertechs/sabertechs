@@ -709,67 +709,33 @@ export default function Employees() {
 
 
 
-  const downloadBothDocuments = async (emp) => {
-    const empKey = `${emp.id}-all`;
+  const downloadAllDocsAsZip = async (emp) => {
+    const empKey = `${emp.id}-zip`;
     setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
     
     try {
-      // Generate combined HTML with both documents for printing as PDF
+      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id });
+      
+      // Create blob from response data
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
       const folderName = emp.email?.replace('@', '_at_').replace(/\./g, '_');
-      const offerContent = generateOfferLetterHTML(emp, false);
-      const bgvContent = generateBGVHTML(emp, false);
+      a.download = `${folderName}_documents.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
       
-      const combinedContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Documents - ${emp.full_name}</title>
-  <style>
-    @media print {
-      .page-break { page-break-before: always; }
-      .no-print { display: none; }
-    }
-    body { margin: 0; padding: 0; }
-    .document-section { margin-bottom: 20px; }
-    .instructions { padding: 20px; background: #f5f5f5; margin: 20px; border-radius: 8px; font-family: Arial, sans-serif; }
-    .instructions h2 { color: #333; }
-    .instructions p { color: #666; }
-    .instructions ol { color: #333; }
-  </style>
-</head>
-<body>
-  <div class="instructions no-print">
-    <h2>📁 Documents for: ${emp.full_name} (${emp.email})</h2>
-    <p>To save as PDF files, create a folder named "<strong>${folderName}</strong>" and save the documents inside:</p>
-    <ol>
-      <li>Press <strong>Ctrl+P</strong> (or Cmd+P on Mac)</li>
-      <li>Select <strong>"Save as PDF"</strong> as the destination</li>
-      <li>Save as: <strong>Offer_Letter.pdf</strong> and <strong>BGV_Report.pdf</strong></li>
-    </ol>
-    <p>This document contains: <strong>Offer Letter</strong> and <strong>BGV Report</strong></p>
-    <hr style="margin-top: 20px;">
-  </div>
-  
-  <!-- Offer Letter -->
-  <div class="document-section">
-    ${offerContent.replace('<!DOCTYPE html>', '').replace('<html>', '').replace('</html>', '').replace(/<head>[\s\S]*?<\/head>/, '')}
-  </div>
-  
-  <div class="page-break"></div>
-  
-  <!-- BGV Report -->
-  <div class="document-section">
-    ${bgvContent.replace('<!DOCTYPE html>', '').replace('<html>', '').replace('</html>', '').replace(/<head>[\s\S]*?<\/head>/, '')}
-  </div>
-</body>
-</html>`;
-      
-      const newWindow = window.open('', '_blank');
-      newWindow.document.write(combinedContent);
-      newWindow.document.close();
-      
-      toast.success('Documents ready - save as PDF in folder: ' + folderName);
+      toast.success('ZIP file downloaded successfully');
+    } catch (error) {
+      console.error('ZIP download error:', error);
+      toast.error('Failed to generate ZIP. Opening documents individually...');
+      // Fallback to individual documents
+      generateOfferLetterHTML(emp, true);
+      setTimeout(() => generateBGVHTML(emp, true), 500);
+      setTimeout(() => generatePolicyAgreement(emp), 1000);
     } finally {
       setGeneratingPdf(prev => ({ ...prev, [empKey]: false }));
     }
