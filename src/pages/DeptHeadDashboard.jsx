@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
-import { Users, Receipt, CheckCircle, Clock, ChevronRight } from "lucide-react";
+import { 
+  Users, Receipt, CheckCircle, Clock, ChevronRight, 
+  UserPlus, Mail, FileText, ShieldCheck, Shield, Settings,
+  Calendar, TrendingUp, AlertCircle
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +39,34 @@ export default function DeptHeadDashboard() {
     enabled: !!employee?.department,
   });
 
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ['allEmployees'],
+    queryFn: () => base44.entities.Employee.list(),
+  });
+
+  const { data: pendingOnboarding = [] } = useQuery({
+    queryKey: ['pendingOnboarding'],
+    queryFn: () => base44.entities.Onboarding.filter({ status: 'in_progress' }),
+  });
+
+  const { data: pendingBGV = [] } = useQuery({
+    queryKey: ['pendingBGV'],
+    queryFn: () => base44.entities.Employee.filter({ bg_verification_status: 'pending' }),
+  });
+
+  const quickActions = [
+    { name: "Employees", icon: Users, page: "Employees", color: "bg-blue-100 text-blue-600", count: allEmployees.length },
+    { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload", color: "bg-indigo-100 text-indigo-600" },
+    { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement", color: "bg-purple-100 text-purple-600", count: pendingOnboarding.length },
+    { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement", color: "bg-pink-100 text-pink-600" },
+    { name: "Attendance", icon: Clock, page: "AttendanceManagement", color: "bg-cyan-100 text-cyan-600" },
+    { name: "Payslips", icon: FileText, page: "PayslipManagement", color: "bg-emerald-100 text-emerald-600" },
+    { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification", color: "bg-amber-100 text-amber-600", count: pendingBGV.length },
+    { name: "Expenses", icon: Receipt, page: "ExpenseApproval", color: "bg-orange-100 text-orange-600", count: pendingExpenses.length },
+    { name: "Access Control", icon: Shield, page: "AccessControl", color: "bg-red-100 text-red-600" },
+    { name: "Settings", icon: Settings, page: "Settings", color: "bg-slate-100 text-slate-600" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -52,7 +84,21 @@ export default function DeptHeadDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Users className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{allEmployees.length}</p>
+                <p className="text-sm text-slate-500">Total Employees</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -61,7 +107,7 @@ export default function DeptHeadDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-800">{teamMembers.length}</p>
-                <p className="text-sm text-slate-500">Team Members</p>
+                <p className="text-sm text-slate-500">My Team</p>
               </div>
             </div>
           </CardContent>
@@ -71,11 +117,11 @@ export default function DeptHeadDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-amber-100 rounded-xl">
-                <Clock className="w-5 h-5 text-amber-600" />
+                <AlertCircle className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800">{pendingExpenses.length}</p>
-                <p className="text-sm text-slate-500">Pending Approvals</p>
+                <p className="text-2xl font-bold text-slate-800">{pendingBGV.length}</p>
+                <p className="text-sm text-slate-500">Pending BGV</p>
               </div>
             </div>
           </CardContent>
@@ -88,15 +134,39 @@ export default function DeptHeadDashboard() {
                 <Receipt className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800">
-                  ₹{pendingExpenses.reduce((sum, e) => sum + (e.amount || 0), 0).toLocaleString()}
-                </p>
-                <p className="text-sm text-slate-500">Pending Amount</p>
+                <p className="text-2xl font-bold text-slate-800">{pendingExpenses.length}</p>
+                <p className="text-sm text-slate-500">Pending Expenses</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions Grid */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {quickActions.map((action) => (
+              <Link key={action.page} to={createPageUrl(action.page)}>
+                <div className="relative p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-center group">
+                  <div className={`w-12 h-12 mx-auto rounded-xl ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                    <action.icon className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">{action.name}</p>
+                  {action.count > 0 && (
+                    <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs">
+                      {action.count}
+                    </Badge>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Team Members */}
