@@ -44,13 +44,14 @@ Deno.serve(async (req) => {
         folder.file('BGV_Report.html', bgvReportHTML);
         folder.file('Policy_Agreement.html', policyHTML);
 
-        const zipBlob = await zip.generateAsync({ type: 'arraybuffer' });
+        const zipUint8Array = await zip.generateAsync({ type: 'uint8array' });
         
-        return new Response(zipBlob, {
+        return new Response(zipUint8Array, {
             status: 200,
             headers: {
                 'Content-Type': 'application/zip',
-                'Content-Disposition': `attachment; filename="${folderName}_documents.zip"`
+                'Content-Disposition': `attachment; filename="${folderName}_documents.zip"`,
+                'Content-Length': zipUint8Array.length.toString()
             }
         });
     } catch (error) {
