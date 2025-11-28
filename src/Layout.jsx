@@ -258,7 +258,7 @@ export default function Layout({ children, currentPageName }) {
           {/* Footer */}
           <div className="p-2 lg:group-hover:p-4 border-t border-slate-100 transition-all duration-300">
             <button
-              onClick={() => base44.auth.logout()}
+              onClick={() => base44.auth.logout(window.location.origin)}
               className="flex items-center gap-3 px-3 lg:group-hover:px-4 py-3 w-full rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
               title="Logout"
             >
@@ -295,7 +295,7 @@ export default function Layout({ children, currentPageName }) {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => base44.auth.logout()}>
+                <DropdownMenuItem onClick={() => base44.auth.logout(window.location.origin)}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
