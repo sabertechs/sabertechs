@@ -211,25 +211,6 @@ export default function Registration() {
     { num: 2, title: "Documents", icon: FileText }
   ];
 
-  const InputWithError = ({ label, field, type = "text", placeholder, ...props }) => (
-    <div className="space-y-2">
-      <Label>{label} *</Label>
-      <Input
-        type={type}
-        value={formData[field]}
-        onChange={(e) => handleChange(field, e.target.value)}
-        placeholder={placeholder}
-        className={errors[field] ? "border-red-500" : ""}
-        {...props}
-      />
-      {errors[field] && (
-        <p className="text-red-500 text-xs flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" /> {errors[field]}
-        </p>
-      )}
-    </div>
-  );
-
   if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
