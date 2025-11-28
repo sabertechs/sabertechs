@@ -286,7 +286,7 @@ export default function Employees() {
       right: 60px;
       text-align: right;
       font-family: 'Dancing Script', cursive;
-      font-size: 15pt;
+      font-size: 17pt;
       color: #1a365d;
     }
   </style>
@@ -402,7 +402,7 @@ export default function Employees() {
       right: 30px;
       text-align: right;
       font-family: 'Dancing Script', cursive;
-      font-size: 15pt;
+      font-size: 17pt;
       color: #1a365d;
     }
     .logo-header { text-align: center; padding: 15px 0; }
@@ -672,7 +672,7 @@ export default function Employees() {
     }
     .signature-name {
       font-family: 'Dancing Script', cursive;
-      font-size: 20px;
+      font-size: 17pt;
       color: #1a365d;
       background: rgba(255,255,255,0.95);
       padding: 8px 20px;
