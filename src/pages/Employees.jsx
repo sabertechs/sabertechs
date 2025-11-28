@@ -579,133 +579,7 @@ export default function Employees() {
         generatePDFWithMonkey(emp, 'bgv');
       };
 
-      const generatePolicyAgreement = (emp) => {
-            const policyPdfUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf';
 
-            const content = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Policy Agreement - ${emp.full_name}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
-
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; background: #f5f5f5; }
-
-          .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-
-          .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-
-          .header h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 10px;
-          }
-
-          .header p {
-            color: #666;
-          }
-
-          .pdf-container {
-            position: relative;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-
-          .pdf-frame {
-            width: 100%;
-            height: 85vh;
-            border: none;
-          }
-
-          .signature-overlay {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Dancing Script', cursive;
-            font-size: 20px;
-            color: #1a365d;
-            background: rgba(255,255,255,0.95);
-            padding: 10px 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-          }
-
-          .print-btn {
-            background: #4f46e5;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-          }
-
-          .print-btn:hover {
-            background: #4338ca;
-          }
-
-          @media print {
-            body { background: white; }
-            .header, .print-btn { display: none; }
-            .pdf-container { box-shadow: none; }
-            .signature-overlay {
-              position: fixed;
-              bottom: 30px;
-              background: transparent;
-              box-shadow: none;
-            }
-            @page { margin: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>📋 Policy Agreement</h1>
-            <p><strong>Employee:</strong> ${emp.full_name}</p>
-            <p style="margin-top: 10px; color: #888; font-size: 14px;">
-              The employee signature will appear at the bottom when viewing/printing. 
-              Use your browser's print function (Ctrl+P) to save as PDF with the signature.
-            </p>
-            <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-          </div>
-
-          <div class="pdf-container">
-            <iframe 
-              class="pdf-frame" 
-              src="${policyPdfUrl}#toolbar=1&navpanes=0"
-            ></iframe>
-          </div>
-        </div>
-
-        <div class="signature-overlay">
-          ${emp.full_name}
-        </div>
-      </body>
-      </html>`;
-
-            const newWindow = window.open('', '_blank');
-            newWindow.document.write(content);
-            newWindow.document.close();
-          };
 
   const downloadBothDocuments = async (emp) => {
     const empKey = `${emp.id}-all`;
@@ -1210,10 +1084,7 @@ export default function Employees() {
                                                             {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
                                                             Download All Documents
                                                           </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => generatePolicyAgreement(emp)}>
-                                                                                            <FileText className="w-4 h-4 mr-2" />
-                                                                                            Policy Agreement
-                                                                                          </DropdownMenuItem>
+
                                                           <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
                                                             {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
                                                             Download Offer Letter
@@ -1427,10 +1298,7 @@ export default function Employees() {
                     {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
                     All Docs
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
-                                            <Download className="w-4 h-4 mr-1" />
-                                            Policy
-                                          </Button>
+
                   <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
                     {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                     Offer Letter
