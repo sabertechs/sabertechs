@@ -23,7 +23,8 @@ import {
   UserX,
   FolderDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Archive
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
