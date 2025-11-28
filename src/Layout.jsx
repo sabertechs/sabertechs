@@ -87,9 +87,16 @@ export default function Layout({ children, currentPageName }) {
       );
     } else if (userRole === 'department_head') {
       items.push(
-        { name: "Team", icon: Users, page: "TeamView" },
+        { name: "Employees", icon: Users, page: "Employees" },
+        { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
+        { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
+        { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
+        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
+        { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Access Control", icon: Shield, page: "AccessControl" },
+        { name: "Settings", icon: Settings, page: "Settings" },
       );
     }
     
