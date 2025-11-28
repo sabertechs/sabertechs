@@ -317,10 +317,10 @@ export default function Registration() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputWithError label="Locality" field="locality" placeholder="Locality / Area" />
-                    <InputWithError label="City" field="city" placeholder="City" />
-                    <InputWithError label="State" field="state" placeholder="State" />
-                    <InputWithError label="Pincode" field="pincode" placeholder="XXXXXX" />
+                    <InputWithError label="Locality" field="locality" value={formData.locality} onChange={(e) => handleChange("locality", e.target.value)} error={errors.locality} placeholder="Locality / Area" />
+                    <InputWithError label="City" field="city" value={formData.city} onChange={(e) => handleChange("city", e.target.value)} error={errors.city} placeholder="City" />
+                    <InputWithError label="State" field="state" value={formData.state} onChange={(e) => handleChange("state", e.target.value)} error={errors.state} placeholder="State" />
+                    <InputWithError label="Pincode" field="pincode" value={formData.pincode} onChange={(e) => handleChange("pincode", e.target.value)} error={errors.pincode} placeholder="XXXXXX" />
                   </div>
                 </div>
               </div>
