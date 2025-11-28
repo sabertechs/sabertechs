@@ -32,10 +32,7 @@ Deno.serve(async (req) => {
 
         const folderName = emp.email?.replace('@', '_at_').replace(/\./g, '_');
         
-        // Generate HTML content for each document
-        const offerLetterHTML = generateOfferLetterHTML(emp, offerLetter);
-        const bgvReportHTML = generateBGVHTML(emp);
-        const policyHTML = generatePolicyHTML(emp);
+
 
         // Generate PDFs
         const offerPdf = generateOfferLetterPDF(emp, offerLetter);
