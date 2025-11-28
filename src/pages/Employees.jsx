@@ -1078,18 +1078,22 @@ export default function Employees() {
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)} disabled={generatingPdf[`${emp.id}-all`]}>
-                            {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
-                            Download All Documents
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
-                            {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                            Download Offer Letter
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)} disabled={generatingPdf[`${emp.id}-bgv`]}>
-                            {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                            Download BGV Report
-                          </DropdownMenuItem>
+                                                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)} disabled={generatingPdf[`${emp.id}-all`]}>
+                                                            {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
+                                                            Download All Documents
+                                                          </DropdownMenuItem>
+                                                          <DropdownMenuItem onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/Policy.pdf', '_blank')}>
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Policy Agreement
+                                                          </DropdownMenuItem>
+                                                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
+                                                            {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                                            Download Offer Letter
+                                                          </DropdownMenuItem>
+                                                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)} disabled={generatingPdf[`${emp.id}-bgv`]}>
+                                                            {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                                                            Download BGV Report
+                                                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -1294,6 +1298,10 @@ export default function Employees() {
                   <Button size="sm" variant="outline" onClick={() => downloadBothDocuments(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-all`]}>
                     {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
                     All Docs
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/Policy.pdf', '_blank')}>
+                    <Download className="w-4 h-4 mr-1" />
+                    Policy
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
                     {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
