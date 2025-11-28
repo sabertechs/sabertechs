@@ -612,7 +612,12 @@ export default function Employees() {
 
   const generatePolicyAgreement = (emp) => {
     const policyImages = [
-      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/26ed80578_Screenshot2025-11-28at14140PM.png'
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/26ed80578_Screenshot2025-11-28at14140PM.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/1d8f2d32e_2.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/be4a967d7_3.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9b90d22fd_4.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/da075ad19_5.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/a6348a5ee_6.png'
     ];
     
     const content = `
