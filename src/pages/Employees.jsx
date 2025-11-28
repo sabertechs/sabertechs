@@ -1208,8 +1208,12 @@ export default function Employees() {
                                                             <FileText className="w-4 h-4 mr-2" />
                                                             Policy Agreement
                                                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
+                                                          <DropdownMenuItem onClick={() => downloadAllDocsAsZip(emp)} disabled={generatingPdf[`${emp.id}-zip`]}>
+                                                            {generatingPdf[`${emp.id}-zip`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Archive className="w-4 h-4 mr-2" />}
+                                                            Download All (ZIP)
+                                                          </DropdownMenuItem>
+                                                          <DropdownMenuSeparator />
+                                                          <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
