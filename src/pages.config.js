@@ -17,6 +17,7 @@ import OnboardingManagement from './pages/OnboardingManagement';
 import EmployeeUpload from './pages/EmployeeUpload';
 import AccessControl from './pages/AccessControl';
 import AuthRedirect from './pages/AuthRedirect';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "EmployeeUpload": EmployeeUpload,
     "AccessControl": AccessControl,
     "AuthRedirect": AuthRedirect,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {

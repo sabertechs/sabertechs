@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Building2,
   UserPlus,
-  Shield
+  Shield,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,6 +83,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
+        { name: "Settings", icon: Settings, page: "Settings" },
       );
     } else if (userRole === 'department_head') {
       items.push(
