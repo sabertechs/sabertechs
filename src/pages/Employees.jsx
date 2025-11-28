@@ -779,17 +779,25 @@ export default function Employees() {
     
     setDownloading(true);
     
-    // Since we can't use JSZip, we'll download files sequentially
+    // Download all 3 documents for each selected employee
     for (const empId of selectedEmployees) {
       const emp = employees.find(e => e.id === empId);
       if (emp) {
-        generateOfferLetterPDF(emp);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        generateBGVPDF(emp);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Generate Offer Letter
+        generateOfferLetterHTML(emp, true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Generate BGV Report
+        generateBGVHTML(emp, true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Generate Policy Agreement
+        generatePolicyAgreement(emp);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
     
+    toast.success(`Downloaded documents for ${selectedEmployees.length} employee(s)`);
     setDownloading(false);
     setSelectedEmployees([]);
   };
