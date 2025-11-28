@@ -37,13 +37,18 @@ Deno.serve(async (req) => {
         const bgvReportHTML = generateBGVHTML(emp);
         const policyHTML = generatePolicyHTML(emp);
 
+        // Generate PDFs
+        const offerPdf = generateOfferLetterPDF(emp, offerLetter);
+        const bgvPdf = generateBGVPDF(emp);
+        const policyPdf = generatePolicyPDF(emp);
+
         // Create ZIP file
         const zip = new JSZip();
         const folder = zip.folder(folderName);
         
-        folder.file('Offer_Letter.html', offerLetterHTML);
-        folder.file('BGV_Report.html', bgvReportHTML);
-        folder.file('Policy_Agreement.html', policyHTML);
+        folder.file('Offer_Letter.pdf', offerPdf, { binary: true });
+        folder.file('BGV_Report.pdf', bgvPdf, { binary: true });
+        folder.file('Policy_Agreement.pdf', policyPdf, { binary: true });
 
         const zipBase64 = await zip.generateAsync({ type: 'base64' });
         
