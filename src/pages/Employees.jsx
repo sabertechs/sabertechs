@@ -262,6 +262,7 @@ export default function Employees() {
 <head>
   <meta charset="utf-8">
   <title>Appointment Letter - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
   <style>
     @page { margin: 0; }
     body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; font-size: 12pt; line-height: 1.5; }
@@ -279,6 +280,15 @@ export default function Employees() {
     .terms li { margin: 8px 0; text-align: justify; }
     .signature { margin-top: 40px; }
     .employee-name { font-weight: bold; }
+    .digital-signature {
+      position: fixed;
+      bottom: 100px;
+      right: 60px;
+      text-align: right;
+      font-family: 'Dancing Script', cursive;
+      font-size: 15pt;
+      color: #1a365d;
+    }
   </style>
 </head>
 <body>
@@ -323,6 +333,10 @@ export default function Employees() {
   
   <div class="footer">
     <img src="${footerImg}" alt="Company Footer" />
+  </div>
+  
+  <div class="digital-signature">
+    ${emp.full_name}
   </div>
 </body>
 </html>`;
@@ -375,12 +389,22 @@ export default function Employees() {
 <head>
   <meta charset="utf-8">
   <title>Background Verification - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
   <style>
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
-    .page { width: 210mm; min-height: 297mm; padding: 0; margin: 0 auto; background: white; page-break-after: always; }
+    .page { width: 210mm; min-height: 297mm; padding: 0; margin: 0 auto; background: white; page-break-after: always; position: relative; }
     .page:last-child { page-break-after: auto; }
+    .digital-signature {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      text-align: right;
+      font-family: 'Dancing Script', cursive;
+      font-size: 15pt;
+      color: #1a365d;
+    }
     .logo-header { text-align: center; padding: 15px 0; }
     .logo-header img { height: 60px; }
     .title-bar { background: #f57c00; color: white; text-align: center; padding: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
@@ -503,6 +527,7 @@ export default function Employees() {
         </tr>
       </tbody>
     </table>
+    <div class="digital-signature">${emp.full_name}</div>
   </div>
   
   <!-- PAGE 2: AADHAAR VERIFICATION REPORT -->
@@ -534,6 +559,7 @@ export default function Employees() {
       <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
       <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
     </table>
+    <div class="digital-signature">${emp.full_name}</div>
   </div>
   
   <!-- PAGE 3: PAN CARD VERIFICATION REPORT -->
@@ -563,6 +589,7 @@ export default function Employees() {
       <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
       <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
     </table>
+    <div class="digital-signature">${emp.full_name}</div>
   </div>
 </body>
 </html>`;
