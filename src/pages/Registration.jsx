@@ -147,7 +147,7 @@ export default function Registration() {
     { num: 2, title: "Documents", icon: FileText }
   ];
 
-  const InputWithError = ({ label, field, type = "text", placeholder, ...props }) => (
+  const renderInput = (label, field, type = "text", placeholder, extraProps = {}) => (
     <div className="space-y-2">
       <Label>{label} *</Label>
       <Input
@@ -156,7 +156,7 @@ export default function Registration() {
         onChange={(e) => handleChange(field, e.target.value)}
         placeholder={placeholder}
         className={errors[field] ? "border-red-500" : ""}
-        {...props}
+        {...extraProps}
       />
       {errors[field] && (
         <p className="text-red-500 text-xs flex items-center gap-1">
