@@ -44,15 +44,11 @@ Deno.serve(async (req) => {
         folder.file('BGV_Report.html', bgvReportHTML);
         folder.file('Policy_Agreement.html', policyHTML);
 
-        const zipUint8Array = await zip.generateAsync({ type: 'uint8array' });
+        const zipBase64 = await zip.generateAsync({ type: 'base64' });
         
-        return new Response(zipUint8Array, {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/zip',
-                'Content-Disposition': `attachment; filename="${folderName}_documents.zip"`,
-                'Content-Length': zipUint8Array.length.toString()
-            }
+        return Response.json({ 
+            zipBase64, 
+            fileName: `${folderName}_documents.zip` 
         });
     } catch (error) {
         console.error('ZIP generation error:', error);
