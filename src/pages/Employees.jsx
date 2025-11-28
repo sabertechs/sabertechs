@@ -576,8 +576,97 @@ export default function Employees() {
   };
 
   const generateBGVPDF = (emp) => {
-    generatePDFWithMonkey(emp, 'bgv');
-  };
+        generatePDFWithMonkey(emp, 'bgv');
+      };
+
+      const generatePolicyAgreement = (emp) => {
+        const policyPdfUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf';
+
+        const content = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>Policy Agreement - ${emp.full_name}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+      @page { margin: 0; size: A4; }
+      body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+      .page { 
+        width: 210mm; 
+        min-height: 297mm; 
+        position: relative; 
+        page-break-after: always;
+        box-sizing: border-box;
+      }
+      .page:last-child { page-break-after: auto; }
+      .pdf-embed {
+        width: 100%;
+        height: 100%;
+      }
+      .signature-footer {
+        position: fixed;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: 'Dancing Script', cursive;
+        font-size: 15pt;
+        color: #1a365d;
+      }
+      .instructions {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px;
+        font-family: Arial, sans-serif;
+      }
+      .instructions h2 { color: #333; margin-bottom: 15px; }
+      .instructions p { color: #666; line-height: 1.6; }
+      .instructions a { color: #4f46e5; text-decoration: none; }
+      .instructions a:hover { text-decoration: underline; }
+
+      @media print {
+        .instructions { display: none; }
+        .signature-footer {
+          position: fixed;
+          bottom: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="instructions">
+      <h2>📋 Policy Agreement for: ${emp.full_name}</h2>
+      <p>To download the Policy Agreement with employee signature:</p>
+      <ol>
+        <li>Click the link below to open the original Policy PDF</li>
+        <li>Print this page (Ctrl+P / Cmd+P) to add the employee signature to each page</li>
+      </ol>
+      <p><a href="${policyPdfUrl}" target="_blank">📄 View Original Policy Document</a></p>
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+      <p><strong>Note:</strong> The employee name "${emp.full_name}" will appear at the bottom of each printed page in signature style.</p>
+    </div>
+
+    <div class="signature-footer">
+      ${emp.full_name}
+    </div>
+
+    <script>
+      // Auto-trigger print dialog
+      window.onload = function() {
+        // Open PDF in new tab for reference
+        window.open('${policyPdfUrl}', '_blank');
+      };
+    </script>
+  </body>
+  </html>`;
+
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(content);
+        newWindow.document.close();
+      };
 
   const downloadBothDocuments = async (emp) => {
     const empKey = `${emp.id}-all`;
@@ -1082,7 +1171,7 @@ export default function Employees() {
                                                             {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
                                                             Download All Documents
                                                           </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf', '_blank')}>
+                                                          <DropdownMenuItem onClick={() => generatePolicyAgreement(emp)}>
                                                                                             <FileText className="w-4 h-4 mr-2" />
                                                                                             Policy Agreement
                                                                                           </DropdownMenuItem>
@@ -1299,7 +1388,7 @@ export default function Employees() {
                     {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
                     All Docs
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf', '_blank')}>
+                  <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
                                             <Download className="w-4 h-4 mr-1" />
                                             Policy
                                           </Button>
