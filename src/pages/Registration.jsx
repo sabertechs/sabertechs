@@ -14,6 +14,7 @@ export default function Registration() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [uploadingDoc, setUploadingDoc] = useState(null);
   const [errors, setErrors] = useState({});
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
