@@ -45,7 +45,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "HRDashboard",
+    mainPage: "MyAttendance",
     Pages: PAGES,
     Layout: __Layout,
 };
