@@ -65,16 +65,24 @@ export default function Registration() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
+          // Not authenticated - allow registration page to show
           if (isMounted) setInitialLoading(false);
           return;
         }
         
         const userData = await base44.auth.me();
+        
+        // Check if user is admin - admins don't need registration
+        if (userData.role === 'admin') {
+          window.location.href = createPageUrl("HRDashboard");
+          return;
+        }
+        
         const employees = await base44.entities.Employee.filter({ email: userData.email });
         
         if (employees.length > 0 && isMounted) {
           const emp = employees[0];
-          // Redirect based on role
+          // Employee exists - redirect based on role
           if (emp.role === 'hr' || emp.role === 'manager') {
             window.location.href = createPageUrl("HRDashboard");
           } else if (emp.role === 'department_head') {
@@ -84,7 +92,12 @@ export default function Registration() {
           }
           return;
         }
-        if (isMounted) setInitialLoading(false);
+        
+        // No employee record - show registration form and pre-fill email
+        if (isMounted) {
+          setFormData(prev => ({ ...prev, email: userData.email }));
+          setInitialLoading(false);
+        }
       } catch (error) {
         console.log("Error checking employee:", error);
         if (isMounted) setInitialLoading(false);
