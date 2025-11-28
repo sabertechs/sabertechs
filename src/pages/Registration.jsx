@@ -83,7 +83,10 @@ export default function Registration() {
       setCheckingDuplicate(true);
       const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim() });
       if (existingByEmail.length > 0) {
-        newErrors.email = "An employee with this email already exists";
+        // Redirect to dashboard if employee already exists
+        setCheckingDuplicate(false);
+        navigate(createPageUrl("EmployeeDashboard"));
+        return false;
       }
       
       const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
