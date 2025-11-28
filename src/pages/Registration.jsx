@@ -40,6 +40,39 @@ export default function Registration() {
     profile_photo: ""
   });
 
+  useEffect(() => {
+    const checkExistingEmployee = async () => {
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setInitialLoading(false);
+          return;
+        }
+        
+        const userData = await base44.auth.me();
+        const employees = await base44.entities.Employee.filter({ email: userData.email });
+        
+        if (employees.length > 0) {
+          const emp = employees[0];
+          // Redirect based on role
+          if (emp.role === 'hr' || emp.role === 'manager') {
+            navigate(createPageUrl("HRDashboard"));
+          } else if (emp.role === 'department_head') {
+            navigate(createPageUrl("DeptHeadDashboard"));
+          } else {
+            navigate(createPageUrl("EmployeeDashboard"));
+          }
+          return;
+        }
+        setInitialLoading(false);
+      } catch (error) {
+        console.log("Error checking employee:", error);
+        setInitialLoading(false);
+      }
+    };
+    checkExistingEmployee();
+  }, [navigate]);
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user types
