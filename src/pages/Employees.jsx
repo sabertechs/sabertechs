@@ -611,7 +611,9 @@ export default function Employees() {
       };
 
   const generatePolicyAgreement = (emp) => {
-    const policyHtmlUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/57fd3f0bc_policy_polished.html';
+    const policyImages = [
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/26ed80578_Screenshot2025-11-28at14140PM.png'
+    ];
     
     const content = `
 <!DOCTYPE html>
@@ -621,16 +623,14 @@ export default function Employees() {
   <title>Policy Agreement - ${emp.full_name}</title>
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    @page { size: A4; margin: 0; }
     @media print {
       .no-print { display: none !important; }
-      .signature-block { 
-        position: fixed !important;
-        bottom: 30px !important;
-        right: 40px !important;
-      }
-      @page { margin: 0.5in; }
+      .page { page-break-after: always; }
+      .page:last-child { page-break-after: auto; }
     }
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
     .instructions {
       background: #f0f4f8;
       padding: 20px;
@@ -651,33 +651,29 @@ export default function Employees() {
       margin-top: 15px;
     }
     .print-btn:hover { background: #4338ca; }
-    .policy-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 20px auto;
       position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .policy-frame {
+    .page img {
       width: 100%;
-      min-height: 800px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      height: auto;
+      display: block;
     }
     .signature-block {
-      position: fixed;
-      bottom: 40px;
-      right: 50px;
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
       text-align: right;
-      z-index: 1000;
     }
     .signature-name {
       font-family: 'Dancing Script', cursive;
       font-size: 17pt;
       color: #1a365d;
-      background: rgba(255,255,255,0.95);
-      padding: 8px 20px;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
   </style>
 </head>
@@ -689,13 +685,14 @@ export default function Employees() {
     <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>
   
-  <div class="policy-container">
-    <iframe class="policy-frame" src="${policyHtmlUrl}" frameborder="0"></iframe>
+  ${policyImages.map((img, index) => `
+  <div class="page">
+    <img src="${img}" alt="Policy Page ${index + 1}" />
+    <div class="signature-block">
+      <div class="signature-name">${emp.full_name}</div>
+    </div>
   </div>
-  
-  <div class="signature-block">
-    <div class="signature-name">${emp.full_name}</div>
-  </div>
+  `).join('')}
 </body>
 </html>`;
     
