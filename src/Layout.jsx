@@ -34,24 +34,43 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const [userData, employees] = await Promise.all([
-          base44.auth.me(),
-          base44.auth.me().then(u => base44.entities.Employee.filter({ email: u.email }))
-        ]);
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          // Not logged in - redirect to login
+          if (currentPageName !== "Registration" && currentPageName !== "Login") {
+            base44.auth.redirectToLogin(window.location.href);
+          }
+          setLoading(false);
+          return;
+        }
+        
+        const userData = await base44.auth.me();
         setUser(userData);
+        
+        const employees = await base44.entities.Employee.filter({ email: userData.email });
         if (employees.length > 0) {
           setEmployeeData(employees[0]);
+        } else if (currentPageName !== "Registration") {
+          // No employee record - redirect to registration
+          window.location.href = createPageUrl("Registration");
+          return;
         }
+        setLoading(false);
       } catch (error) {
         console.log("User not logged in");
+        if (currentPageName !== "Registration" && currentPageName !== "Login") {
+          base44.auth.redirectToLogin(window.location.href);
+        }
+        setLoading(false);
       }
     };
     fetchUser();
-  }, []);
+  }, [currentPageName]);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.email],
