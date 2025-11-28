@@ -1082,7 +1082,7 @@ export default function Employees() {
                                                             {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
                                                             Download All Documents
                                                           </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/529a74eee_PolicyforProctor.html', '_blank')}>
+                                                          <DropdownMenuItem onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf', '_blank')}>
                                                                                             <FileText className="w-4 h-4 mr-2" />
                                                                                             Policy Agreement
                                                                                           </DropdownMenuItem>
@@ -1299,7 +1299,7 @@ export default function Employees() {
                     {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
                     All Docs
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/529a74eee_PolicyforProctor.html', '_blank')}>
+                  <Button size="sm" variant="outline" onClick={() => window.open('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf', '_blank')}>
                                             <Download className="w-4 h-4 mr-1" />
                                             Policy
                                           </Button>
