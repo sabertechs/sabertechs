@@ -16,6 +16,7 @@ export default function Registration() {
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(null);
   const [errors, setErrors] = useState({});
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -63,7 +64,7 @@ export default function Registration() {
     setUploadingDoc(null);
   };
 
-  const validateStep1 = () => {
+  const validateStep1 = async () => {
     const newErrors = {};
     if (!formData.full_name.trim()) newErrors.full_name = "Full name is required";
     if (!formData.father_name.trim()) newErrors.father_name = "Father's name is required";
@@ -76,6 +77,21 @@ export default function Registration() {
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.pincode.trim()) newErrors.pincode = "Pincode is required";
+    
+    // Check for duplicate email and phone if no basic errors
+    if (!newErrors.email && !newErrors.phone) {
+      setCheckingDuplicate(true);
+      const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim() });
+      if (existingByEmail.length > 0) {
+        newErrors.email = "An employee with this email already exists";
+      }
+      
+      const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
+      if (existingByPhone.length > 0) {
+        newErrors.phone = "An employee with this phone number already exists";
+      }
+      setCheckingDuplicate(false);
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -107,9 +123,12 @@ export default function Registration() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) {
-      setStep(2);
+  const handleNext = async () => {
+    if (step === 1) {
+      const isValid = await validateStep1();
+      if (isValid) {
+        setStep(2);
+      }
     }
   };
 
@@ -464,9 +483,17 @@ export default function Registration() {
               {step < 2 ? (
                 <Button
                   onClick={handleNext}
+                  disabled={checkingDuplicate}
                   className="px-8 bg-indigo-600 hover:bg-indigo-700"
                 >
-                  Next
+                  {checkingDuplicate ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    "Next"
+                  )}
                 </Button>
               ) : (
                 <Button
