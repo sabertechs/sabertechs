@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -37,6 +37,19 @@ export default function Registration() {
     education_certificates: [],
     profile_photo: ""
   });
+
+  // Pre-fill email from logged in user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user?.email) {
+          setFormData(prev => ({ ...prev, email: user.email, full_name: user.full_name || "" }));
+        }
+      } catch (e) {}
+    };
+    fetchUser();
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
