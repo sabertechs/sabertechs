@@ -215,11 +215,11 @@ export default function Registration() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InputWithError label="Full Name" field="full_name" placeholder="Enter your full name" />
-                  <InputWithError label="Father's Name" field="father_name" placeholder="Enter father's name" />
-                  <InputWithError label="Email" field="email" type="email" placeholder="your.email@company.com" />
-                  <InputWithError label="Phone" field="phone" placeholder="+91 XXXXX XXXXX" />
-                  <InputWithError label="Date of Birth" field="date_of_birth" type="date" />
+                  {renderInput("Full Name", "full_name", "text", "Enter your full name")}
+                  {renderInput("Father's Name", "father_name", "text", "Enter father's name")}
+                  {renderInput("Email", "email", "email", "your.email@company.com", { readOnly: true, className: "bg-slate-100" })}
+                  {renderInput("Phone", "phone", "text", "+91 XXXXX XXXXX")}
+                  {renderInput("Date of Birth", "date_of_birth", "date", "")}
                   <div className="space-y-2">
                     <Label>Gender *</Label>
                     <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
