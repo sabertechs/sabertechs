@@ -1080,10 +1080,7 @@ export default function Employees() {
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                                                          <DropdownMenuItem onClick={() => downloadBothDocuments(emp)} disabled={generatingPdf[`${emp.id}-all`]}>
-                                                            {generatingPdf[`${emp.id}-all`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FolderDown className="w-4 h-4 mr-2" />}
-                                                            Download All Documents
-                                                          </DropdownMenuItem>
+
 
                                                           <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
                                                             {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
@@ -1294,10 +1291,7 @@ export default function Employees() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline" onClick={() => downloadBothDocuments(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-all`]}>
-                    {generatingPdf[`${selectedEmployee.id}-all`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <FolderDown className="w-4 h-4 mr-1" />}
-                    All Docs
-                  </Button>
+
 
                   <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
                     {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
