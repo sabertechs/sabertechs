@@ -63,7 +63,8 @@ export default function Layout({ children, currentPageName }) {
 
   const getNavItems = () => {
     const items = [];
-    
+    const sectionAccess = employeeData?.section_access || [];
+
     // Dashboard based on role
     if (userRole === 'hr' || userRole === 'manager') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
@@ -72,7 +73,7 @@ export default function Layout({ children, currentPageName }) {
     } else {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
     }
-    
+
     // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
       items.push(
@@ -100,8 +101,22 @@ export default function Layout({ children, currentPageName }) {
         { name: "Access Control", icon: Shield, page: "AccessControl" },
         { name: "Settings", icon: Settings, page: "Settings" },
       );
+    } else {
+      // Employee role - show pages based on section_access or defaults
+      if (sectionAccess.includes('attendance') || sectionAccess.length === 0) {
+        items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
+      }
+      if (sectionAccess.includes('payslips') || sectionAccess.length === 0) {
+        items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+      }
+      if (sectionAccess.includes('expenses') || sectionAccess.length === 0) {
+        items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+      }
+      if (sectionAccess.includes('team_view')) {
+        items.push({ name: "My Team", icon: Users, page: "TeamView" });
+      }
     }
-    
+
     return items;
   };
 
