@@ -714,15 +714,21 @@ export default function Employees() {
     setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
     
     try {
-      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id }, { responseType: 'arraybuffer' });
+      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id });
       
-      // Create blob from arraybuffer response
-      const blob = new Blob([response.data], { type: 'application/zip' });
+      // Convert base64 to blob
+      const base64 = response.data.zipBase64;
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' });
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const folderName = emp.email?.replace('@', '_at_').replace(/\./g, '_');
-      a.download = `${folderName}_documents.zip`;
+      a.download = response.data.fileName;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
