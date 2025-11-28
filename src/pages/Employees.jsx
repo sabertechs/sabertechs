@@ -580,93 +580,132 @@ export default function Employees() {
       };
 
       const generatePolicyAgreement = (emp) => {
-        const policyPdfUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf';
+            const policyPdfUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/14bea2cfc_Policy_signed.pdf';
 
-        const content = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Policy Agreement - ${emp.full_name}</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+            const content = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Policy Agreement - ${emp.full_name}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
 
-      @page { margin: 0; size: A4; }
-      body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-      .page { 
-        width: 210mm; 
-        min-height: 297mm; 
-        position: relative; 
-        page-break-after: always;
-        box-sizing: border-box;
-      }
-      .page:last-child { page-break-after: auto; }
-      .pdf-embed {
-        width: 100%;
-        height: 100%;
-      }
-      .signature-footer {
-        position: fixed;
-        bottom: 30px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-family: 'Dancing Script', cursive;
-        font-size: 15pt;
-        color: #1a365d;
-      }
-      .instructions {
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin: 20px;
-        font-family: Arial, sans-serif;
-      }
-      .instructions h2 { color: #333; margin-bottom: 15px; }
-      .instructions p { color: #666; line-height: 1.6; }
-      .instructions a { color: #4f46e5; text-decoration: none; }
-      .instructions a:hover { text-decoration: underline; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; background: #f5f5f5; }
 
-      @media print {
-        .instructions { display: none; }
-        .signature-footer {
-          position: fixed;
-          bottom: 30px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="instructions">
-      <h2>📋 Policy Agreement for: ${emp.full_name}</h2>
-      <p>To download the Policy Agreement with employee signature:</p>
-      <ol>
-        <li>Click the link below to open the original Policy PDF</li>
-        <li>Print this page (Ctrl+P / Cmd+P) to add the employee signature to each page</li>
-      </ol>
-      <p><a href="${policyPdfUrl}" target="_blank">📄 View Original Policy Document</a></p>
-      <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-      <p><strong>Note:</strong> The employee name "${emp.full_name}" will appear at the bottom of each printed page in signature style.</p>
-    </div>
+          .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+          }
 
-    <div class="signature-footer">
-      ${emp.full_name}
-    </div>
+          .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
 
-    <script>
-      // Auto-trigger print dialog
-      window.onload = function() {
-        // Open PDF in new tab for reference
-        window.open('${policyPdfUrl}', '_blank');
-      };
-    </script>
-  </body>
-  </html>`;
+          .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+          }
 
-        const newWindow = window.open('', '_blank');
-        newWindow.document.write(content);
-        newWindow.document.close();
-      };
+          .header p {
+            color: #666;
+          }
+
+          .pdf-container {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+
+          .pdf-frame {
+            width: 100%;
+            height: 85vh;
+            border: none;
+          }
+
+          .signature-overlay {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Dancing Script', cursive;
+            font-size: 20px;
+            color: #1a365d;
+            background: rgba(255,255,255,0.95);
+            padding: 10px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+          }
+
+          .print-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+          }
+
+          .print-btn:hover {
+            background: #4338ca;
+          }
+
+          @media print {
+            body { background: white; }
+            .header, .print-btn { display: none; }
+            .pdf-container { box-shadow: none; }
+            .signature-overlay {
+              position: fixed;
+              bottom: 30px;
+              background: transparent;
+              box-shadow: none;
+            }
+            @page { margin: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📋 Policy Agreement</h1>
+            <p><strong>Employee:</strong> ${emp.full_name}</p>
+            <p style="margin-top: 10px; color: #888; font-size: 14px;">
+              The employee signature will appear at the bottom when viewing/printing. 
+              Use your browser's print function (Ctrl+P) to save as PDF with the signature.
+            </p>
+            <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+          </div>
+
+          <div class="pdf-container">
+            <iframe 
+              class="pdf-frame" 
+              src="${policyPdfUrl}#toolbar=1&navpanes=0"
+            ></iframe>
+          </div>
+        </div>
+
+        <div class="signature-overlay">
+          ${emp.full_name}
+        </div>
+      </body>
+      </html>`;
+
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(content);
+            newWindow.document.close();
+          };
 
   const downloadBothDocuments = async (emp) => {
     const empKey = `${emp.id}-all`;
