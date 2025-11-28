@@ -27,31 +27,25 @@ export default function DeptHeadDashboard() {
     fetchUser();
   }, []);
 
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['team', employee?.department],
-    queryFn: () => base44.entities.Employee.filter({ department: employee?.department, status: 'active' }),
-    enabled: !!employee?.department,
-  });
-
-  const { data: pendingExpenses = [] } = useQuery({
-    queryKey: ['pendingExpenses', employee?.department],
-    queryFn: () => base44.entities.Expense.filter({ department: employee?.department, status: 'pending' }, '-created_date'),
-    enabled: !!employee?.department,
-  });
-
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['allEmployees'],
     queryFn: () => base44.entities.Employee.list(),
+    staleTime: 30000,
+  });
+
+  const teamMembers = allEmployees.filter(e => e.department === employee?.department && e.status === 'active');
+  const pendingBGV = allEmployees.filter(e => e.bg_verification_status === 'pending');
+
+  const { data: pendingExpenses = [] } = useQuery({
+    queryKey: ['pendingExpenses'],
+    queryFn: () => base44.entities.Expense.filter({ status: 'pending' }, '-created_date'),
+    staleTime: 30000,
   });
 
   const { data: pendingOnboarding = [] } = useQuery({
     queryKey: ['pendingOnboarding'],
     queryFn: () => base44.entities.Onboarding.filter({ status: 'in_progress' }),
-  });
-
-  const { data: pendingBGV = [] } = useQuery({
-    queryKey: ['pendingBGV'],
-    queryFn: () => base44.entities.Employee.filter({ bg_verification_status: 'pending' }),
+    staleTime: 30000,
   });
 
   const quickActions = [

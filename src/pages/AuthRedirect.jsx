@@ -9,51 +9,34 @@ export default function AuthRedirect() {
   useEffect(() => {
     const checkAuthAndRedirect = async () => {
       try {
-        // Check if user is authenticated
-        const isAuth = await base44.auth.isAuthenticated();
+        // Direct auth check - faster than separate isAuthenticated call
+        const user = await base44.auth.me().catch(() => null);
         
-        if (!isAuth) {
-          // Not logged in - redirect to login
-          setStatus("Redirecting to login...");
+        if (!user) {
           base44.auth.redirectToLogin(createPageUrl('AuthRedirect'));
           return;
         }
 
-        // User is logged in - get user data
-        const user = await base44.auth.me();
-        setStatus("Verifying employee records...");
-        
         // Check if employee exists in database
         const employees = await base44.entities.Employee.filter({ email: user.email });
         
         if (employees.length > 0) {
-          // Existing employee - check role and redirect
-          const employee = employees[0];
-          const role = employee.role || 'employee';
+          const role = employees[0].role || 'employee';
           
-          setStatus(`Welcome back, ${employee.full_name || user.full_name}!`);
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Redirect based on role
+          // Immediate redirect without delay
           if (role === 'hr' || role === 'manager') {
             window.location.href = createPageUrl('HRDashboard');
           } else if (role === 'department_head') {
             window.location.href = createPageUrl('DeptHeadDashboard');
           } else {
-            // employee or any other role
             window.location.href = createPageUrl('EmployeeDashboard');
           }
         } else {
-          // New user - not in employee database - redirect to registration
-          setStatus("Welcome! Completing your registration...");
-          await new Promise(resolve => setTimeout(resolve, 500));
           window.location.href = createPageUrl('Registration');
         }
       } catch (error) {
-        console.error('Auth check error:', error);
-        setStatus("Error occurred. Retrying...");
-        // Retry after delay
-        setTimeout(() => window.location.reload(), 2000);
+        console.error('Auth error:', error);
+        base44.auth.redirectToLogin(createPageUrl('AuthRedirect'));
       }
     };
 

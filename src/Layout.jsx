@@ -38,9 +38,11 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userData = await base44.auth.me();
+        const [userData, employees] = await Promise.all([
+          base44.auth.me(),
+          base44.auth.me().then(u => base44.entities.Employee.filter({ email: u.email }))
+        ]);
         setUser(userData);
-        const employees = await base44.entities.Employee.filter({ email: userData.email });
         if (employees.length > 0) {
           setEmployeeData(employees[0]);
         }
