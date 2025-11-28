@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import JSZip from 'npm:jszip@3.10.1';
 import { format } from 'npm:date-fns@3.6.0';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
     try {
