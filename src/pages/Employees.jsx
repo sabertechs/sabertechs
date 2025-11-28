@@ -583,6 +583,100 @@ export default function Employees() {
         generatePDFWithMonkey(emp, 'bgv');
       };
 
+  const generatePolicyAgreement = (emp) => {
+    const policyHtmlUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/671f1e046_Policy_signed.html';
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Policy Agreement - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      .signature-block { 
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 40px !important;
+      }
+      @page { margin: 0.5in; }
+    }
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    .instructions {
+      background: #f0f4f8;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #4f46e5;
+    }
+    .instructions h2 { color: #1e293b; margin-bottom: 10px; }
+    .instructions p { color: #64748b; margin: 5px 0; }
+    .print-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    .print-btn:hover { background: #4338ca; }
+    .policy-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    .policy-frame {
+      width: 100%;
+      min-height: 800px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .signature-block {
+      position: fixed;
+      bottom: 40px;
+      right: 50px;
+      text-align: right;
+      z-index: 1000;
+    }
+    .signature-name {
+      font-family: 'Dancing Script', cursive;
+      font-size: 20px;
+      color: #1a365d;
+      background: rgba(255,255,255,0.95);
+      padding: 8px 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions no-print">
+    <h2>📋 Policy Agreement for: ${emp.full_name}</h2>
+    <p>This document contains the Policy for Proctor/Assessors with employee signature.</p>
+    <p>Click the button below to print or save as PDF.</p>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  
+  <div class="policy-container">
+    <iframe class="policy-frame" src="${policyHtmlUrl}" frameborder="0"></iframe>
+  </div>
+  
+  <div class="signature-block">
+    <div class="signature-name">${emp.full_name}</div>
+  </div>
+</body>
+</html>`;
+    
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(content);
+    newWindow.document.close();
+  };
+
 
 
   const downloadBothDocuments = async (emp) => {
@@ -1106,6 +1200,10 @@ export default function Employees() {
                                                             {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
                                                             Download BGV Report
                                                           </DropdownMenuItem>
+                                                          <DropdownMenuItem onClick={() => generatePolicyAgreement(emp)}>
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Policy Agreement
+                                                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -1373,6 +1471,10 @@ export default function Employees() {
                   <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
                     {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                     BGV
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
+                    <FileText className="w-4 h-4 mr-1" />
+                    Policy
                   </Button>
                 </div>
               </div>
