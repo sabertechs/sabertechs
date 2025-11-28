@@ -65,8 +65,8 @@ export default function Registration() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          // Not authenticated - allow registration page to show
-          if (isMounted) setInitialLoading(false);
+          // Not authenticated - redirect to login
+          base44.auth.redirectToLogin(window.location.href);
           return;
         }
         
@@ -74,21 +74,21 @@ export default function Registration() {
         
         // Check if user is admin - admins don't need registration
         if (userData.role === 'admin') {
-          window.location.href = createPageUrl("HRDashboard");
+          window.location.replace(createPageUrl("HRDashboard"));
           return;
         }
         
         const employees = await base44.entities.Employee.filter({ email: userData.email });
         
-        if (employees.length > 0 && isMounted) {
+        if (employees.length > 0) {
           const emp = employees[0];
-          // Employee exists - redirect based on role
+          // Employee exists - redirect based on role using replace to prevent back button issues
           if (emp.role === 'hr' || emp.role === 'manager') {
-            window.location.href = createPageUrl("HRDashboard");
+            window.location.replace(createPageUrl("HRDashboard"));
           } else if (emp.role === 'department_head') {
-            window.location.href = createPageUrl("DeptHeadDashboard");
+            window.location.replace(createPageUrl("DeptHeadDashboard"));
           } else {
-            window.location.href = createPageUrl("EmployeeDashboard");
+            window.location.replace(createPageUrl("EmployeeDashboard"));
           }
           return;
         }
