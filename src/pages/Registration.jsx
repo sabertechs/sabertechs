@@ -38,15 +38,32 @@ export default function Registration() {
     profile_photo: ""
   });
 
-  // Pre-fill email from logged in user
+  // Pre-fill email from logged in user and check if already registered
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         if (user?.email) {
+          // Check if employee already exists
+          const employees = await base44.entities.Employee.filter({ email: user.email });
+          if (employees.length > 0) {
+            // Already registered, redirect to dashboard
+            const role = employees[0].role || 'employee';
+            if (role === 'hr' || role === 'manager') {
+              window.location.href = createPageUrl('HRDashboard');
+            } else if (role === 'department_head') {
+              window.location.href = createPageUrl('DeptHeadDashboard');
+            } else {
+              window.location.href = createPageUrl('EmployeeDashboard');
+            }
+            return;
+          }
           setFormData(prev => ({ ...prev, email: user.email, full_name: user.full_name || "" }));
         }
-      } catch (e) {}
+      } catch (e) {
+        // Not logged in, redirect to login
+        base44.auth.redirectToLogin(createPageUrl('Registration'));
+      }
     };
     fetchUser();
   }, []);
