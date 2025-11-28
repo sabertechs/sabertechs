@@ -45,7 +45,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Employees",
+    mainPage: "EmployeeDashboard",
     Pages: PAGES,
     Layout: __Layout,
 };
