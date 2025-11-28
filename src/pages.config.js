@@ -18,6 +18,7 @@ import EmployeeUpload from './pages/EmployeeUpload';
 import AccessControl from './pages/AccessControl';
 import AuthRedirect from './pages/AuthRedirect';
 import Settings from './pages/Settings';
+import NotificationCenter from './pages/NotificationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +43,7 @@ export const PAGES = {
     "AccessControl": AccessControl,
     "AuthRedirect": AuthRedirect,
     "Settings": Settings,
+    "NotificationCenter": NotificationCenter,
 }
 
 export const pagesConfig = {

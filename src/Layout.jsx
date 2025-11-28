@@ -19,7 +19,8 @@ import {
   Building2,
   UserPlus,
   Shield,
-  Settings
+  Settings,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
