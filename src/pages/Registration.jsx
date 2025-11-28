@@ -10,6 +10,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 
+const InputWithError = ({ label, field, value, onChange, error, type = "text", placeholder, ...props }) => (
+  <div className="space-y-2">
+    <Label>{label} *</Label>
+    <Input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={error ? "border-red-500" : ""}
+      {...props}
+    />
+    {error && (
+      <p className="text-red-500 text-xs flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" /> {error}
+      </p>
+    )}
+  </div>
+);
+
 export default function Registration() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
