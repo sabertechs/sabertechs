@@ -145,6 +145,17 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <Building2 className="w-12 h-12 text-indigo-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-slate-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <style>{`
