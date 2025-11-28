@@ -261,10 +261,10 @@ export default function Registration() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputWithError label="Locality" field="locality" placeholder="Locality / Area" />
-                    <InputWithError label="City" field="city" placeholder="City" />
-                    <InputWithError label="State" field="state" placeholder="State" />
-                    <InputWithError label="Pincode" field="pincode" placeholder="XXXXXX" />
+                    {renderInput("Locality", "locality", "text", "Locality / Area")}
+                    {renderInput("City", "city", "text", "City")}
+                    {renderInput("State", "state", "text", "State")}
+                    {renderInput("Pincode", "pincode", "text", "XXXXXX")}
                   </div>
                 </div>
               </div>
