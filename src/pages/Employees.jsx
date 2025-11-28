@@ -21,7 +21,9 @@ import {
   FileSpreadsheet,
   UserCheck,
   UserX,
-  FolderDown
+  FolderDown,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +66,8 @@ export default function Employees() {
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [downloading, setDownloading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const employeesPerPage = 40;
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -717,6 +721,18 @@ export default function Employees() {
   const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
   const designations = [...new Set(employees.map(e => e.designation).filter(Boolean))];
 
+  // Pagination
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * employeesPerPage,
+    currentPage * employeesPerPage
+  );
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -1016,7 +1032,7 @@ export default function Employees() {
                 </tr>
               </thead>
               <tbody>
-                {filteredEmployees.map((emp) => (
+                {paginatedEmployees.map((emp) => (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-4 py-4">
                       <Checkbox 
@@ -1102,6 +1118,63 @@ export default function Employees() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100">
+              <p className="text-sm text-slate-500">
+                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, filteredEmployees.length)} of {filteredEmployees.length} employees
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first page, last page, current page, and pages around current
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className={currentPage === page ? "bg-indigo-600 hover:bg-indigo-700" : ""}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return <span key={page} className="px-1 text-slate-400">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
