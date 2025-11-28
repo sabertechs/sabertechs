@@ -1484,6 +1484,10 @@ export default function Employees() {
                     <FileText className="w-4 h-4 mr-1" />
                     Policy
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => downloadAllDocsAsZip(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-zip`]} className="bg-indigo-50 border-indigo-300 text-indigo-700">
+                    {generatingPdf[`${selectedEmployee.id}-zip`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Archive className="w-4 h-4 mr-1" />}
+                    ZIP
+                  </Button>
                 </div>
               </div>
 
