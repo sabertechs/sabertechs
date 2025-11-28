@@ -18,7 +18,6 @@ import EmployeeUpload from './pages/EmployeeUpload';
 import AccessControl from './pages/AccessControl';
 import AuthRedirect from './pages/AuthRedirect';
 import Settings from './pages/Settings';
-import AccessDenied from './pages/AccessDenied';
 import __Layout from './Layout.jsx';
 
 
@@ -43,7 +42,6 @@ export const PAGES = {
     "AccessControl": AccessControl,
     "AuthRedirect": AuthRedirect,
     "Settings": Settings,
-    "AccessDenied": AccessDenied,
 }
 
 export const pagesConfig = {

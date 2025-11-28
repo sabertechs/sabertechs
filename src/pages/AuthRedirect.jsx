@@ -32,8 +32,7 @@ export default function AuthRedirect() {
             window.location.href = createPageUrl('EmployeeDashboard');
           }
         } else {
-          // No employee record found - show access denied page
-          window.location.href = createPageUrl('AccessDenied');
+          window.location.href = createPageUrl('Registration');
         }
       } catch (error) {
         console.error('Auth error:', error);
