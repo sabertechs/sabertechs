@@ -611,7 +611,7 @@ export default function Employees() {
       };
 
   const generatePolicyAgreement = (emp) => {
-    const policyHtmlUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/671f1e046_Policy_signed.html';
+    const policyHtmlUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/57fd3f0bc_policy_polished.html';
     
     const content = `
 <!DOCTYPE html>
