@@ -4,57 +4,56 @@ import { Building2, Loader2 } from "lucide-react";
 import { createPageUrl } from "../utils";
 
 export default function AuthRedirect() {
-  const [status, setStatus] = useState("Checking authentication...");
+  const [status, setStatus] = useState("Loading...");
 
   useEffect(() => {
     const checkAuthAndRedirect = async () => {
       try {
+        // Check if user is authenticated
         const isAuth = await base44.auth.isAuthenticated();
         
         if (!isAuth) {
+          // Not logged in - redirect to login
           setStatus("Redirecting to login...");
           base44.auth.redirectToLogin(createPageUrl('AuthRedirect'));
           return;
         }
 
+        // User is logged in - get user data
         const user = await base44.auth.me();
-        setStatus("Checking employee records...");
+        setStatus("Verifying employee records...");
         
         // Check if employee exists in database
         const employees = await base44.entities.Employee.filter({ email: user.email });
         
         if (employees.length > 0) {
+          // Existing employee - check role and redirect
           const employee = employees[0];
           const role = employee.role || 'employee';
           
-          setStatus(`Welcome back! Redirecting to your dashboard...`);
-          
-          // Small delay for user feedback
+          setStatus(`Welcome back, ${employee.full_name || user.full_name}!`);
           await new Promise(resolve => setTimeout(resolve, 500));
           
           // Redirect based on role
-          switch (role) {
-            case 'hr':
-            case 'manager':
-              window.location.href = createPageUrl('HRDashboard');
-              break;
-            case 'department_head':
-              window.location.href = createPageUrl('DeptHeadDashboard');
-              break;
-            case 'employee':
-            default:
-              window.location.href = createPageUrl('EmployeeDashboard');
-              break;
+          if (role === 'hr' || role === 'manager') {
+            window.location.href = createPageUrl('HRDashboard');
+          } else if (role === 'department_head') {
+            window.location.href = createPageUrl('DeptHeadDashboard');
+          } else {
+            // employee or any other role
+            window.location.href = createPageUrl('EmployeeDashboard');
           }
         } else {
-          // New employee - redirect to registration
-          setStatus("New user detected. Redirecting to registration...");
+          // New user - not in employee database - redirect to registration
+          setStatus("Welcome! Completing your registration...");
           await new Promise(resolve => setTimeout(resolve, 500));
           window.location.href = createPageUrl('Registration');
         }
       } catch (error) {
         console.error('Auth check error:', error);
-        setStatus("Error checking authentication. Please try again.");
+        setStatus("Error occurred. Retrying...");
+        // Retry after delay
+        setTimeout(() => window.location.reload(), 2000);
       }
     };
 
