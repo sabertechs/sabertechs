@@ -714,9 +714,9 @@ export default function Employees() {
     setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
     
     try {
-      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id });
+      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id }, { responseType: 'arraybuffer' });
       
-      // Create blob from response data
+      // Create blob from arraybuffer response
       const blob = new Blob([response.data], { type: 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
