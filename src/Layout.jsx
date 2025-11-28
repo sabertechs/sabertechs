@@ -61,24 +61,33 @@ export default function Layout({ children, currentPageName }) {
   const getNavItems = () => {
     const items = [];
     
+    // Dashboard based on role
+    if (userRole === 'hr' || userRole === 'manager') {
+      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
+    } else if (userRole === 'department_head') {
+      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" });
+    } else {
+      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
+    }
+    
+    // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
       items.push(
-        { name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" },
         { name: "Employees", icon: Users, page: "Employees" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
         { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
+        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
+        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
+        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
       );
     } else if (userRole === 'department_head') {
       items.push(
-        { name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" },
         { name: "Team", icon: Users, page: "TeamView" },
-      );
-    } else {
-      items.push(
-        { name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" },
+        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
+        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
       );
     }
     
