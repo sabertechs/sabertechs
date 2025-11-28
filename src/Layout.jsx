@@ -58,10 +58,12 @@ export default function Layout({ children, currentPageName }) {
         } else if (userData.role === 'admin') {
           // Admin users don't need employee record - treat as HR
           setEmployeeData({ role: 'hr', email: userData.email });
-        } else if (currentPageName !== "Registration") {
-          // No employee record - redirect to registration
-          window.location.href = createPageUrl("Registration");
-          return;
+        } else {
+          // No employee record - redirect to registration to complete profile
+          if (currentPageName !== "Registration") {
+            window.location.href = createPageUrl("Registration");
+            return;
+          }
         }
         setLoading(false);
       } catch (error) {
