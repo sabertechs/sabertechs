@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -37,36 +37,6 @@ export default function Registration() {
     education_certificates: [],
     profile_photo: ""
   });
-
-  // Pre-fill email from logged in user and check if already registered
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        if (user?.email) {
-          // Check if employee already exists
-          const employees = await base44.entities.Employee.filter({ email: user.email });
-          if (employees.length > 0) {
-            // Already registered, redirect to dashboard
-            const role = employees[0].role || 'employee';
-            if (role === 'hr' || role === 'manager') {
-              window.location.href = createPageUrl('HRDashboard');
-            } else if (role === 'department_head') {
-              window.location.href = createPageUrl('DeptHeadDashboard');
-            } else {
-              window.location.href = createPageUrl('EmployeeDashboard');
-            }
-            return;
-          }
-          setFormData(prev => ({ ...prev, email: user.email, full_name: user.full_name || "" }));
-        }
-      } catch (e) {
-        // Not logged in, redirect to login
-        base44.auth.redirectToLogin(createPageUrl('Registration'));
-      }
-    };
-    fetchUser();
-  }, []);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -164,7 +134,7 @@ export default function Registration() {
     { num: 2, title: "Documents", icon: FileText }
   ];
 
-  const renderInput = (label, field, type = "text", placeholder, extraProps = {}) => (
+  const InputWithError = ({ label, field, type = "text", placeholder, ...props }) => (
     <div className="space-y-2">
       <Label>{label} *</Label>
       <Input
@@ -173,7 +143,7 @@ export default function Registration() {
         onChange={(e) => handleChange(field, e.target.value)}
         placeholder={placeholder}
         className={errors[field] ? "border-red-500" : ""}
-        {...extraProps}
+        {...props}
       />
       {errors[field] && (
         <p className="text-red-500 text-xs flex items-center gap-1">
@@ -232,11 +202,11 @@ export default function Registration() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderInput("Full Name", "full_name", "text", "Enter your full name")}
-                  {renderInput("Father's Name", "father_name", "text", "Enter father's name")}
-                  {renderInput("Email", "email", "email", "your.email@company.com", { readOnly: true, className: "bg-slate-100" })}
-                  {renderInput("Phone", "phone", "text", "+91 XXXXX XXXXX")}
-                  {renderInput("Date of Birth", "date_of_birth", "date", "")}
+                  <InputWithError label="Full Name" field="full_name" placeholder="Enter your full name" />
+                  <InputWithError label="Father's Name" field="father_name" placeholder="Enter father's name" />
+                  <InputWithError label="Email" field="email" type="email" placeholder="your.email@company.com" />
+                  <InputWithError label="Phone" field="phone" placeholder="+91 XXXXX XXXXX" />
+                  <InputWithError label="Date of Birth" field="date_of_birth" type="date" />
                   <div className="space-y-2">
                     <Label>Gender *</Label>
                     <Select value={formData.gender} onValueChange={(v) => handleChange("gender", v)}>
@@ -278,10 +248,10 @@ export default function Registration() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {renderInput("Locality", "locality", "text", "Locality / Area")}
-                    {renderInput("City", "city", "text", "City")}
-                    {renderInput("State", "state", "text", "State")}
-                    {renderInput("Pincode", "pincode", "text", "XXXXXX")}
+                    <InputWithError label="Locality" field="locality" placeholder="Locality / Area" />
+                    <InputWithError label="City" field="city" placeholder="City" />
+                    <InputWithError label="State" field="state" placeholder="State" />
+                    <InputWithError label="Pincode" field="pincode" placeholder="XXXXXX" />
                   </div>
                 </div>
               </div>

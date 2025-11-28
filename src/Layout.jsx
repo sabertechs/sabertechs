@@ -36,27 +36,18 @@ export default function Layout({ children, currentPageName }) {
   const [employeeData, setEmployeeData] = useState(null);
 
   useEffect(() => {
-    // Skip auth check for Registration and AuthRedirect pages
-    if (currentPageName === 'Registration' || currentPageName === 'AuthRedirect') {
-      return;
-    }
-    
     const fetchUser = async () => {
       try {
-        const userData = await base44.auth.me();
+        const [userData, employees] = await Promise.all([
+          base44.auth.me(),
+          base44.auth.me().then(u => base44.entities.Employee.filter({ email: u.email }))
+        ]);
         setUser(userData);
-        
-        const employees = await base44.entities.Employee.filter({ email: userData.email });
-        
         if (employees.length > 0) {
           setEmployeeData(employees[0]);
-        } else {
-          // No employee record found - redirect to Registration
-          window.location.href = createPageUrl('Registration');
         }
       } catch (error) {
         console.log("User not logged in");
-        base44.auth.redirectToLogin(createPageUrl('AuthRedirect'));
       }
     };
     fetchUser();
