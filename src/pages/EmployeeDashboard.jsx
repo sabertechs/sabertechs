@@ -19,19 +19,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import EditProfileSection from "@/components/employee/EditProfileSection";
 
 export default function EmployeeDashboard() {
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
 
+  const fetchEmployee = async () => {
+    const userData = await base44.auth.me();
+    setUser(userData);
+    const employees = await base44.entities.Employee.filter({ email: userData.email });
+    if (employees.length > 0) setEmployee(employees[0]);
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const userData = await base44.auth.me();
-      setUser(userData);
-      const employees = await base44.entities.Employee.filter({ email: userData.email });
-      if (employees.length > 0) setEmployee(employees[0]);
-    };
-    fetchUser();
+    fetchEmployee();
   }, []);
 
   const { data: attendance = [] } = useQuery({
@@ -257,6 +259,11 @@ export default function EmployeeDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* My Profile Section */}
+      {employee && (
+        <EditProfileSection employee={employee} onUpdate={fetchEmployee} />
+      )}
 
       {/* Recent Expenses */}
       <Card className="border-0 shadow-sm">
