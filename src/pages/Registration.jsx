@@ -95,7 +95,7 @@ export default function Registration() {
         
         // No employee record - show registration form and pre-fill email
         if (isMounted) {
-          setFormData(prev => ({ ...prev, email: userData.email }));
+          setFormData(prev => ({ ...prev, email: userData.email, full_name: userData.full_name || "" }));
           setInitialLoading(false);
         }
       } catch (error) {
@@ -105,7 +105,7 @@ export default function Registration() {
     };
     checkExistingEmployee();
     return () => { isMounted = false; };
-  }, []);
+  }, [navigate]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
