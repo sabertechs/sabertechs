@@ -61,11 +61,12 @@ export default function Registration() {
 
   useEffect(() => {
     let isMounted = true;
+    let redirecting = false;
+    
     const checkExistingEmployee = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          // Not authenticated - redirect to login
           base44.auth.redirectToLogin(window.location.href);
           return;
         }
@@ -74,15 +75,21 @@ export default function Registration() {
         
         // Check if user is admin - admins don't need registration
         if (userData.role === 'admin') {
+          redirecting = true;
           window.location.replace(createPageUrl("HRDashboard"));
           return;
         }
         
+        // Fetch employee record fresh - no caching
         const employees = await base44.entities.Employee.filter({ email: userData.email });
+        console.log("Registration check - Found employees:", employees.length, "for email:", userData.email);
         
         if (employees.length > 0) {
           const emp = employees[0];
-          // Employee exists - redirect based on role using replace to prevent back button issues
+          console.log("Employee found with status:", emp.status, "role:", emp.role);
+          redirecting = true;
+          
+          // Employee exists - redirect based on role
           if (emp.role === 'hr' || emp.role === 'manager') {
             window.location.replace(createPageUrl("HRDashboard"));
           } else if (emp.role === 'department_head') {
@@ -93,19 +100,20 @@ export default function Registration() {
           return;
         }
         
-        // No employee record - show registration form and pre-fill email
-        if (isMounted) {
+        // No employee record - show registration form
+        if (isMounted && !redirecting) {
           setFormData(prev => ({ ...prev, email: userData.email, full_name: userData.full_name || "" }));
           setInitialLoading(false);
         }
       } catch (error) {
-        console.log("Error checking employee:", error);
-        if (isMounted) setInitialLoading(false);
+        console.error("Error checking employee:", error);
+        if (isMounted && !redirecting) setInitialLoading(false);
       }
     };
+    
     checkExistingEmployee();
     return () => { isMounted = false; };
-  }, [navigate]);
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
