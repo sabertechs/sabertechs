@@ -20,7 +20,8 @@ import {
   UserPlus,
   Shield,
   Settings,
-  Megaphone
+  Megaphone,
+  Newspaper
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,6 +111,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
         { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
         { name: "Settings", icon: Settings, page: "Settings" },
@@ -124,6 +126,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
         { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
         { name: "Settings", icon: Settings, page: "Settings" },
