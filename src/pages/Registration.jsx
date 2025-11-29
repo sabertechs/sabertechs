@@ -245,6 +245,7 @@ export default function Registration() {
     setLoading(true);
     await base44.entities.Employee.create({
       ...formData,
+      email: formData.email.toLowerCase().trim(),
       pan_number: formData.pan_number.toUpperCase(),
       aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
       status: "pending",
