@@ -9,8 +9,11 @@ import {
   Save,
   Loader2,
   CheckCircle,
-  X
+  X,
+  AlertTriangle,
+  Scan
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +31,9 @@ import {
 export default function EditProfileSection({ employee, onUpdate }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [uploading, setUploading] = useState({});
+  const [extracting, setExtracting] = useState({});
+  const [mismatchWarnings, setMismatchWarnings] = useState([]);
+  const [extractedData, setExtractedData] = useState({ aadhaar: null, pan: null });
   const [formData, setFormData] = useState({
     date_of_birth: employee?.date_of_birth || "",
     gender: employee?.gender || "",
@@ -59,10 +65,128 @@ export default function EditProfileSection({ employee, onUpdate }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, [field]: file_url }));
       toast.success("File uploaded successfully!");
+      
+      // Auto-extract data from Aadhaar or PAN documents
+      if (field === "aadhaar_document" || field === "pan_document") {
+        await extractDocumentData(file_url, field);
+      }
     } catch (err) {
       toast.error("Failed to upload file");
     }
     setUploading(prev => ({ ...prev, [field]: false }));
+  };
+
+  const extractDocumentData = async (fileUrl, field) => {
+    const docType = field === "aadhaar_document" ? "aadhaar" : "pan";
+    setExtracting(prev => ({ ...prev, [docType]: true }));
+    
+    try {
+      const schema = field === "aadhaar_document" ? {
+        type: "object",
+        properties: {
+          aadhaar_number: { type: "string", description: "12-digit Aadhaar number" },
+          name: { type: "string", description: "Full name on the card" },
+          date_of_birth: { type: "string", description: "Date of birth in YYYY-MM-DD format" },
+          gender: { type: "string", description: "Gender (male/female/other)" }
+        }
+      } : {
+        type: "object",
+        properties: {
+          pan_number: { type: "string", description: "10-character PAN number" },
+          name: { type: "string", description: "Full name on the card" },
+          father_name: { type: "string", description: "Father's name" },
+          date_of_birth: { type: "string", description: "Date of birth in YYYY-MM-DD format" }
+        }
+      };
+
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: fileUrl,
+        json_schema: schema
+      });
+
+      if (result.status === "success" && result.output) {
+        const extracted = result.output;
+        setExtractedData(prev => ({ ...prev, [docType]: extracted }));
+        
+        // Check for mismatches
+        checkForMismatches(extracted, docType);
+        
+        toast.success(`${docType === 'aadhaar' ? 'Aadhaar' : 'PAN'} data extracted successfully!`);
+      }
+    } catch (err) {
+      console.error("Extraction error:", err);
+      toast.error("Could not extract data from document");
+    }
+    
+    setExtracting(prev => ({ ...prev, [docType]: false }));
+  };
+
+  const checkForMismatches = (extracted, docType) => {
+    const warnings = [...mismatchWarnings.filter(w => w.source !== docType)];
+    
+    // Check DOB mismatch
+    if (extracted.date_of_birth && formData.date_of_birth) {
+      const extractedDob = extracted.date_of_birth;
+      const formDob = formData.date_of_birth;
+      
+      if (extractedDob !== formDob) {
+        warnings.push({
+          source: docType,
+          type: "dob",
+          message: `Date of Birth mismatch: Your profile shows ${formDob}, but ${docType === 'aadhaar' ? 'Aadhaar' : 'PAN'} shows ${extractedDob}`,
+          extractedValue: extractedDob
+        });
+      }
+    }
+
+    // Check gender mismatch (for Aadhaar)
+    if (docType === "aadhaar" && extracted.gender && formData.gender) {
+      if (extracted.gender.toLowerCase() !== formData.gender.toLowerCase()) {
+        warnings.push({
+          source: docType,
+          type: "gender",
+          message: `Gender mismatch: Your profile shows ${formData.gender}, but Aadhaar shows ${extracted.gender}`,
+          extractedValue: extracted.gender.toLowerCase()
+        });
+      }
+    }
+
+    // Cross-check between Aadhaar and PAN if both exist
+    if (docType === "pan" && extractedData.aadhaar) {
+      if (extracted.date_of_birth && extractedData.aadhaar.date_of_birth) {
+        if (extracted.date_of_birth !== extractedData.aadhaar.date_of_birth) {
+          warnings.push({
+            source: "cross",
+            type: "dob_cross",
+            message: `DOB differs between documents: Aadhaar shows ${extractedData.aadhaar.date_of_birth}, PAN shows ${extracted.date_of_birth}`
+          });
+        }
+      }
+    }
+    
+    if (docType === "aadhaar" && extractedData.pan) {
+      if (extracted.date_of_birth && extractedData.pan.date_of_birth) {
+        if (extracted.date_of_birth !== extractedData.pan.date_of_birth) {
+          warnings.push({
+            source: "cross",
+            type: "dob_cross",
+            message: `DOB differs between documents: Aadhaar shows ${extracted.date_of_birth}, PAN shows ${extractedData.pan.date_of_birth}`
+          });
+        }
+      }
+    }
+
+    setMismatchWarnings(warnings);
+  };
+
+  const applyExtractedValue = (type, value) => {
+    if (type === "dob") {
+      setFormData(prev => ({ ...prev, date_of_birth: value }));
+    } else if (type === "gender") {
+      setFormData(prev => ({ ...prev, gender: value }));
+    }
+    setMismatchWarnings(prev => prev.filter(w => w.type !== type));
+    toast.success("Value updated from document");
   };
 
   const handleSubmit = () => {
@@ -82,6 +206,8 @@ export default function EditProfileSection({ employee, onUpdate }) {
       aadhaar_document: employee?.aadhaar_document || "",
       pan_document: employee?.pan_document || ""
     });
+    setMismatchWarnings([]);
+    setExtractedData({ aadhaar: null, pan: null });
     setShowEditDialog(true);
   };
 
@@ -260,18 +386,37 @@ export default function EditProfileSection({ employee, onUpdate }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Aadhaar Document */}
               <div className="space-y-2">
-                <Label>Aadhaar Document</Label>
+                <Label className="flex items-center gap-2">
+                  Aadhaar Document
+                  {extracting.aadhaar && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
+                </Label>
                 <div className={`border-2 border-dashed rounded-lg p-4 text-center ${formData.aadhaar_document ? 'border-green-300 bg-green-50' : 'border-slate-200'}`}>
                   {formData.aadhaar_document ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-green-700 text-sm">Uploaded</span>
-                      <button 
-                        onClick={() => setFormData(prev => ({ ...prev, aadhaar_document: "" }))}
-                        className="text-red-500 hover:text-red-700 ml-2"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-green-700 text-sm">Uploaded</span>
+                        <button 
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, aadhaar_document: "" }));
+                            setExtractedData(prev => ({ ...prev, aadhaar: null }));
+                            setMismatchWarnings(prev => prev.filter(w => w.source !== 'aadhaar'));
+                          }}
+                          className="text-red-500 hover:text-red-700 ml-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {extracting.aadhaar && (
+                        <p className="text-xs text-indigo-600 flex items-center justify-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Extracting data...
+                        </p>
+                      )}
+                      {extractedData.aadhaar && (
+                        <p className="text-xs text-slate-500">
+                          Extracted: {extractedData.aadhaar.aadhaar_number || 'N/A'}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <label className="cursor-pointer">
@@ -287,6 +432,7 @@ export default function EditProfileSection({ employee, onUpdate }) {
                         <>
                           <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1" />
                           <span className="text-slate-500 text-sm">Upload Aadhaar</span>
+                          <p className="text-xs text-slate-400 mt-1">Auto-extracts details</p>
                         </>
                       )}
                     </label>
@@ -296,18 +442,37 @@ export default function EditProfileSection({ employee, onUpdate }) {
 
               {/* PAN Document */}
               <div className="space-y-2">
-                <Label>PAN Card Document</Label>
+                <Label className="flex items-center gap-2">
+                  PAN Card Document
+                  {extracting.pan && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
+                </Label>
                 <div className={`border-2 border-dashed rounded-lg p-4 text-center ${formData.pan_document ? 'border-green-300 bg-green-50' : 'border-slate-200'}`}>
                   {formData.pan_document ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-green-700 text-sm">Uploaded</span>
-                      <button 
-                        onClick={() => setFormData(prev => ({ ...prev, pan_document: "" }))}
-                        className="text-red-500 hover:text-red-700 ml-2"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-green-700 text-sm">Uploaded</span>
+                        <button 
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, pan_document: "" }));
+                            setExtractedData(prev => ({ ...prev, pan: null }));
+                            setMismatchWarnings(prev => prev.filter(w => w.source !== 'pan'));
+                          }}
+                          className="text-red-500 hover:text-red-700 ml-2"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {extracting.pan && (
+                        <p className="text-xs text-indigo-600 flex items-center justify-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Extracting data...
+                        </p>
+                      )}
+                      {extractedData.pan && (
+                        <p className="text-xs text-slate-500">
+                          Extracted: {extractedData.pan.pan_number || 'N/A'}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <label className="cursor-pointer">
@@ -323,6 +488,7 @@ export default function EditProfileSection({ employee, onUpdate }) {
                         <>
                           <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1" />
                           <span className="text-slate-500 text-sm">Upload PAN</span>
+                          <p className="text-xs text-slate-400 mt-1">Auto-extracts details</p>
                         </>
                       )}
                     </label>
@@ -330,6 +496,31 @@ export default function EditProfileSection({ employee, onUpdate }) {
                 </div>
               </div>
             </div>
+
+            {/* Mismatch Warnings */}
+            {mismatchWarnings.length > 0 && (
+              <div className="space-y-2">
+                {mismatchWarnings.map((warning, idx) => (
+                  <Alert key={idx} variant="destructive" className="bg-amber-50 border-amber-300">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertTitle className="text-amber-800">Data Mismatch Detected</AlertTitle>
+                    <AlertDescription className="text-amber-700">
+                      <p className="mb-2">{warning.message}</p>
+                      {warning.extractedValue && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="border-amber-400 text-amber-700 hover:bg-amber-100"
+                          onClick={() => applyExtractedValue(warning.type, warning.extractedValue)}
+                        >
+                          Use value from document
+                        </Button>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
