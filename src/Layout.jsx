@@ -56,7 +56,20 @@ export default function Layout({ children, currentPageName }) {
         
         const employees = await base44.entities.Employee.filter({ email: userData.email });
         if (employees.length > 0) {
-          setEmployeeData(employees[0]);
+          const emp = employees[0];
+          setEmployeeData(emp);
+          
+          // If on Registration page but employee exists, redirect to appropriate dashboard
+          if (currentPageName === "Registration") {
+            if (emp.role === 'hr' || emp.role === 'manager') {
+              window.location.replace(createPageUrl("HRDashboard"));
+            } else if (emp.role === 'department_head') {
+              window.location.replace(createPageUrl("DeptHeadDashboard"));
+            } else {
+              window.location.replace(createPageUrl("EmployeeDashboard"));
+            }
+            return;
+          }
         } else if (userData.role === 'admin') {
           // Admin users don't need employee record - treat as HR
           setEmployeeData({ role: 'hr', email: userData.email });
