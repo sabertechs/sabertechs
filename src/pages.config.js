@@ -19,6 +19,7 @@ import AccessControl from './pages/AccessControl';
 import AuthRedirect from './pages/AuthRedirect';
 import Settings from './pages/Settings';
 import NotificationCenter from './pages/NotificationCenter';
+import CompanyFeed from './pages/CompanyFeed';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "AuthRedirect": AuthRedirect,
     "Settings": Settings,
     "NotificationCenter": NotificationCenter,
+    "CompanyFeed": CompanyFeed,
 }
 
 export const pagesConfig = {

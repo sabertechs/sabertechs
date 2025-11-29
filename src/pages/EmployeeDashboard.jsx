@@ -13,13 +13,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  ChevronRight,
-  Download
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EditProfileSection from "@/components/employee/EditProfileSection";
+import CompanyFeed from "@/components/feed/CompanyFeed";
 
 export default function EmployeeDashboard() {
   const [user, setUser] = useState(null);
@@ -42,11 +42,7 @@ export default function EmployeeDashboard() {
     enabled: !!user?.email,
   });
 
-  const { data: payslips = [] } = useQuery({
-    queryKey: ['payslips', user?.email],
-    queryFn: () => base44.entities.Payslip.filter({ employee_email: user?.email }, '-created_date', 3),
-    enabled: !!user?.email,
-  });
+
 
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', user?.email],
@@ -216,48 +212,8 @@ export default function EmployeeDashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Payslips */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Recent Payslips</CardTitle>
-            <Link to={createPageUrl("MyPayslips")}>
-              <Button variant="ghost" size="sm">
-                View All <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {payslips.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
-                <FileText className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-                <p>No payslips available yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {payslips.map((payslip) => (
-                  <div key={payslip.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div>
-                      <p className="font-medium text-slate-800">{payslip.month} {payslip.year}</p>
-                      <p className="text-sm text-slate-500">Net: ₹{payslip.net_salary?.toLocaleString()}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={payslip.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
-                        {payslip.payment_status}
-                      </Badge>
-                      {payslip.payslip_url && (
-                        <a href={payslip.payslip_url} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" variant="outline">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Company Feed */}
+        <CompanyFeed user={user} limit={3} />
       </div>
 
       {/* My Profile Section */}
