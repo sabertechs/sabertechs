@@ -80,9 +80,11 @@ export default function Registration() {
           return;
         }
         
-        // Fetch employee record fresh - no caching
-        const employees = await base44.entities.Employee.filter({ email: userData.email });
-        console.log("Registration check - Found employees:", employees.length, "for email:", userData.email);
+        // Fetch employee record fresh - use lowercase email for case-insensitive match
+        const userEmail = userData.email.toLowerCase().trim();
+        const allEmployees = await base44.entities.Employee.list();
+        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
+        console.log("Registration check - Found employees:", employees.length, "for email:", userEmail);
         
         if (employees.length > 0) {
           const emp = employees[0];

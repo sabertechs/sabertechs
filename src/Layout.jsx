@@ -54,7 +54,10 @@ export default function Layout({ children, currentPageName }) {
         const userData = await base44.auth.me();
         setUser(userData);
         
-        const employees = await base44.entities.Employee.filter({ email: userData.email });
+        // Use case-insensitive email matching
+        const userEmail = userData.email.toLowerCase().trim();
+        const allEmployees = await base44.entities.Employee.list();
+        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
         if (employees.length > 0) {
           const emp = employees[0];
           setEmployeeData(emp);

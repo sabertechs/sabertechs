@@ -17,8 +17,10 @@ export default function AuthRedirect() {
           return;
         }
 
-        // Check if employee exists in database
-        const employees = await base44.entities.Employee.filter({ email: user.email });
+        // Check if employee exists in database - case-insensitive match
+        const userEmail = user.email.toLowerCase().trim();
+        const allEmployees = await base44.entities.Employee.list();
+        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
         
         if (employees.length > 0) {
           const role = employees[0].role || 'employee';
