@@ -157,6 +157,11 @@ export default function EmployeeUpload() {
     let successCount = 0;
     let failedCount = 0;
 
+    // Process in batches to avoid rate limiting
+    const batchSize = 5;
+    const delayBetweenBatches = 1500; // 1.5 seconds between batches
+    const delayBetweenRecords = 300; // 300ms between individual records
+    
     for (let i = 0; i < rows.length; i++) {
       const { data, lineNumber } = rows[i];
       
@@ -171,38 +176,58 @@ export default function EmployeeUpload() {
         });
         failedCount++;
       } else {
-        try {
-          await base44.entities.Employee.create({
-            full_name: data.full_name?.trim(),
-            father_name: data.father_name?.trim() || '',
-            email: data.email?.trim().toLowerCase(),
-            phone: data.phone?.trim(),
-            date_of_birth: data.date_of_birth || null,
-            gender: data.gender?.toLowerCase() || null,
-            address: data.address?.trim() || '',
-            locality: data.locality?.trim() || '',
-            city: data.city?.trim() || '',
-            state: data.state?.trim() || '',
-            pincode: data.pincode?.trim() || '',
-            aadhaar_number: data.aadhaar_number?.replace(/\s/g, '') || '',
-            pan_number: data.pan_number?.toUpperCase() || '',
-            department: data.department?.toLowerCase() || '',
-            designation: data.designation?.trim() || '',
-            date_of_joining: data.date_of_joining || null,
-            salary: data.salary ? parseFloat(data.salary) : null,
-            role: data.role?.toLowerCase() || 'employee',
-            status: data.status?.toLowerCase() || 'pending',
-            bg_verification_status: 'pending'
-          });
-          successCount++;
-        } catch (err) {
-          errors.push({
-            line: lineNumber,
-            email: data.email || 'N/A',
-            name: data.full_name || 'N/A',
-            errors: [err.message || 'Failed to create employee record']
-          });
-          failedCount++;
+        let retries = 3;
+        let success = false;
+        
+        while (retries > 0 && !success) {
+          try {
+            await base44.entities.Employee.create({
+              full_name: data.full_name?.trim(),
+              father_name: data.father_name?.trim() || '',
+              email: data.email?.trim().toLowerCase(),
+              phone: data.phone?.trim(),
+              date_of_birth: data.date_of_birth || null,
+              gender: data.gender?.toLowerCase() || null,
+              address: data.address?.trim() || '',
+              locality: data.locality?.trim() || '',
+              city: data.city?.trim() || '',
+              state: data.state?.trim() || '',
+              pincode: data.pincode?.trim() || '',
+              aadhaar_number: data.aadhaar_number?.replace(/\s/g, '') || '',
+              pan_number: data.pan_number?.toUpperCase() || '',
+              department: data.department?.toLowerCase() || '',
+              designation: data.designation?.trim() || '',
+              date_of_joining: data.date_of_joining || null,
+              salary: data.salary ? parseFloat(data.salary) : null,
+              role: data.role?.toLowerCase() || 'employee',
+              status: data.status?.toLowerCase() || 'pending',
+              bg_verification_status: 'pending'
+            });
+            successCount++;
+            success = true;
+          } catch (err) {
+            retries--;
+            if (err.message?.toLowerCase().includes('rate limit') && retries > 0) {
+              // Wait longer on rate limit
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            } else if (retries === 0) {
+              errors.push({
+                line: lineNumber,
+                email: data.email || 'N/A',
+                name: data.full_name || 'N/A',
+                errors: [err.message || 'Failed to create employee record']
+              });
+              failedCount++;
+            }
+          }
+        }
+        
+        // Add delay between records
+        await new Promise(resolve => setTimeout(resolve, delayBetweenRecords));
+        
+        // Add extra delay after each batch
+        if ((i + 1) % batchSize === 0) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
         }
       }
       
