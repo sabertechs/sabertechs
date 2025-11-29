@@ -117,17 +117,43 @@ export default function Registration() {
 
   const handleFileUpload = async (file, field) => {
     setUploadingDoc(field);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    if (field === "education_certificates") {
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      if (field === "education_certificates") {
+        setFormData(prev => ({
+          ...prev,
+          education_certificates: [...prev.education_certificates, file_url]
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, [field]: file_url }));
+      }
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: null }));
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+    }
+    setUploadingDoc(null);
+  };
+
+  const handleMultipleFileUpload = async (files, field) => {
+    setUploadingDoc(field);
+    try {
+      const uploadPromises = Array.from(files).map(file => 
+        base44.integrations.Core.UploadFile({ file })
+      );
+      const results = await Promise.all(uploadPromises);
+      const fileUrls = results.map(r => r.file_url);
+      
       setFormData(prev => ({
         ...prev,
-        education_certificates: [...prev.education_certificates, file_url]
+        education_certificates: [...prev.education_certificates, ...fileUrls]
       }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: file_url }));
-    }
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: null }));
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
     }
     setUploadingDoc(null);
   };
@@ -466,9 +492,9 @@ export default function Registration() {
                         accept=".pdf,.jpg,.jpeg,.png"
                         multiple
                         onChange={(e) => {
-                          Array.from(e.target.files).forEach(file => {
-                            handleFileUpload(file, "education_certificates");
-                          });
+                          if (e.target.files.length > 0) {
+                            handleMultipleFileUpload(e.target.files, "education_certificates");
+                          }
                         }}
                       />
                       {uploadingDoc === "education_certificates" ? (
