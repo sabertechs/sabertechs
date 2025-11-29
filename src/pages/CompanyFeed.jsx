@@ -86,6 +86,68 @@ export default function CompanyFeedPage() {
 
   const isHR = employee?.role === 'hr' || employee?.role === 'manager' || employee?.role === 'department_head' || user?.role === 'admin';
 
+  // Auto-generate birthday and anniversary posts
+  React.useEffect(() => {
+    if (!isHR || employees.length === 0 || posts.length === 0) return;
+    
+    const today = format(new Date(), 'MM-dd');
+    const checkAndCreatePost = async () => {
+      for (const emp of employees) {
+        // Check birthday
+        if (emp.date_of_birth) {
+          const dobMMDD = emp.date_of_birth.slice(5); // Get MM-DD
+          if (dobMMDD === today) {
+            const existingBirthday = posts.find(p => 
+              p.post_type === 'birthday' && 
+              p.employee_email === emp.email &&
+              p.event_date === format(new Date(), 'yyyy-MM-dd')
+            );
+            if (!existingBirthday) {
+              await base44.entities.CompanyPost.create({
+                title: `🎂 Happy Birthday ${emp.full_name}!`,
+                content: `Wishing you a wonderful birthday filled with joy and happiness!`,
+                post_type: 'birthday',
+                employee_email: emp.email,
+                employee_name: emp.full_name,
+                event_date: format(new Date(), 'yyyy-MM-dd')
+              });
+              queryClient.invalidateQueries(['companyPosts']);
+            }
+          }
+        }
+        
+        // Check work anniversary
+        if (emp.date_of_joining) {
+          const dojMMDD = emp.date_of_joining.slice(5); // Get MM-DD
+          const joiningYear = parseInt(emp.date_of_joining.slice(0, 4));
+          const currentYear = new Date().getFullYear();
+          const yearsCompleted = currentYear - joiningYear;
+          
+          if (dojMMDD === today && yearsCompleted > 0) {
+            const existingAnniversary = posts.find(p => 
+              p.post_type === 'anniversary' && 
+              p.employee_email === emp.email &&
+              p.event_date === format(new Date(), 'yyyy-MM-dd')
+            );
+            if (!existingAnniversary) {
+              await base44.entities.CompanyPost.create({
+                title: `🎉 Happy ${yearsCompleted} Year Work Anniversary ${emp.full_name}!`,
+                content: `Congratulations on completing ${yearsCompleted} year${yearsCompleted > 1 ? 's' : ''} with us! Thank you for your dedication and hard work.`,
+                post_type: 'anniversary',
+                employee_email: emp.email,
+                employee_name: emp.full_name,
+                event_date: format(new Date(), 'yyyy-MM-dd')
+              });
+              queryClient.invalidateQueries(['companyPosts']);
+            }
+          }
+        }
+      }
+    };
+    
+    checkAndCreatePost();
+  }, [employees, posts, isHR]);
+
   const createPostMutation = useMutation({
     mutationFn: (data) => base44.entities.CompanyPost.create(data),
     onSuccess: () => {
@@ -389,25 +451,44 @@ export default function CompanyFeedPage() {
               <>
                 <div className="space-y-2">
                   <Label>Select Employee *</Label>
-                  <Select value={formData.employee_email} onValueChange={(v) => setFormData(prev => ({ ...prev, employee_email: v }))}>
+                  <Select 
+                    value={formData.employee_email} 
+                    onValueChange={(v) => {
+                      const emp = employees.find(e => e.email === v);
+                      if (emp) {
+                        const eventDate = formData.post_type === 'birthday' 
+                          ? emp.date_of_birth 
+                          : emp.date_of_joining;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          employee_email: v,
+                          event_date: eventDate || ''
+                        }));
+                      }
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Choose employee" />
                     </SelectTrigger>
                     <SelectContent>
                       {employees.map(emp => (
                         <SelectItem key={emp.email} value={emp.email}>
-                          {emp.full_name}
+                          {emp.full_name} 
+                          {formData.post_type === 'birthday' && emp.date_of_birth && ` (DOB: ${emp.date_of_birth})`}
+                          {formData.post_type === 'anniversary' && emp.date_of_joining && ` (Joined: ${emp.date_of_joining})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Event Date</Label>
+                  <Label>Event Date (Auto-filled from employee data)</Label>
                   <Input
                     type="date"
                     value={formData.event_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, event_date: e.target.value }))}
+                    readOnly
+                    className="bg-slate-50"
                   />
                 </div>
               </>
