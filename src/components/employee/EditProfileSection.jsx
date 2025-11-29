@@ -30,6 +30,7 @@ import {
 
 export default function EditProfileSection({ employee, onUpdate }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [step, setStep] = useState(1); // Step 1: Upload docs, Step 2: Review & Edit
   const [uploading, setUploading] = useState({});
   const [extracting, setExtracting] = useState({});
   const [mismatchWarnings, setMismatchWarnings] = useState([]);
@@ -44,7 +45,9 @@ export default function EditProfileSection({ employee, onUpdate }) {
     pincode: employee?.pincode || "",
     profile_photo: employee?.profile_photo || "",
     aadhaar_document: employee?.aadhaar_document || "",
-    pan_document: employee?.pan_document || ""
+    pan_document: employee?.pan_document || "",
+    aadhaar_number: employee?.aadhaar_number || "",
+    pan_number: employee?.pan_number || ""
   });
 
   const updateMutation = useMutation({
@@ -108,10 +111,26 @@ export default function EditProfileSection({ employee, onUpdate }) {
         const extracted = result.output;
         setExtractedData(prev => ({ ...prev, [docType]: extracted }));
         
-        // Check for mismatches
+        // Auto-fill form with extracted data
+        if (docType === "aadhaar") {
+          setFormData(prev => ({
+            ...prev,
+            aadhaar_number: extracted.aadhaar_number?.replace(/\s/g, '') || prev.aadhaar_number,
+            date_of_birth: extracted.date_of_birth || prev.date_of_birth,
+            gender: extracted.gender?.toLowerCase() || prev.gender
+          }));
+        } else if (docType === "pan") {
+          setFormData(prev => ({
+            ...prev,
+            pan_number: extracted.pan_number?.toUpperCase() || prev.pan_number,
+            date_of_birth: prev.date_of_birth || extracted.date_of_birth // Only fill if empty
+          }));
+        }
+        
+        // Check for mismatches between documents
         checkForMismatches(extracted, docType);
         
-        toast.success(`${docType === 'aadhaar' ? 'Aadhaar' : 'PAN'} data extracted successfully!`);
+        toast.success(`${docType === 'aadhaar' ? 'Aadhaar' : 'PAN'} data extracted and auto-filled!`);
       }
     } catch (err) {
       console.error("Extraction error:", err);
@@ -204,12 +223,18 @@ export default function EditProfileSection({ employee, onUpdate }) {
       pincode: employee?.pincode || "",
       profile_photo: employee?.profile_photo || "",
       aadhaar_document: employee?.aadhaar_document || "",
-      pan_document: employee?.pan_document || ""
+      pan_document: employee?.pan_document || "",
+      aadhaar_number: employee?.aadhaar_number || "",
+      pan_number: employee?.pan_number || ""
     });
     setMismatchWarnings([]);
     setExtractedData({ aadhaar: null, pan: null });
+    // Start at step 1 if documents not uploaded, otherwise step 2
+    setStep(employee?.aadhaar_document && employee?.pan_document ? 2 : 1);
     setShowEditDialog(true);
   };
+
+  const canProceedToStep2 = formData.aadhaar_document && formData.pan_document && !extracting.aadhaar && !extracting.pan;
 
   return (
     <>
@@ -271,13 +296,167 @@ export default function EditProfileSection({ employee, onUpdate }) {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit My Profile</DialogTitle>
+            <DialogTitle>
+              {step === 1 ? "Step 1: Upload Documents" : "Step 2: Review & Edit Details"}
+            </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            {/* Profile Photo Upload */}
-            <div className="space-y-2">
-              <Label>Profile Photo</Label>
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${step === 1 ? 'bg-indigo-600 text-white' : 'bg-green-100 text-green-700'}`}>
+                {step > 1 ? <CheckCircle className="w-4 h-4" /> : <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-sm">1</span>}
+                <span className="text-sm font-medium">Upload Docs</span>
+              </div>
+              <div className="w-8 h-0.5 bg-slate-200" />
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${step === 2 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                <span className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-sm">2</span>
+                <span className="text-sm font-medium">Review & Edit</span>
+              </div>
+            </div>
+
+            {step === 1 && (
+              <>
+                {/* Step 1: Document Uploads */}
+                <div className="text-center mb-4">
+                  <p className="text-slate-600">Upload your Aadhaar and PAN card to auto-fill your details</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Aadhaar Document */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      Aadhaar Card *
+                      {extracting.aadhaar && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
+                    </Label>
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${formData.aadhaar_document ? 'border-green-300 bg-green-50' : 'border-slate-200 hover:border-indigo-300'}`}>
+                      {formData.aadhaar_document ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                            <span className="text-green-700 font-medium">Uploaded</span>
+                            <button 
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, aadhaar_document: "", aadhaar_number: "" }));
+                                setExtractedData(prev => ({ ...prev, aadhaar: null }));
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-2"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {extracting.aadhaar ? (
+                            <p className="text-sm text-indigo-600 flex items-center justify-center gap-1">
+                              <Loader2 className="w-4 h-4 animate-spin" /> Extracting details...
+                            </p>
+                          ) : extractedData.aadhaar && (
+                            <div className="text-xs text-slate-600 bg-white rounded p-2 mt-2">
+                              <p><strong>Aadhaar:</strong> {extractedData.aadhaar.aadhaar_number || 'N/A'}</p>
+                              <p><strong>DOB:</strong> {extractedData.aadhaar.date_of_birth || 'N/A'}</p>
+                              <p><strong>Gender:</strong> {extractedData.aadhaar.gender || 'N/A'}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer block">
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "aadhaar_document")}
+                          />
+                          {uploading.aadhaar_document ? (
+                            <Loader2 className="w-8 h-8 mx-auto text-indigo-500 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                              <span className="text-slate-600 font-medium">Upload Aadhaar Card</span>
+                              <p className="text-xs text-slate-400 mt-1">JPG, PNG supported</p>
+                            </>
+                          )}
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* PAN Document */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      PAN Card *
+                      {extracting.pan && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
+                    </Label>
+                    <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${formData.pan_document ? 'border-green-300 bg-green-50' : 'border-slate-200 hover:border-indigo-300'}`}>
+                      {formData.pan_document ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                            <span className="text-green-700 font-medium">Uploaded</span>
+                            <button 
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, pan_document: "", pan_number: "" }));
+                                setExtractedData(prev => ({ ...prev, pan: null }));
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-2"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {extracting.pan ? (
+                            <p className="text-sm text-indigo-600 flex items-center justify-center gap-1">
+                              <Loader2 className="w-4 h-4 animate-spin" /> Extracting details...
+                            </p>
+                          ) : extractedData.pan && (
+                            <div className="text-xs text-slate-600 bg-white rounded p-2 mt-2">
+                              <p><strong>PAN:</strong> {extractedData.pan.pan_number || 'N/A'}</p>
+                              <p><strong>Name:</strong> {extractedData.pan.name || 'N/A'}</p>
+                              <p><strong>DOB:</strong> {extractedData.pan.date_of_birth || 'N/A'}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer block">
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "pan_document")}
+                          />
+                          {uploading.pan_document ? (
+                            <Loader2 className="w-8 h-8 mx-auto text-indigo-500 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                              <span className="text-slate-600 font-medium">Upload PAN Card</span>
+                              <p className="text-xs text-slate-400 mt-1">JPG, PNG supported</p>
+                            </>
+                          )}
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mismatch Warnings */}
+                {mismatchWarnings.length > 0 && (
+                  <div className="space-y-2">
+                    {mismatchWarnings.map((warning, idx) => (
+                      <Alert key={idx} variant="destructive" className="bg-amber-50 border-amber-300">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertTitle className="text-amber-800">Data Mismatch</AlertTitle>
+                        <AlertDescription className="text-amber-700">{warning.message}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                {/* Step 2: Review & Edit */}
+                {/* Profile Photo Upload */}
+                <div className="space-y-2">
+                  <Label>Profile Photo</Label>
               <div className="flex items-center gap-4">
                 {formData.profile_photo ? (
                   <div className="relative">
@@ -311,10 +490,41 @@ export default function EditProfileSection({ employee, onUpdate }) {
               </div>
             </div>
 
+            {/* Extracted Document Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-indigo-50 rounded-lg">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  Aadhaar Number
+                  {extractedData.aadhaar && <span className="text-xs text-green-600">(Auto-filled)</span>}
+                </Label>
+                <Input
+                  value={formData.aadhaar_number}
+                  onChange={(e) => setFormData(prev => ({ ...prev, aadhaar_number: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
+                  placeholder="12-digit Aadhaar number"
+                  maxLength={12}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  PAN Number
+                  {extractedData.pan && <span className="text-xs text-green-600">(Auto-filled)</span>}
+                </Label>
+                <Input
+                  value={formData.pan_number}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pan_number: e.target.value.toUpperCase().slice(0, 10) }))}
+                  placeholder="10-character PAN"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+
             {/* Personal Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
+                <Label className="flex items-center gap-2">
+                  Date of Birth
+                  {extractedData.aadhaar?.date_of_birth && <span className="text-xs text-green-600">(Auto-filled)</span>}
+                </Label>
                 <Input
                   type="date"
                   value={formData.date_of_birth}
@@ -322,7 +532,10 @@ export default function EditProfileSection({ employee, onUpdate }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label className="flex items-center gap-2">
+                  Gender
+                  {extractedData.aadhaar?.gender && <span className="text-xs text-green-600">(Auto-filled)</span>}
+                </Label>
                 <Select value={formData.gender} onValueChange={(v) => setFormData(prev => ({ ...prev, gender: v }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
@@ -382,166 +595,56 @@ export default function EditProfileSection({ employee, onUpdate }) {
               </div>
             </div>
 
-            {/* Document Uploads */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Aadhaar Document */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  Aadhaar Document
-                  {extracting.aadhaar && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
-                </Label>
-                <div className={`border-2 border-dashed rounded-lg p-4 text-center ${formData.aadhaar_document ? 'border-green-300 bg-green-50' : 'border-slate-200'}`}>
-                  {formData.aadhaar_document ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="text-green-700 text-sm">Uploaded</span>
-                        <button 
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, aadhaar_document: "" }));
-                            setExtractedData(prev => ({ ...prev, aadhaar: null }));
-                            setMismatchWarnings(prev => prev.filter(w => w.source !== 'aadhaar'));
-                          }}
-                          className="text-red-500 hover:text-red-700 ml-2"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {extracting.aadhaar && (
-                        <p className="text-xs text-indigo-600 flex items-center justify-center gap-1">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Extracting data...
-                        </p>
-                      )}
-                      {extractedData.aadhaar && (
-                        <p className="text-xs text-slate-500">
-                          Extracted: {extractedData.aadhaar.aadhaar_number || 'N/A'}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "aadhaar_document")}
-                      />
-                      {uploading.aadhaar_document ? (
-                        <Loader2 className="w-6 h-6 mx-auto text-indigo-500 animate-spin" />
-                      ) : (
-                        <>
-                          <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1" />
-                          <span className="text-slate-500 text-sm">Upload Aadhaar</span>
-                          <p className="text-xs text-slate-400 mt-1">Auto-extracts details</p>
-                        </>
-                      )}
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              {/* PAN Document */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  PAN Card Document
-                  {extracting.pan && <Scan className="w-4 h-4 text-indigo-500 animate-pulse" />}
-                </Label>
-                <div className={`border-2 border-dashed rounded-lg p-4 text-center ${formData.pan_document ? 'border-green-300 bg-green-50' : 'border-slate-200'}`}>
-                  {formData.pan_document ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="text-green-700 text-sm">Uploaded</span>
-                        <button 
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, pan_document: "" }));
-                            setExtractedData(prev => ({ ...prev, pan: null }));
-                            setMismatchWarnings(prev => prev.filter(w => w.source !== 'pan'));
-                          }}
-                          className="text-red-500 hover:text-red-700 ml-2"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {extracting.pan && (
-                        <p className="text-xs text-indigo-600 flex items-center justify-center gap-1">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Extracting data...
-                        </p>
-                      )}
-                      {extractedData.pan && (
-                        <p className="text-xs text-slate-500">
-                          Extracted: {extractedData.pan.pan_number || 'N/A'}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => e.target.files[0] && handleFileUpload(e.target.files[0], "pan_document")}
-                      />
-                      {uploading.pan_document ? (
-                        <Loader2 className="w-6 h-6 mx-auto text-indigo-500 animate-spin" />
-                      ) : (
-                        <>
-                          <Upload className="w-6 h-6 mx-auto text-slate-400 mb-1" />
-                          <span className="text-slate-500 text-sm">Upload PAN</span>
-                          <p className="text-xs text-slate-400 mt-1">Auto-extracts details</p>
-                        </>
-                      )}
-                    </label>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Mismatch Warnings */}
+            {/* Mismatch Warnings in Step 2 */}
             {mismatchWarnings.length > 0 && (
               <div className="space-y-2">
                 {mismatchWarnings.map((warning, idx) => (
                   <Alert key={idx} variant="destructive" className="bg-amber-50 border-amber-300">
                     <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <AlertTitle className="text-amber-800">Data Mismatch Detected</AlertTitle>
-                    <AlertDescription className="text-amber-700">
-                      <p className="mb-2">{warning.message}</p>
-                      {warning.extractedValue && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="border-amber-400 text-amber-700 hover:bg-amber-100"
-                          onClick={() => applyExtractedValue(warning.type, warning.extractedValue)}
-                        >
-                          Use value from document
-                        </Button>
-                      )}
-                    </AlertDescription>
+                    <AlertTitle className="text-amber-800">Data Mismatch</AlertTitle>
+                    <AlertDescription className="text-amber-700">{warning.message}</AlertDescription>
                   </Alert>
                 ))}
               </div>
             )}
+              </>
+            )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleSubmit} 
-              disabled={updateMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+            {step === 1 ? (
+              <>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+                <Button 
+                  onClick={() => setStep(2)} 
+                  disabled={!canProceedToStep2}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Continue to Review
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={updateMutation.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
