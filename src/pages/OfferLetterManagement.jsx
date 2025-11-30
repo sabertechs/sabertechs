@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Plus, Send, Download, Search, FileText, Mail, Loader2, CheckSquare } from "lucide-react";
+import { getOfferLetterEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,21 @@ export default function OfferLetterManagement() {
           title: 'Offer Letter Received',
           message: `Your offer letter for ${letter.designation} position has been sent.`,
           type: 'info'
+        });
+
+        // Send professional email
+        const emailBody = getOfferLetterEmail({
+          recipientName: letter.employee_name,
+          designation: letter.designation,
+          department: letter.department,
+          joiningDate: letter.joining_date ? format(new Date(letter.joining_date), 'MMMM d, yyyy') : 'TBD',
+          salary: letter.salary
+        });
+        
+        await base44.integrations.Core.SendEmail({
+          to: letter.employee_email,
+          subject: '🎉 Congratulations! Your Offer Letter from SaberTechs',
+          body: emailBody
         });
       }
     }
@@ -248,6 +264,21 @@ export default function OfferLetterManagement() {
                                 title: 'Offer Letter Received',
                                 message: `Your offer letter for ${letter.designation} position has been sent.`,
                                 type: 'info'
+                              });
+                              
+                              // Send professional email
+                              const emailBody = getOfferLetterEmail({
+                                recipientName: letter.employee_name,
+                                designation: letter.designation,
+                                department: letter.department,
+                                joiningDate: letter.joining_date ? format(new Date(letter.joining_date), 'MMMM d, yyyy') : 'TBD',
+                                salary: letter.salary
+                              });
+                              
+                              await base44.integrations.Core.SendEmail({
+                                to: letter.employee_email,
+                                subject: '🎉 Congratulations! Your Offer Letter from SaberTechs',
+                                body: emailBody
                               });
                             }}
                           >

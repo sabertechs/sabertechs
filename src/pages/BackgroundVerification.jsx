@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Search, CheckCircle, XCircle, Download, FileText, Loader2, Eye, ShieldCheck } from "lucide-react";
+import { getBGVStatusEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,12 +48,24 @@ export default function BackgroundVerification() {
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
-        // Send in-app notification only
+        // Send in-app notification
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Approved',
           message: 'Your background verification has been completed and approved. You are now an active employee.',
           type: 'success'
+        });
+
+        // Send professional email
+        const emailBody = getBGVStatusEmail({
+          recipientName: emp.full_name,
+          status: 'approved'
+        });
+        
+        await base44.integrations.Core.SendEmail({
+          to: emp.email,
+          subject: 'Background Verification Approved - SaberTechs',
+          body: emailBody
         });
       }
     }
@@ -63,6 +76,30 @@ export default function BackgroundVerification() {
   const handleReject = async (employeeIds) => {
     for (const id of employeeIds) {
       await base44.entities.Employee.update(id, { bg_verification_status: 'rejected' });
+      
+      const emp = employees.find(e => e.id === id);
+      if (emp) {
+        // Send in-app notification
+        await base44.entities.Notification.create({
+          recipient_email: emp.email,
+          title: 'Background Verification Update',
+          message: 'Your background verification could not be approved. Please contact HR for more details.',
+          type: 'alert'
+        });
+
+        // Send professional email
+        const emailBody = getBGVStatusEmail({
+          recipientName: emp.full_name,
+          status: 'rejected',
+          remarks: 'Please contact HR for more details.'
+        });
+        
+        await base44.integrations.Core.SendEmail({
+          to: emp.email,
+          subject: 'Background Verification Update - SaberTechs',
+          body: emailBody
+        });
+      }
     }
     queryClient.invalidateQueries(['employees']);
     setSelectedEmployees([]);
