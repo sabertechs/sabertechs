@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { getNotificationEmail } from "@/components/email/EmailTemplate";
 import {
   Bell,
   Send,
@@ -173,16 +174,15 @@ export default function NotificationCenter() {
         }
       }
 
-      // Send emails
+      // Send emails with professional template
       if (formData.send_email) {
         for (const emp of targetEmployees) {
-          let emailBody = `<h2>${formData.title}</h2><p>${formData.message}</p>`;
-          if (formData.image_url) {
-            emailBody += `<img src="${formData.image_url}" style="max-width:300px;margin:10px 0;" />`;
-          }
-          if (formData.link_url) {
-            emailBody += `<p><a href="${formData.link_url}">Click here for more details</a></p>`;
-          }
+          const emailBody = getNotificationEmail({
+            recipientName: emp.full_name,
+            title: formData.title,
+            message: formData.message + (formData.image_url ? `<br/><img src="${formData.image_url}" style="max-width:300px;margin:10px 0;border-radius:8px;" />` : ''),
+            link: formData.link_url || null
+          });
           
           await base44.integrations.Core.SendEmail({
             to: emp.email,

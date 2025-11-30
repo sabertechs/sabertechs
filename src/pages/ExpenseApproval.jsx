@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Search, Filter, CheckCircle, XCircle, Eye, Receipt, ExternalLink } from "lucide-react";
+import { getExpenseStatusEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ export default function ExpenseApproval() {
     onSuccess: async (_, { id, data }) => {
       queryClient.invalidateQueries(['expenses']);
       
-      // Create in-app notification
+      // Create in-app notification and send email
       const expense = expenses.find(e => e.id === id);
       if (expense) {
         const subject = data.status === 'approved' 
@@ -59,6 +60,21 @@ export default function ExpenseApproval() {
           title: subject,
           message: body,
           type: data.status === 'approved' ? 'success' : 'alert'
+        });
+
+        // Send professional email
+        const emailBody = getExpenseStatusEmail({
+          recipientName: expense.employee_name,
+          expenseType: expense.expense_type,
+          amount: expense.amount,
+          status: data.status,
+          remarks: data.rejection_reason || null
+        });
+        
+        await base44.integrations.Core.SendEmail({
+          to: expense.employee_email,
+          subject: subject,
+          body: emailBody
         });
       }
       
