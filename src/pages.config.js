@@ -20,6 +20,7 @@ import AuthRedirect from './pages/AuthRedirect';
 import Settings from './pages/Settings';
 import NotificationCenter from './pages/NotificationCenter';
 import CompanyFeed from './pages/CompanyFeed';
+import TestEmail from './pages/TestEmail';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "Settings": Settings,
     "NotificationCenter": NotificationCenter,
     "CompanyFeed": CompanyFeed,
+    "TestEmail": TestEmail,
 }
 
 export const pagesConfig = {
