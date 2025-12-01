@@ -277,6 +277,7 @@ export default function EmployeeUpload() {
     setUploadResult({
       success: successCount,
       failed: failedCount,
+      skipped: skippedCount,
       total: rows.length
     });
     setUploading(false);
