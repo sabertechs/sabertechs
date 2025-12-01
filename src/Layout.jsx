@@ -21,7 +21,8 @@ import {
   Shield,
   Settings,
   Megaphone,
-  Newspaper
+  Newspaper,
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
