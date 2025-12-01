@@ -181,7 +181,7 @@ function generateBGVPDF(emp) {
         ['Name:', emp.full_name],
         ['Staff ID:', emp.employee_id || emp.id || 'N/A'],
         ['Mobile:', emp.phone || 'N/A'],
-        ['Date of Birth:', emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'],
+        ['Date of Birth:', parseDate(emp.date_of_birth) ? format(parseDate(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'],
         ["Father's Name:", emp.father_name || 'N/A'],
         ['Address:', fullAddress.substring(0, 60) + (fullAddress.length > 60 ? '...' : '')]
     ];
