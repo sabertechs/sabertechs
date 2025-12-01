@@ -241,6 +241,9 @@ export default function EmployeeUpload() {
             });
             successCount++;
             success = true;
+            // Add to existing sets to prevent duplicates within the same upload
+            existingEmails.add(emailLower);
+            if (phoneTrimmed) existingPhones.add(phoneTrimmed);
           } catch (err) {
             retries--;
             if (err.message?.toLowerCase().includes('rate limit') && retries > 0) {
