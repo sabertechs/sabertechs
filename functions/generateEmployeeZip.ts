@@ -569,7 +569,7 @@ function generateBGVHTML(emp) {
     <table class="data-table">
       <tr><td>NAME ON PAN CARD</td><td>${emp.full_name}</td></tr>
       <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
-      <tr><td>DATE OF BIRTH</td><td>${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
+      <tr><td>DATE OF BIRTH</td><td>${parseDate(emp.date_of_birth) ? format(parseDate(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
     </table>
     <div class="section-title">VERIFIED INFORMATION*</div>
     <table class="data-table">
