@@ -247,8 +247,8 @@ export default function EmployeeUpload() {
           } catch (err) {
             retries--;
             if (err.message?.toLowerCase().includes('rate limit') && retries > 0) {
-              // Wait longer on rate limit
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              // Wait longer on rate limit - exponential backoff
+              await new Promise(resolve => setTimeout(resolve, 5000 * (4 - retries)));
             } else if (retries === 0) {
               errors.push({
                 line: lineNumber,
