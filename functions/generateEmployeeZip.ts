@@ -512,7 +512,7 @@ function generateBGVHTML(emp) {
         <div class="info-grid">
           <div class="info-item"><div class="info-label">Staff ID</div><div class="info-value">${emp.employee_id || emp.id || 'N/A'}</div></div>
           <div class="info-item"><div class="info-label">Mobile</div><div class="info-value">${emp.phone || 'N/A'}</div></div>
-          <div class="info-item"><div class="info-label">Date of Birth</div><div class="info-value">${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div></div>
+          <div class="info-item"><div class="info-label">Date of Birth</div><div class="info-value">${parseDate(emp.date_of_birth) ? format(parseDate(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div></div>
           <div class="info-item"><div class="info-label">Father's/Guardian's name</div><div class="info-value">${emp.father_name || 'N/A'}</div></div>
           <div class="info-item"><div class="info-label">Current Address</div><div class="info-value">${fullAddress}</div></div>
           <div class="info-item"><div class="info-label">Permanent Address</div><div class="info-value">${fullAddress}</div></div>
