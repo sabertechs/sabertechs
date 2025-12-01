@@ -171,6 +171,36 @@ export default function EmployeeUpload() {
     for (let i = 0; i < rows.length; i++) {
       const { data, lineNumber } = rows[i];
       
+      // Check for duplicates - skip if employee already exists
+      const emailLower = data.email?.toLowerCase().trim();
+      const phoneTrimmed = data.phone?.trim();
+      
+      if (emailLower && existingEmails.has(emailLower)) {
+        errors.push({
+          line: lineNumber,
+          email: data.email || 'N/A',
+          name: data.full_name || 'N/A',
+          errors: ['Employee with this email already exists - skipped'],
+          skipped: true
+        });
+        skippedCount++;
+        setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+        continue;
+      }
+      
+      if (phoneTrimmed && existingPhones.has(phoneTrimmed)) {
+        errors.push({
+          line: lineNumber,
+          email: data.email || 'N/A',
+          name: data.full_name || 'N/A',
+          errors: ['Employee with this phone number already exists - skipped'],
+          skipped: true
+        });
+        skippedCount++;
+        setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+        continue;
+      }
+      
       const validationErrors = validateRow(data, lineNumber);
       
       if (validationErrors.length > 0) {
