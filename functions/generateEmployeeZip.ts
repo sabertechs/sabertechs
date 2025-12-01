@@ -59,11 +59,30 @@ Deno.serve(async (req) => {
     }
 });
 
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    // Try ISO format first (YYYY-MM-DD)
+    let date = new Date(dateStr);
+    if (!isNaN(date.getTime())) return date;
+    
+    // Try DD/MM/YYYY or DD/MM/YY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+        let year = parseInt(parts[2]);
+        if (year < 100) year += 2000; // Convert 25 to 2025
+        date = new Date(year, parseInt(parts[1]) - 1, parseInt(parts[0]));
+        if (!isNaN(date.getTime())) return date;
+    }
+    
+    return null;
+}
+
 function generateOfferLetterPDF(emp, offerLetter) {
     const doc = new jsPDF();
     const currentDate = format(new Date(), 'MMMM d, yyyy');
-    const joiningDate = emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) 
-        ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') 
+    const joiningDateParsed = parseDate(emp.date_of_joining);
+    const joiningDate = joiningDateParsed 
+        ? format(joiningDateParsed, 'MMMM d, yyyy') 
         : 'the date of joining';
     
     // Title
