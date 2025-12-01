@@ -21,6 +21,8 @@ import Settings from './pages/Settings';
 import NotificationCenter from './pages/NotificationCenter';
 import CompanyFeed from './pages/CompanyFeed';
 import TestEmail from './pages/TestEmail';
+import PolicyManagement from './pages/PolicyManagement';
+import CompanyPolicies from './pages/CompanyPolicies';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +50,8 @@ export const PAGES = {
     "NotificationCenter": NotificationCenter,
     "CompanyFeed": CompanyFeed,
     "TestEmail": TestEmail,
+    "PolicyManagement": PolicyManagement,
+    "CompanyPolicies": CompanyPolicies,
 }
 
 export const pagesConfig = {
