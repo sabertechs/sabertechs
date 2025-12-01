@@ -389,18 +389,23 @@ export default function EmployeeUpload() {
 
             {uploadResult && (
               <div className="space-y-3">
-                <div className="flex gap-3">
-                  <div className="flex-1 bg-green-50 rounded-lg p-3 text-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-green-50 rounded-lg p-3 text-center">
                     <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
                     <p className="text-lg font-bold text-green-700">{uploadResult.success}</p>
                     <p className="text-xs text-green-600">Successful</p>
                   </div>
-                  <div className="flex-1 bg-red-50 rounded-lg p-3 text-center">
+                  <div className="bg-amber-50 rounded-lg p-3 text-center">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-amber-700">{uploadResult.skipped}</p>
+                    <p className="text-xs text-amber-600">Skipped (Duplicate)</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-3 text-center">
                     <AlertCircle className="w-5 h-5 text-red-600 mx-auto mb-1" />
                     <p className="text-lg font-bold text-red-700">{uploadResult.failed}</p>
                     <p className="text-xs text-red-600">Failed</p>
                   </div>
-                  <div className="flex-1 bg-slate-50 rounded-lg p-3 text-center">
+                  <div className="bg-slate-50 rounded-lg p-3 text-center">
                     <FileSpreadsheet className="w-5 h-5 text-slate-600 mx-auto mb-1" />
                     <p className="text-lg font-bold text-slate-700">{uploadResult.total}</p>
                     <p className="text-xs text-slate-600">Total</p>
