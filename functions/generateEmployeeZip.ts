@@ -274,7 +274,7 @@ function generateBGVPDF(emp) {
     doc.setFont('helvetica', 'normal');
     doc.text(`Name on PAN Card: ${emp.full_name}`, 20, 65);
     doc.text(`PAN Number: ${emp.pan_number || 'N/A'}`, 20, 75);
-    doc.text(`Date of Birth: ${emp.date_of_birth ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}`, 20, 85);
+    doc.text(`Date of Birth: ${parseDate(emp.date_of_birth) ? format(parseDate(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}`, 20, 85);
     
     doc.setFont('helvetica', 'bold');
     doc.text('RESULT', 20, 105);
