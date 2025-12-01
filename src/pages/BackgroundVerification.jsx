@@ -56,17 +56,7 @@ export default function BackgroundVerification() {
           type: 'success'
         });
 
-        // Send professional email
-        const emailBody = getBGVStatusEmail({
-          recipientName: emp.full_name,
-          status: 'approved'
-        });
-        
-        await base44.integrations.Core.SendEmail({
-          to: emp.email,
-          subject: 'Background Verification Approved - SaberTechs',
-          body: emailBody
-        });
+        // Email disabled for now - will enable later
       }
     }
     queryClient.invalidateQueries(['employees']);
@@ -87,18 +77,7 @@ export default function BackgroundVerification() {
           type: 'alert'
         });
 
-        // Send professional email
-        const emailBody = getBGVStatusEmail({
-          recipientName: emp.full_name,
-          status: 'rejected',
-          remarks: 'Please contact HR for more details.'
-        });
-        
-        await base44.integrations.Core.SendEmail({
-          to: emp.email,
-          subject: 'Background Verification Update - SaberTechs',
-          body: emailBody
-        });
+        // Email disabled for now - will enable later
       }
     }
     queryClient.invalidateQueries(['employees']);
