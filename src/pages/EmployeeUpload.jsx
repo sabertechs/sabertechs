@@ -164,9 +164,9 @@ export default function EmployeeUpload() {
     let skippedCount = 0;
 
     // Process in batches to avoid rate limiting
-    const batchSize = 5;
-    const delayBetweenBatches = 1500; // 1.5 seconds between batches
-    const delayBetweenRecords = 300; // 300ms between individual records
+    const batchSize = 3;
+    const delayBetweenBatches = 3000; // 3 seconds between batches
+    const delayBetweenRecords = 800; // 800ms between individual records
     
     for (let i = 0; i < rows.length; i++) {
       const { data, lineNumber } = rows[i];
