@@ -148,14 +148,20 @@ export default function EmployeeUpload() {
     const rows = parseCSV(text);
     
     if (rows.length === 0) {
-      setUploadResult({ success: 0, failed: 0, total: 0 });
+      setUploadResult({ success: 0, failed: 0, skipped: 0, total: 0 });
       setUploading(false);
       return;
     }
 
+    // Fetch existing employees to check for duplicates
+    const existingEmployees = await base44.entities.Employee.list();
+    const existingEmails = new Set(existingEmployees.map(e => e.email?.toLowerCase().trim()));
+    const existingPhones = new Set(existingEmployees.map(e => e.phone?.trim()).filter(Boolean));
+
     const errors = [];
     let successCount = 0;
     let failedCount = 0;
+    let skippedCount = 0;
 
     // Process in batches to avoid rate limiting
     const batchSize = 5;
