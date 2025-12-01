@@ -440,13 +440,15 @@ export default function EmployeeUpload() {
           <CardContent>
             <div className="max-h-64 overflow-y-auto space-y-2">
               {errorLog.slice(0, 10).map((err, idx) => (
-                <div key={idx} className="bg-red-50 rounded-lg p-3 text-sm">
+                <div key={idx} className={`${err.skipped ? 'bg-amber-50' : 'bg-red-50'} rounded-lg p-3 text-sm`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="outline" className="text-red-600 border-red-300">Line {err.line}</Badge>
+                    <Badge variant="outline" className={err.skipped ? "text-amber-600 border-amber-300" : "text-red-600 border-red-300"}>
+                      Line {err.line}
+                    </Badge>
                     <span className="font-medium text-slate-800">{err.name}</span>
                     <span className="text-slate-500">({err.email})</span>
                   </div>
-                  <p className="text-red-600 text-xs">{err.errors.join(', ')}</p>
+                  <p className={`${err.skipped ? 'text-amber-600' : 'text-red-600'} text-xs`}>{err.errors.join(', ')}</p>
                 </div>
               ))}
               {errorLog.length > 10 && (
