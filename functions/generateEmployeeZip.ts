@@ -346,8 +346,9 @@ function generateOfferLetterHTML(emp, offerLetter) {
     const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
     const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
     const currentDate = format(new Date(), 'MMMM d, yyyy');
-    const joiningDate = emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) 
-        ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') 
+    const joiningDateParsed = parseDate(emp.date_of_joining);
+    const joiningDate = joiningDateParsed 
+        ? format(joiningDateParsed, 'MMMM d, yyyy') 
         : 'the date of joining';
     
     return `<!DOCTYPE html>
