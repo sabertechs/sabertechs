@@ -148,7 +148,8 @@ function generateBGVPDF(emp) {
     
     const calculateAge = (dob) => {
         if (!dob) return 'N/A';
-        const birthDate = new Date(dob);
+        const birthDate = parseDate(dob);
+        if (!birthDate) return 'N/A';
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
