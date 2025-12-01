@@ -164,6 +164,8 @@ export default function Layout({ children, currentPageName }) {
       if (sectionAccess.includes('team_view')) {
         items.push({ name: "My Team", icon: Users, page: "TeamView" });
       }
+      // All employees can access policies
+      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
     }
 
     return items;
