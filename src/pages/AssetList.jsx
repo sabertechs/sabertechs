@@ -20,7 +20,8 @@ import {
   Server,
   FileText,
   Upload,
-  X
+  X,
+  QrCode
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import AssetAssignDialog from "@/components/assets/AssetAssignDialog";
 import AssetViewDialog from "@/components/assets/AssetViewDialog";
+import QRScanner from "@/components/assets/QRScanner";
 
 const categoryIcons = {
   laptop: Laptop,
@@ -103,6 +105,7 @@ export default function AssetList() {
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -259,9 +262,14 @@ export default function AssetList() {
           <h2 className="text-2xl font-bold text-slate-800">Assets</h2>
           <p className="text-slate-500">{filteredAssets.length} assets found</p>
         </div>
-        <Button onClick={() => { resetForm(); setSelectedAsset(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" /> Add Asset
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowQRScanner(true)} variant="outline">
+            <QrCode className="w-4 h-4 mr-2" /> Scan QR
+          </Button>
+          <Button onClick={() => { resetForm(); setSelectedAsset(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" /> Add Asset
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -567,6 +575,21 @@ export default function AssetList() {
           onClose={() => { setShowViewDialog(false); setSelectedAsset(null); }}
         />
       )}
+
+      {/* QR Scanner */}
+      <QRScanner
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={(scannedData) => {
+          const asset = assets.find(a => a.asset_id === scannedData || a.id === scannedData);
+          if (asset) {
+            setSelectedAsset(asset);
+            setShowViewDialog(true);
+          } else {
+            alert(`Asset not found: ${scannedData}`);
+          }
+        }}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
