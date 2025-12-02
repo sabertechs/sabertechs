@@ -24,7 +24,11 @@ import {
   FolderDown,
   ChevronLeft,
   ChevronRight,
-  Archive
+  Archive,
+  CreditCard,
+  User,
+  MapPin,
+  Briefcase
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -1174,7 +1179,12 @@ export default function Employees() {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-slate-800">{emp.full_name}</p>
+                          <button 
+                            onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}
+                            className="font-medium text-slate-800 hover:text-indigo-600 hover:underline text-left"
+                          >
+                            {emp.full_name}
+                          </button>
                           <p className="text-sm text-slate-500">{emp.email}</p>
                         </div>
                       </div>
@@ -1491,13 +1501,14 @@ export default function Employees() {
 
       {/* View Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Employee Details</DialogTitle>
           </DialogHeader>
           {selectedEmployee && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4">
+              {/* Header */}
+              <div className="flex items-center gap-4 pb-4 border-b">
                 {selectedEmployee.profile_photo ? (
                   <img src={selectedEmployee.profile_photo} alt="" className="w-20 h-20 rounded-full object-cover" />
                 ) : (
@@ -1507,8 +1518,11 @@ export default function Employees() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-slate-800">{selectedEmployee.full_name}</h3>
-                  <p className="text-slate-500">{selectedEmployee.designation}</p>
-                  <div className="flex gap-2 mt-2">
+                  <p className="text-slate-500">{selectedEmployee.designation} • {selectedEmployee.department}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Badge className={selectedEmployee.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
+                      {selectedEmployee.employment_type === 'contractual' ? 'Contractual' : 'Permanent'}
+                    </Badge>
                     <Badge className={
                       selectedEmployee.status === 'active' ? 'bg-green-100 text-green-700' :
                       'bg-amber-100 text-amber-700'
@@ -1524,75 +1538,210 @@ export default function Employees() {
                     </Badge>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-
-
-                  <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
-                    {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                    Offer Letter
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
-                    {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                    BGV
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
-                    <FileText className="w-4 h-4 mr-1" />
-                    Policy
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(selectedEmployee)}>
+                    <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => downloadAllDocsAsZip(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-zip`]} className="bg-indigo-50 border-indigo-300 text-indigo-700">
                     {generatingPdf[`${selectedEmployee.id}-zip`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Archive className="w-4 h-4 mr-1" />}
-                    ZIP
+                    Download All
                   </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Email</p>
-                  <p className="font-medium">{selectedEmployee.email}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Phone</p>
-                  <p className="font-medium">{selectedEmployee.phone}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Department</p>
-                  <p className="font-medium capitalize">{selectedEmployee.department || '-'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Employment Type</p>
-                  <div className="flex items-center gap-2">
-                    <Badge className={selectedEmployee.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
-                      {selectedEmployee.employment_type === 'contractual' ? 'Contractual' : 'Permanent'}
-                    </Badge>
-                    {selectedEmployee.employment_type === 'contractual' && selectedEmployee.contract_end_date && (
-                      <span className="text-xs text-slate-500">
-                        (Ends: {format(new Date(selectedEmployee.contract_end_date), 'MMM d, yyyy')})
-                      </span>
-                    )}
+              {/* Tabs */}
+              <Tabs defaultValue="personal" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="personal" className="flex items-center gap-1">
+                    <User className="w-4 h-4" /> Personal
+                  </TabsTrigger>
+                  <TabsTrigger value="employment" className="flex items-center gap-1">
+                    <Briefcase className="w-4 h-4" /> Employment
+                  </TabsTrigger>
+                  <TabsTrigger value="documents" className="flex items-center gap-1">
+                    <FileText className="w-4 h-4" /> Documents
+                  </TabsTrigger>
+                  <TabsTrigger value="banking" className="flex items-center gap-1">
+                    <CreditCard className="w-4 h-4" /> Banking
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Personal Tab */}
+                <TabsContent value="personal" className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Full Name</p>
+                      <p className="font-medium">{selectedEmployee.full_name}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Father's Name</p>
+                      <p className="font-medium">{selectedEmployee.father_name || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Email</p>
+                      <p className="font-medium">{selectedEmployee.email}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Phone</p>
+                      <p className="font-medium">{selectedEmployee.phone}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Date of Birth</p>
+                      <p className="font-medium">{selectedEmployee.date_of_birth ? format(new Date(selectedEmployee.date_of_birth), 'MMM d, yyyy') : '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Gender</p>
+                      <p className="font-medium capitalize">{selectedEmployee.gender || '-'}</p>
+                    </div>
+                    <div className="col-span-2 p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> Address</p>
+                      <p className="font-medium">
+                        {selectedEmployee.address ? 
+                          `${selectedEmployee.address}, ${selectedEmployee.locality || ''}, ${selectedEmployee.city || ''}, ${selectedEmployee.state || ''} - ${selectedEmployee.pincode || ''}` 
+                          : '-'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Father's Name</p>
-                  <p className="font-medium">{selectedEmployee.father_name || '-'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Aadhaar</p>
-                  <p className="font-medium">{selectedEmployee.aadhaar_number || '-'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">PAN</p>
-                  <p className="font-medium">{selectedEmployee.pan_number || '-'}</p>
-                </div>
-                <div className="col-span-2 p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Address</p>
-                  <p className="font-medium">
-                    {selectedEmployee.address ? 
-                      `${selectedEmployee.address}, ${selectedEmployee.locality || ''}, ${selectedEmployee.city || ''}, ${selectedEmployee.state || ''} - ${selectedEmployee.pincode || ''}` 
-                      : '-'}
-                  </p>
-                </div>
-              </div>
+                </TabsContent>
+
+                {/* Employment Tab */}
+                <TabsContent value="employment" className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Employee ID</p>
+                      <p className="font-medium">{selectedEmployee.employee_id || selectedEmployee.id}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Department</p>
+                      <p className="font-medium capitalize">{selectedEmployee.department || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Designation</p>
+                      <p className="font-medium">{selectedEmployee.designation || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Role</p>
+                      <p className="font-medium capitalize">{selectedEmployee.role || 'employee'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Employment Type</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className={selectedEmployee.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
+                          {selectedEmployee.employment_type === 'contractual' ? 'Contractual' : 'Permanent'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Date of Joining</p>
+                      <p className="font-medium">{selectedEmployee.date_of_joining ? format(new Date(selectedEmployee.date_of_joining), 'MMM d, yyyy') : '-'}</p>
+                    </div>
+                    {selectedEmployee.employment_type === 'contractual' && (
+                      <div className="p-4 bg-purple-50 rounded-xl">
+                        <p className="text-sm text-purple-600">Contract End Date</p>
+                        <p className="font-medium text-purple-700">{selectedEmployee.contract_end_date ? format(new Date(selectedEmployee.contract_end_date), 'MMM d, yyyy') : '-'}</p>
+                      </div>
+                    )}
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Salary</p>
+                      <p className="font-medium">₹{selectedEmployee.salary?.toLocaleString() || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Reporting To</p>
+                      <p className="font-medium">{selectedEmployee.reporting_to || '-'}</p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Documents Tab */}
+                <TabsContent value="documents" className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Aadhaar Number</p>
+                      <p className="font-medium">{selectedEmployee.aadhaar_number || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">PAN Number</p>
+                      <p className="font-medium">{selectedEmployee.pan_number || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Aadhaar Document</p>
+                      {selectedEmployee.aadhaar_document ? (
+                        <a href={selectedEmployee.aadhaar_document} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">View Document</a>
+                      ) : <p className="text-slate-400 text-sm">Not uploaded</p>}
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">PAN Document</p>
+                      {selectedEmployee.pan_document ? (
+                        <a href={selectedEmployee.pan_document} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">View Document</a>
+                      ) : <p className="text-slate-400 text-sm">Not uploaded</p>}
+                    </div>
+                    <div className="col-span-2 p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500 mb-2">Education Certificates</p>
+                      {selectedEmployee.education_certificates?.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedEmployee.education_certificates.map((cert, idx) => (
+                            <a key={idx} href={cert} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm bg-indigo-50 px-3 py-1 rounded-full">
+                              Certificate {idx + 1}
+                            </a>
+                          ))}
+                        </div>
+                      ) : <p className="text-slate-400 text-sm">Not uploaded</p>}
+                    </div>
+                  </div>
+
+                  {/* Download Buttons */}
+                  <div className="mt-6 pt-4 border-t">
+                    <p className="text-sm text-slate-500 mb-3">Generate Documents</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
+                        {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                        Offer Letter
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
+                        {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                        BGV Report
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
+                        <FileText className="w-4 h-4 mr-1" />
+                        Policy Agreement
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Banking Tab */}
+                <TabsContent value="banking" className="mt-4">
+                  {selectedEmployee.bank_account_number ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <p className="text-sm text-slate-500">Account Holder Name</p>
+                        <p className="font-medium">{selectedEmployee.account_holder_name || '-'}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <p className="text-sm text-slate-500">Bank Name</p>
+                        <p className="font-medium">{selectedEmployee.bank_name || '-'}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <p className="text-sm text-slate-500">Account Number</p>
+                        <p className="font-medium font-mono">{selectedEmployee.bank_account_number || '-'}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <p className="text-sm text-slate-500">IFSC Code</p>
+                        <p className="font-medium font-mono">{selectedEmployee.bank_ifsc || '-'}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <p className="text-sm text-slate-500">Branch</p>
+                        <p className="font-medium">{selectedEmployee.bank_branch || '-'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-slate-500">
+                      <CreditCard className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+                      <p>No banking details available</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </DialogContent>
