@@ -22,7 +22,8 @@ import {
   Settings,
   Megaphone,
   Newspaper,
-  BookOpen
+  BookOpen,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

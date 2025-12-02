@@ -28,6 +28,7 @@ import AssetList from './pages/AssetList';
 import AssetRequests from './pages/AssetRequests';
 import AssetMaintenance from './pages/AssetMaintenance';
 import MyAssets from './pages/MyAssets';
+import AssetReports from './pages/AssetReports';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +63,7 @@ export const PAGES = {
     "AssetRequests": AssetRequests,
     "AssetMaintenance": AssetMaintenance,
     "MyAssets": MyAssets,
+    "AssetReports": AssetReports,
 }
 
 export const pagesConfig = {
