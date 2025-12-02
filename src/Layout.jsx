@@ -191,6 +191,9 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Notification Popup */}
+      <NotificationPopup userEmail={user?.email} />
+      
       <style>{`
         :root {
           --primary: 222.2 47.4% 11.2%;
