@@ -23,6 +23,11 @@ import CompanyFeed from './pages/CompanyFeed';
 import TestEmail from './pages/TestEmail';
 import PolicyManagement from './pages/PolicyManagement';
 import CompanyPolicies from './pages/CompanyPolicies';
+import AssetDashboard from './pages/AssetDashboard';
+import AssetList from './pages/AssetList';
+import AssetRequests from './pages/AssetRequests';
+import AssetMaintenance from './pages/AssetMaintenance';
+import MyAssets from './pages/MyAssets';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +57,11 @@ export const PAGES = {
     "TestEmail": TestEmail,
     "PolicyManagement": PolicyManagement,
     "CompanyPolicies": CompanyPolicies,
+    "AssetDashboard": AssetDashboard,
+    "AssetList": AssetList,
+    "AssetRequests": AssetRequests,
+    "AssetMaintenance": AssetMaintenance,
+    "MyAssets": MyAssets,
 }
 
 export const pagesConfig = {
