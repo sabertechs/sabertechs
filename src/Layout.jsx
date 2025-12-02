@@ -130,6 +130,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Assets", icon: Package, page: "AssetDashboard" },
         { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
         { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
@@ -146,6 +147,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
+        { name: "Assets", icon: Package, page: "AssetDashboard" },
         { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
         { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
@@ -166,8 +168,9 @@ export default function Layout({ children, currentPageName }) {
       if (sectionAccess.includes('team_view')) {
         items.push({ name: "My Team", icon: Users, page: "TeamView" });
       }
-      // All employees can access policies
+      // All employees can access policies and their assets
       items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+      items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
     }
 
     return items;
