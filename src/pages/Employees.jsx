@@ -55,6 +55,7 @@ export default function Employees() {
   const [bgvFilter, setBgvFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [designationFilter, setDesignationFilter] = useState("all");
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState("all");
   const [joiningDateFrom, setJoiningDateFrom] = useState("");
   const [joiningDateTo, setJoiningDateTo] = useState("");
   const [sortField, setSortField] = useState("created_date");
@@ -76,6 +77,8 @@ export default function Employees() {
     phone: "",
     department: "",
     designation: "",
+    employment_type: "permanent",
+    contract_end_date: "",
     date_of_joining: "",
     salary: "",
     status: "active",
@@ -124,6 +127,8 @@ export default function Employees() {
       phone: "",
       department: "",
       designation: "",
+      employment_type: "permanent",
+      contract_end_date: "",
       date_of_joining: "",
       salary: "",
       status: "active",
@@ -140,6 +145,8 @@ export default function Employees() {
       phone: employee.phone || "",
       department: employee.department || "",
       designation: employee.designation || "",
+      employment_type: employee.employment_type || "permanent",
+      contract_end_date: employee.contract_end_date || "",
       date_of_joining: employee.date_of_joining || "",
       salary: employee.salary || "",
       status: employee.status || "active",
@@ -796,6 +803,7 @@ export default function Employees() {
     const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
     const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
     const matchesDesignation = designationFilter === "all" || emp.designation === designationFilter;
+    const matchesEmploymentType = employmentTypeFilter === "all" || emp.employment_type === employmentTypeFilter;
     
     let matchesJoiningDate = true;
     if (joiningDateFrom && emp.date_of_joining) {
@@ -805,7 +813,7 @@ export default function Employees() {
       matchesJoiningDate = matchesJoiningDate && emp.date_of_joining <= joiningDateTo;
     }
     
-    return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesJoiningDate;
+    return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesEmploymentType && matchesJoiningDate;
   }).sort((a, b) => {
     let aVal = a[sortField] || '';
     let bVal = b[sortField] || '';
@@ -835,7 +843,7 @@ export default function Employees() {
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
+  }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, employmentTypeFilter, joiningDateFrom, joiningDateTo]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -910,6 +918,7 @@ export default function Employees() {
     setBgvFilter("all");
     setDepartmentFilter("all");
     setDesignationFilter("all");
+    setEmploymentTypeFilter("all");
     setJoiningDateFrom("");
     setJoiningDateTo("");
     setSortField("created_date");
@@ -992,6 +1001,16 @@ export default function Employees() {
                 {departments.map(dept => (
                   <SelectItem key={dept} value={dept} className="capitalize">{dept}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={employmentTypeFilter} onValueChange={setEmploymentTypeFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Emp. Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="permanent">Permanent</SelectItem>
+                <SelectItem value="contractual">Contractual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1124,6 +1143,7 @@ export default function Employees() {
                   </th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Department</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Designation</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Type</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">BGV Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500 cursor-pointer hover:text-indigo-600" onClick={() => handleSort('date_of_joining')}>
@@ -1161,6 +1181,13 @@ export default function Employees() {
                     </td>
                     <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
                     <td className="px-4 py-4 text-slate-600">{emp.designation || '-'}</td>
+                    <td className="px-4 py-4">
+                      <Badge className={
+                        emp.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                      }>
+                        {emp.employment_type === 'contractual' ? 'Contract' : 'Permanent'}
+                      </Badge>
+                    </td>
                     <td className="px-4 py-4">
                       <Badge className={
                         emp.status === 'active' ? 'bg-green-100 text-green-700' :
@@ -1354,6 +1381,28 @@ export default function Employees() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Employment Type</Label>
+              <Select value={formData.employment_type} onValueChange={(v) => setFormData({ ...formData, employment_type: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="permanent">Permanent</SelectItem>
+                  <SelectItem value="contractual">Contractual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {formData.employment_type === 'contractual' && (
+              <div className="space-y-2">
+                <Label>Contract End Date</Label>
+                <Input
+                  type="date"
+                  value={formData.contract_end_date}
+                  onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
               <Label>Date of Joining</Label>
               <Input
                 type="date"
@@ -1509,6 +1558,19 @@ export default function Employees() {
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-sm text-slate-500">Department</p>
                   <p className="font-medium capitalize">{selectedEmployee.department || '-'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-sm text-slate-500">Employment Type</p>
+                  <div className="flex items-center gap-2">
+                    <Badge className={selectedEmployee.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
+                      {selectedEmployee.employment_type === 'contractual' ? 'Contractual' : 'Permanent'}
+                    </Badge>
+                    {selectedEmployee.employment_type === 'contractual' && selectedEmployee.contract_end_date && (
+                      <span className="text-xs text-slate-500">
+                        (Ends: {format(new Date(selectedEmployee.contract_end_date), 'MMM d, yyyy')})
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-sm text-slate-500">Father's Name</p>
