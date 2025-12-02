@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle } from "lucide-react";
+import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +56,13 @@ export default function Registration() {
     aadhaar_document: "",
     pan_document: "",
     education_certificates: [],
-    profile_photo: ""
+    profile_photo: "",
+    // Bank Details
+    bank_name: "",
+    bank_account_number: "",
+    bank_ifsc: "",
+    bank_branch: "",
+    account_holder_name: ""
   });
 
   useEffect(() => {
@@ -230,17 +236,41 @@ export default function Registration() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateStep3 = () => {
+    const newErrors = {};
+    
+    if (!formData.bank_name.trim()) newErrors.bank_name = "Bank name is required";
+    if (!formData.bank_account_number.trim()) {
+      newErrors.bank_account_number = "Account number is required";
+    } else if (!/^\d{9,18}$/.test(formData.bank_account_number.replace(/\s/g, ''))) {
+      newErrors.bank_account_number = "Enter a valid account number (9-18 digits)";
+    }
+    if (!formData.bank_ifsc.trim()) {
+      newErrors.bank_ifsc = "IFSC code is required";
+    } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(formData.bank_ifsc.toUpperCase())) {
+      newErrors.bank_ifsc = "Enter a valid IFSC code (e.g., SBIN0001234)";
+    }
+    if (!formData.account_holder_name.trim()) newErrors.account_holder_name = "Account holder name is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = async () => {
     if (step === 1) {
       const isValid = await validateStep1();
       if (isValid) {
         setStep(2);
       }
+    } else if (step === 2) {
+      if (validateStep2()) {
+        setStep(3);
+      }
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep2()) return;
+    if (!validateStep3()) return;
     
     setLoading(true);
     await base44.entities.Employee.create({
@@ -248,6 +278,8 @@ export default function Registration() {
       email: formData.email.toLowerCase().trim(),
       pan_number: formData.pan_number.toUpperCase(),
       aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
+      bank_ifsc: formData.bank_ifsc.toUpperCase(),
+      employment_type: "contractual",
       status: "pending",
       role: "employee",
       bg_verification_status: "pending"
@@ -258,7 +290,8 @@ export default function Registration() {
 
   const steps = [
     { num: 1, title: "Personal Info", icon: User },
-    { num: 2, title: "Documents", icon: FileText }
+    { num: 2, title: "Documents", icon: FileText },
+    { num: 3, title: "Bank Details", icon: CreditCard }
   ];
 
   if (initialLoading) {
@@ -281,8 +314,8 @@ export default function Registration() {
             <Building2 className="w-10 h-10 text-indigo-600" />
             <h1 className="text-3xl font-bold text-slate-800">HRMS</h1>
           </div>
-          <h2 className="text-2xl font-semibold text-slate-700">Employee Self-Registration</h2>
-          <p className="text-slate-500 mt-2">Complete your profile to get started</p>
+          <h2 className="text-2xl font-semibold text-slate-700">Contractual Employee Registration</h2>
+                          <p className="text-slate-500 mt-2">Complete your profile to get started</p>
         </div>
 
         {/* Progress Steps */}
@@ -569,49 +602,109 @@ export default function Registration() {
               </div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-10 pt-6 border-t border-slate-100">
-              <Button
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-                disabled={step === 1}
-                className="px-8"
-              >
-                Previous
-              </Button>
-              
-              {step < 2 ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={checkingDuplicate}
-                  className="px-8 bg-indigo-600 hover:bg-indigo-700"
-                >
-                  {checkingDuplicate ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    "Next"
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-8 bg-indigo-600 hover:bg-indigo-700"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Complete Registration"
-                  )}
-                </Button>
-              )}
-            </div>
+            {/* Step 3: Bank Details */}
+                            {step === 3 && (
+                              <div className="space-y-6">
+                                <div className="text-center mb-6">
+                                  <h3 className="text-xl font-semibold text-slate-800">Bank Details</h3>
+                                  <p className="text-slate-500">Enter your bank account information for salary credit</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <InputWithError 
+                                    label="Account Holder Name" 
+                                    field="account_holder_name" 
+                                    value={formData.account_holder_name} 
+                                    onChange={(e) => handleChange("account_holder_name", e.target.value)} 
+                                    error={errors.account_holder_name} 
+                                    placeholder="Name as per bank account" 
+                                  />
+                                  <InputWithError 
+                                    label="Bank Name" 
+                                    field="bank_name" 
+                                    value={formData.bank_name} 
+                                    onChange={(e) => handleChange("bank_name", e.target.value)} 
+                                    error={errors.bank_name} 
+                                    placeholder="e.g., State Bank of India" 
+                                  />
+                                  <InputWithError 
+                                    label="Account Number" 
+                                    field="bank_account_number" 
+                                    value={formData.bank_account_number} 
+                                    onChange={(e) => handleChange("bank_account_number", e.target.value.replace(/\D/g, ''))} 
+                                    error={errors.bank_account_number} 
+                                    placeholder="Enter account number" 
+                                  />
+                                  <InputWithError 
+                                    label="IFSC Code" 
+                                    field="bank_ifsc" 
+                                    value={formData.bank_ifsc} 
+                                    onChange={(e) => handleChange("bank_ifsc", e.target.value.toUpperCase().slice(0, 11))} 
+                                    error={errors.bank_ifsc} 
+                                    placeholder="e.g., SBIN0001234" 
+                                    maxLength={11}
+                                  />
+                                  <InputWithError 
+                                    label="Branch Name (Optional)" 
+                                    field="bank_branch" 
+                                    value={formData.bank_branch} 
+                                    onChange={(e) => handleChange("bank_branch", e.target.value)} 
+                                    error={errors.bank_branch} 
+                                    placeholder="Branch name" 
+                                  />
+                                </div>
+
+                                <div className="bg-blue-50 rounded-xl p-4 mt-4">
+                                  <p className="text-sm text-blue-700">
+                                    <strong>Note:</strong> Please ensure your bank details are accurate. Salary will be credited to this account.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Navigation Buttons */}
+                            <div className="flex justify-between mt-10 pt-6 border-t border-slate-100">
+                              <Button
+                                variant="outline"
+                                onClick={() => setStep(step - 1)}
+                                disabled={step === 1}
+                                className="px-8"
+                              >
+                                Previous
+                              </Button>
+
+                              {step < 3 ? (
+                                <Button
+                                  onClick={handleNext}
+                                  disabled={checkingDuplicate}
+                                  className="px-8 bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                  {checkingDuplicate ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      Checking...
+                                    </>
+                                  ) : (
+                                    "Next"
+                                  )}
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={handleSubmit}
+                                  disabled={loading}
+                                  className="px-8 bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                  {loading ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      Submitting...
+                                    </>
+                                  ) : (
+                                    "Complete Registration"
+                                  )}
+                                </Button>
+                              )}
+                            </div>
           </CardContent>
         </Card>
       </div>
