@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, CheckCircle, XCircle, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, CheckCircle, XCircle, Calendar, LogIn, LogOut, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export default function MyAttendance() {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       const userData = await base44.auth.me();
       setUser(userData);
+      // Fetch employee record
+      const employees = await base44.entities.Employee.filter({ email: userData.email });
+      if (employees.length > 0) {
+        setEmployee(employees[0]);
+      }
     };
     fetchUser();
   }, []);
@@ -58,14 +67,100 @@ export default function MyAttendance() {
     absent: 'bg-red-100 text-red-700 border-red-200',
     leave: 'bg-amber-100 text-amber-700 border-amber-200',
     half_day: 'bg-blue-100 text-blue-700 border-blue-200',
-    holiday: 'bg-purple-100 text-purple-700 border-purple-200'
+    holiday: 'bg-purple-100 text-purple-700 border-purple-200',
+    pending: 'bg-orange-100 text-orange-700 border-orange-200'
+  };
+
+  // Check if permanent employee
+  const isPermanent = employee?.employment_type === 'permanent';
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const todayAttendance = attendance.find(a => a.date === today);
+  const hasCheckedIn = todayAttendance?.check_in;
+  const hasCheckedOut = todayAttendance?.check_out;
+
+  const handleCheckIn = async () => {
+    if (!isPermanent) {
+      toast.error('Only permanent employees can mark attendance');
+      return;
+    }
+    setMarking(true);
+    try {
+      const now = format(new Date(), 'HH:mm');
+      await base44.entities.Attendance.create({
+        employee_email: user.email,
+        employee_id: employee?.employee_id,
+        date: today,
+        check_in: now,
+        status: 'present',
+        marked_by: user.email,
+        marked_by_role: 'self'
+      });
+      queryClient.invalidateQueries(['attendance']);
+      toast.success('Check-in recorded successfully');
+    } catch (error) {
+      toast.error('Failed to check in');
+    }
+    setMarking(false);
+  };
+
+  const handleCheckOut = async () => {
+    if (!todayAttendance) return;
+    setMarking(true);
+    try {
+      const now = format(new Date(), 'HH:mm');
+      const workingHours = calculateWorkingHours(todayAttendance.check_in, now);
+      await base44.entities.Attendance.update(todayAttendance.id, {
+        check_out: now,
+        working_hours: workingHours
+      });
+      queryClient.invalidateQueries(['attendance']);
+      toast.success('Check-out recorded successfully');
+    } catch (error) {
+      toast.error('Failed to check out');
+    }
+    setMarking(false);
+  };
+
+  const calculateWorkingHours = (checkIn, checkOut) => {
+    const [inH, inM] = checkIn.split(':').map(Number);
+    const [outH, outM] = checkOut.split(':').map(Number);
+    return ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">My Attendance</h2>
-        <p className="text-slate-500">Track your attendance records</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">My Attendance</h2>
+          <p className="text-slate-500">Track your attendance records</p>
+        </div>
+        
+        {/* Check In/Out Buttons - Only for permanent employees */}
+        {isPermanent ? (
+          <div className="flex items-center gap-3">
+            {!hasCheckedIn ? (
+              <Button onClick={handleCheckIn} disabled={marking} className="bg-green-600 hover:bg-green-700">
+                {marking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LogIn className="w-4 h-4 mr-2" />}
+                Check In
+              </Button>
+            ) : !hasCheckedOut ? (
+              <Button onClick={handleCheckOut} disabled={marking} className="bg-red-600 hover:bg-red-700">
+                {marking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LogOut className="w-4 h-4 mr-2" />}
+                Check Out
+              </Button>
+            ) : (
+              <Badge className="bg-green-100 text-green-700 py-2 px-4">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Attendance Marked: {todayAttendance.check_in} - {todayAttendance.check_out}
+              </Badge>
+            )}
+          </div>
+        ) : (
+          <Badge className="bg-amber-100 text-amber-700 py-2 px-4">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Contractual employees: Contact supervisor for attendance
+          </Badge>
+        )}
       </div>
 
       {/* Stats Cards */}

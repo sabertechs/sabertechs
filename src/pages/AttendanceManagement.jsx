@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
-import { Search, Plus, ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight, Edit, Trash2, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +21,10 @@ import {
 
 export default function AttendanceManagement() {
   const queryClient = useQueryClient();
+  const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState(null);
   const [formData, setFormData] = useState({
@@ -29,13 +33,25 @@ export default function AttendanceManagement() {
     check_in: "",
     check_out: "",
     status: "present",
-    notes: ""
+    notes: "",
+    supervisor_note: ""
   });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const userData = await base44.auth.me();
+      setUser(userData);
+    };
+    fetchUser();
+  }, []);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.filter({ status: 'active' }),
+    queryFn: () => base44.entities.Employee.list(),
   });
+
+  // Filter only permanent employees for attendance marking
+  const permanentEmployees = employees.filter(e => e.employment_type === 'permanent' && e.status === 'active');
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['attendance'],
@@ -73,17 +89,28 @@ export default function AttendanceManagement() {
       check_in: "",
       check_out: "",
       status: "present",
-      notes: ""
+      notes: "",
+      supervisor_note: ""
     });
   };
 
   const handleSubmit = () => {
     const emp = employees.find(e => e.email === formData.employee_email);
+    
+    // Check if employee is permanent
+    if (emp && emp.employment_type !== 'permanent') {
+      toast.error('Only permanent employees can have attendance marked');
+      return;
+    }
+    
     const data = {
       ...formData,
       employee_id: emp?.employee_id,
       working_hours: formData.check_in && formData.check_out ? 
-        calculateWorkingHours(formData.check_in, formData.check_out) : null
+        calculateWorkingHours(formData.check_in, formData.check_out) : null,
+      marked_by: user?.email,
+      marked_by_role: 'supervisor',
+      supervisor_note: formData.supervisor_note
     };
 
     if (selectedAttendance) {
@@ -107,7 +134,8 @@ export default function AttendanceManagement() {
       check_in: att.check_in || "",
       check_out: att.check_out || "",
       status: att.status,
-      notes: att.notes || ""
+      notes: att.notes || "",
+      supervisor_note: att.supervisor_note || ""
     });
     setShowAddDialog(true);
   };
@@ -116,15 +144,24 @@ export default function AttendanceManagement() {
     const date = new Date(att.date);
     const inMonth = date >= startOfMonth(currentMonth) && date <= endOfMonth(currentMonth);
     const matchesSearch = att.employee_email?.toLowerCase().includes(search.toLowerCase());
-    return inMonth && (search === "" || matchesSearch);
+    const matchesStatus = statusFilter === "all" || att.status === statusFilter;
+    return inMonth && (search === "" || matchesSearch) && matchesStatus;
   });
+
+  // Count pending attendance (employees who haven't marked today)
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const todayAttendance = attendance.filter(a => a.date === today);
+  const pendingCount = permanentEmployees.filter(emp => 
+    !todayAttendance.find(a => a.employee_email === emp.email)
+  ).length;
 
   const statusColors = {
     present: 'bg-green-100 text-green-700',
     absent: 'bg-red-100 text-red-700',
     leave: 'bg-amber-100 text-amber-700',
     half_day: 'bg-blue-100 text-blue-700',
-    holiday: 'bg-purple-100 text-purple-700'
+    holiday: 'bg-purple-100 text-purple-700',
+    pending: 'bg-orange-100 text-orange-700'
   };
 
   return (
@@ -132,12 +169,20 @@ export default function AttendanceManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Attendance Management</h2>
-          <p className="text-slate-500">Track and manage employee attendance</p>
+          <p className="text-slate-500">Track and manage employee attendance (Permanent employees only)</p>
         </div>
-        <Button onClick={() => { resetForm(); setSelectedAttendance(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Attendance
-        </Button>
+        <div className="flex items-center gap-3">
+          {pendingCount > 0 && (
+            <Badge className="bg-orange-100 text-orange-700 py-2 px-4">
+              <Clock className="w-4 h-4 mr-2" />
+              {pendingCount} Pending Today
+            </Badge>
+          )}
+          <Button onClick={() => { resetForm(); setSelectedAttendance(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Mark Attendance
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -153,6 +198,18 @@ export default function AttendanceManagement() {
                 className="pl-10"
               />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="present">Present</SelectItem>
+                <SelectItem value="absent">Absent</SelectItem>
+                <SelectItem value="leave">Leave</SelectItem>
+                <SelectItem value="half_day">Half Day</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                 <ChevronLeft className="w-4 h-4" />
@@ -168,6 +225,40 @@ export default function AttendanceManagement() {
         </CardContent>
       </Card>
 
+      {/* Pending Attendance Section */}
+      {pendingCount > 0 && (
+        <Card className="border-0 shadow-sm border-l-4 border-l-orange-500">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              Pending Attendance Today ({pendingCount})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {permanentEmployees
+                .filter(emp => !todayAttendance.find(a => a.employee_email === emp.email))
+                .slice(0, 10)
+                .map(emp => (
+                  <Badge 
+                    key={emp.id} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-slate-100"
+                    onClick={() => {
+                      setFormData({ ...formData, employee_email: emp.email, date: today });
+                      setSelectedAttendance(null);
+                      setShowAddDialog(true);
+                    }}
+                  >
+                    {emp.full_name}
+                  </Badge>
+                ))}
+              {pendingCount > 10 && <Badge variant="outline">+{pendingCount - 10} more</Badge>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Attendance List */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
@@ -181,6 +272,7 @@ export default function AttendanceManagement() {
                   <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Check Out</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Hours</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Status</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-slate-500">Marked By</th>
                   <th className="text-right px-6 py-4 text-sm font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
@@ -196,6 +288,18 @@ export default function AttendanceManagement() {
                       <Badge className={statusColors[att.status]}>
                         {att.status?.replace('_', ' ')}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <span className={att.marked_by_role === 'supervisor' ? 'text-indigo-600 font-medium' : 'text-slate-500'}>
+                          {att.marked_by_role === 'supervisor' ? 'Supervisor' : 'Self'}
+                        </span>
+                        {att.supervisor_note && (
+                          <p className="text-xs text-slate-400 mt-1 truncate max-w-[150px]" title={att.supervisor_note}>
+                            Note: {att.supervisor_note}
+                          </p>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -226,14 +330,15 @@ export default function AttendanceManagement() {
               <Label>Employee</Label>
               <Select value={formData.employee_email} onValueChange={(v) => setFormData({ ...formData, employee_email: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select employee" />
+                  <SelectValue placeholder="Select permanent employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map(emp => (
+                  {permanentEmployees.map(emp => (
                     <SelectItem key={emp.email} value={emp.email}>{emp.full_name} ({emp.email})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-slate-500">Only permanent employees can have attendance marked</p>
             </div>
 
             <div className="space-y-2">
@@ -287,6 +392,17 @@ export default function AttendanceManagement() {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Optional notes"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Supervisor Note *</Label>
+              <Textarea
+                value={formData.supervisor_note}
+                onChange={(e) => setFormData({ ...formData, supervisor_note: e.target.value })}
+                placeholder="Reason for marking attendance (e.g., Employee forgot to mark, system issue, etc.)"
+                rows={3}
+              />
+              <p className="text-xs text-slate-500">Required when supervisor marks attendance</p>
             </div>
           </div>
           <DialogFooter>
