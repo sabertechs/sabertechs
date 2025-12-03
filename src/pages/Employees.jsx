@@ -77,7 +77,9 @@ export default function Employees() {
   const [generatingPdf, setGeneratingPdf] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
-  const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
+          const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
+          const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+          const [deletingAll, setDeletingAll] = useState(false);
   const employeesPerPage = 40;
   const [formData, setFormData] = useState({
     full_name: "",
@@ -953,14 +955,22 @@ export default function Employees() {
         </div>
         <div className="flex gap-2">
           <Button 
-            variant="outline"
-            onClick={exportToCSV}
-            className="border-green-600 text-green-600 hover:bg-green-50"
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Export All
-          </Button>
-          <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+                            variant="outline"
+                            onClick={exportToCSV}
+                            className="border-green-600 text-green-600 hover:bg-green-50"
+                          >
+                            <FileSpreadsheet className="w-4 h-4 mr-2" />
+                            Export All
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setShowDeleteAllDialog(true)}
+                            className="border-red-600 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete All
+                          </Button>
+                          <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Employee
           </Button>
@@ -1756,11 +1766,45 @@ export default function Employees() {
                 </Dialog>
 
                 {/* WhatsApp Dialog */}
-                <SendWhatsAppDialog 
-                  open={showWhatsAppDialog} 
-                  onClose={() => { setShowWhatsAppDialog(false); setWhatsAppEmployee(null); }}
-                  employee={whatsAppEmployee}
-                />
-              </div>
-            );
-          }
+                                      <SendWhatsAppDialog 
+                                        open={showWhatsAppDialog} 
+                                        onClose={() => { setShowWhatsAppDialog(false); setWhatsAppEmployee(null); }}
+                                        employee={whatsAppEmployee}
+                                      />
+
+                            {/* Delete All Confirmation Dialog */}
+                            <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle className="text-red-600">Delete All Employees</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4">
+                                  <p className="text-slate-600">
+                                    Are you sure you want to delete <strong>all {employees.length} employees</strong>? This action cannot be undone.
+                                  </p>
+                                </div>
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setShowDeleteAllDialog(false)}>Cancel</Button>
+                                  <Button 
+                                    onClick={async () => {
+                                      setDeletingAll(true);
+                                      for (const emp of employees) {
+                                        await base44.entities.Employee.delete(emp.id);
+                                      }
+                                      queryClient.invalidateQueries(['employees']);
+                                      setDeletingAll(false);
+                                      setShowDeleteAllDialog(false);
+                                      toast.success('All employees deleted');
+                                    }}
+                                    disabled={deletingAll}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    {deletingAll ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                                    Delete All
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                                    </div>
+                                  );
+                                }
