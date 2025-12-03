@@ -163,36 +163,50 @@ export default function NotificationCenter() {
     setSending(true);
     const targetEmployees = getTargetEmployees();
     
+    let inAppCount = 0;
+    let emailCount = 0;
+    let whatsappCount = 0;
+    
     try {
       // Create in-app notifications
       if (formData.send_in_app) {
         for (const emp of targetEmployees) {
-          await base44.entities.Notification.create({
-            recipient_email: emp.email,
-            title: formData.title,
-            message: formData.message,
-            type: formData.notification_type,
-            link: formData.link_url || undefined,
-            is_read: false
-          });
+          try {
+            await base44.entities.Notification.create({
+              recipient_email: emp.email,
+              title: formData.title,
+              message: formData.message,
+              type: formData.notification_type,
+              link: formData.link_url || undefined,
+              is_read: false
+            });
+            inAppCount++;
+          } catch (err) {
+            console.error('In-app notification error for', emp.email, err);
+          }
         }
       }
 
       // Send emails with professional template
       if (formData.send_email) {
         for (const emp of targetEmployees) {
-          const emailBody = getNotificationEmail({
-            recipientName: emp.full_name,
-            title: formData.title,
-            message: formData.message + (formData.image_url ? `<br/><img src="${formData.image_url}" style="max-width:300px;margin:10px 0;border-radius:8px;" />` : ''),
-            link: formData.link_url || null
-          });
-          
-          await base44.integrations.Core.SendEmail({
-            to: emp.email,
-            subject: formData.title,
-            body: emailBody
-          });
+          try {
+            const emailBody = getNotificationEmail({
+              recipientName: emp.full_name,
+              title: formData.title,
+              message: formData.message + (formData.image_url ? `<br/><img src="${formData.image_url}" style="max-width:300px;margin:10px 0;border-radius:8px;" />` : ''),
+              link: formData.link_url || null
+            });
+            
+            await base44.integrations.Core.SendEmail({
+              to: emp.email,
+              subject: formData.title,
+              body: emailBody
+            });
+            emailCount++;
+          } catch (err) {
+            console.error('Email send error for', emp.email, err);
+          }
         }
       }
 
@@ -202,10 +216,14 @@ export default function NotificationCenter() {
           if (emp.phone) {
             try {
               const whatsappMessage = `*${formData.title}*\n\n${formData.message}${formData.link_url ? `\n\n🔗 ${formData.link_url}` : ''}`;
-              await base44.functions.invoke('sendWhatsApp', {
+              const response = await base44.functions.invoke('sendWhatsApp', {
                 phone: emp.phone,
                 message: whatsappMessage
               });
+              console.log('WhatsApp response for', emp.email, response);
+              if (response.data?.success) {
+                whatsappCount++;
+              }
             } catch (err) {
               console.error('WhatsApp send error for', emp.email, err);
             }
@@ -222,7 +240,13 @@ export default function NotificationCenter() {
       });
 
       queryClient.invalidateQueries(['scheduledNotifications']);
-      toast.success(`Notification sent to ${targetEmployees.length} employee(s)`);
+      
+      // Show detailed success message
+      const parts = [];
+      if (formData.send_in_app) parts.push(`${inAppCount} in-app`);
+      if (formData.send_email) parts.push(`${emailCount} email`);
+      if (formData.send_whatsapp) parts.push(`${whatsappCount} WhatsApp`);
+      toast.success(`Sent: ${parts.join(', ')}`);
       resetForm();
       setShowDialog(false);
     } catch (error) {
