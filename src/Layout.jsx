@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import NotificationPopup from "@/components/notifications/NotificationPopup";
+import ScheduledNotificationProcessor from "@/components/notifications/ScheduledNotificationProcessor";
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -196,7 +197,12 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Notification Popup */}
-      <NotificationPopup userEmail={user?.email} />
+                  <NotificationPopup userEmail={user?.email} />
+
+                  {/* Background processor for scheduled notifications */}
+                  {(userRole === 'hr' || userRole === 'manager' || userRole === 'department_head') && (
+                    <ScheduledNotificationProcessor />
+                  )}
       
       <style>{`
         :root {
