@@ -58,11 +58,20 @@ export default function BackgroundVerification() {
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
+        // Send in-app notification
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Approved',
           message: 'Your background verification has been completed and approved. You are now an active employee.',
           type: 'success'
+        });
+        
+        // Send email notification
+        const emailHtml = getBGVStatusEmail(emp.full_name, 'approved');
+        await base44.integrations.Core.SendEmail({
+          to: emp.email,
+          subject: 'Background Verification Approved - Saber Technologies',
+          body: emailHtml
         });
       }
       
@@ -90,11 +99,20 @@ export default function BackgroundVerification() {
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
+        // Send in-app notification
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Update',
           message: 'Your background verification could not be approved. Please contact HR for more details.',
           type: 'alert'
+        });
+        
+        // Send email notification
+        const emailHtml = getBGVStatusEmail(emp.full_name, 'rejected');
+        await base44.integrations.Core.SendEmail({
+          to: emp.email,
+          subject: 'Background Verification Update - Saber Technologies',
+          body: emailHtml
         });
       }
       
