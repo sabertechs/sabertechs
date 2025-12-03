@@ -1384,22 +1384,18 @@ export default function Employees() {
             <div className="space-y-2">
               <Label>Department</Label>
               <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="proctor_online">Proctor Online</SelectItem>
-                  <SelectItem value="proctor_cbt">Proctor CBT</SelectItem>
-                  <SelectItem value="team_leader">Team Leader</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="cce">C.C.E</SelectItem>
-                  <SelectItem value="wfm">WFM</SelectItem>
-                  <SelectItem value="hr_manager">HR Manager</SelectItem>
-                  <SelectItem value="hr_associate">HR Associate</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="quality_analyst">Quality Analyst</SelectItem>
-                </SelectContent>
-              </Select>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="admin">Admin</SelectItem>
+                                      <SelectItem value="quality_analyst">Quality Analyst</SelectItem>
+                                      <SelectItem value="cashifty">Cashifty</SelectItem>
+                                      <SelectItem value="mettl_operations">Mettl operations</SelectItem>
+                                      <SelectItem value="mettl">Mettl</SelectItem>
+                                      <SelectItem value="proctoring">Proctoring</SelectItem>
+                                    </SelectContent>
+                                  </Select>
             </div>
             <div className="space-y-2">
               <Label>Designation</Label>

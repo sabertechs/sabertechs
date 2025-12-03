@@ -35,16 +35,12 @@ import {
 import { toast } from "sonner";
 
 const DEFAULT_DEPARTMENTS = [
-  { id: "proctor_online", name: "Proctor Online" },
-  { id: "proctor_cbt", name: "Proctor CBT" },
-  { id: "team_leader", name: "Team Leader" },
-  { id: "manager", name: "Manager" },
-  { id: "cce", name: "C.C.E" },
-  { id: "wfm", name: "WFM" },
-  { id: "hr_manager", name: "HR Manager" },
-  { id: "hr_associate", name: "HR Associate" },
   { id: "admin", name: "Admin" },
   { id: "quality_analyst", name: "Quality Analyst" },
+  { id: "cashifty", name: "Cashifty" },
+  { id: "mettl_operations", name: "Mettl operations" },
+  { id: "mettl", name: "Mettl" },
+  { id: "proctoring", name: "Proctoring" },
 ];
 
 const DEFAULT_ROLES = [
