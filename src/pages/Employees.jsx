@@ -28,7 +28,8 @@ import {
   CreditCard,
   User,
   MapPin,
-  Briefcase
+  Briefcase,
+  MessageCircle
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SendWhatsAppDialog from "@/components/whatsapp/SendWhatsAppDialog";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -74,6 +76,8 @@ export default function Employees() {
   const [downloading, setDownloading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
+  const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
   const employeesPerPage = 40;
   const [formData, setFormData] = useState({
     full_name: "",
@@ -1231,12 +1235,15 @@ export default function Employees() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}>
-                            <Eye className="w-4 h-4 mr-2" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(emp)}>
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                                                        <Eye className="w-4 h-4 mr-2" /> View Details
+                                                      </DropdownMenuItem>
+                                                      <DropdownMenuItem onClick={() => handleEdit(emp)}>
+                                                        <Edit className="w-4 h-4 mr-2" /> Edit
+                                                      </DropdownMenuItem>
+                                                      <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
+                                                        <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
+                                                      </DropdownMenuItem>
+                                                      <DropdownMenuSeparator />
 
 
                                                           <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
@@ -1745,7 +1752,14 @@ export default function Employees() {
             </div>
           )}
         </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+                </Dialog>
+
+                {/* WhatsApp Dialog */}
+                <SendWhatsAppDialog 
+                  open={showWhatsAppDialog} 
+                  onClose={() => { setShowWhatsAppDialog(false); setWhatsAppEmployee(null); }}
+                  employee={whatsAppEmployee}
+                />
+              </div>
+            );
+          }
