@@ -24,7 +24,8 @@ import {
   Megaphone,
   Calendar,
   Filter,
-  Search
+  Search,
+  MessageCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ export default function NotificationCenter() {
     notification_type: "info",
     send_email: false,
     send_in_app: true,
+    send_whatsapp: false,
     link_url: "",
     image_url: "",
     scheduled_time: "",
@@ -115,6 +117,7 @@ export default function NotificationCenter() {
       notification_type: "info",
       send_email: false,
       send_in_app: true,
+      send_whatsapp: false,
       link_url: "",
       image_url: "",
       scheduled_time: "",
@@ -133,6 +136,7 @@ export default function NotificationCenter() {
       notification_type: notification.notification_type || "info",
       send_email: notification.send_email || false,
       send_in_app: notification.send_in_app !== false,
+      send_whatsapp: notification.send_whatsapp || false,
       link_url: notification.link_url || "",
       image_url: notification.image_url || "",
       scheduled_time: notification.scheduled_time || "",
@@ -189,6 +193,23 @@ export default function NotificationCenter() {
             subject: formData.title,
             body: emailBody
           });
+        }
+      }
+
+      // Send WhatsApp messages
+      if (formData.send_whatsapp) {
+        for (const emp of targetEmployees) {
+          if (emp.phone) {
+            try {
+              const whatsappMessage = `*${formData.title}*\n\n${formData.message}${formData.link_url ? `\n\n🔗 ${formData.link_url}` : ''}`;
+              await base44.functions.invoke('sendWhatsApp', {
+                phone: emp.phone,
+                message: whatsappMessage
+              });
+            } catch (err) {
+              console.error('WhatsApp send error for', emp.email, err);
+            }
+          }
         }
       }
 
@@ -429,6 +450,11 @@ export default function NotificationCenter() {
                             <Mail className="w-3 h-3 mr-1" /> Email
                           </Badge>
                         )}
+                        {notification.send_whatsapp && (
+                          <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                            <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
@@ -620,6 +646,15 @@ export default function NotificationCenter() {
                   />
                   <Label className="flex items-center gap-1">
                     <Mail className="w-4 h-4" /> Email
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.send_whatsapp}
+                    onCheckedChange={(checked) => setFormData({ ...formData, send_whatsapp: checked })}
+                  />
+                  <Label className="flex items-center gap-1 text-green-600">
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
                   </Label>
                 </div>
               </div>
