@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -25,6 +26,8 @@ export default function BackgroundVerification() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, action: '' });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
@@ -40,7 +43,14 @@ export default function BackgroundVerification() {
   });
 
   const handleApprove = async (employeeIds) => {
-    for (const id of employeeIds) {
+    const total = employeeIds.length;
+    if (total > 1) {
+      setBulkProcessing(true);
+      setBulkProgress({ current: 0, total, action: 'Approving' });
+    }
+    
+    for (let i = 0; i < employeeIds.length; i++) {
+      const id = employeeIds[i];
       await base44.entities.Employee.update(id, { 
         bg_verification_status: 'approved',
         status: 'active'
@@ -48,38 +58,53 @@ export default function BackgroundVerification() {
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
-        // Send in-app notification
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Approved',
           message: 'Your background verification has been completed and approved. You are now an active employee.',
           type: 'success'
         });
-
-        // Email disabled for now - will enable later
+      }
+      
+      if (total > 1) {
+        setBulkProgress({ current: i + 1, total, action: 'Approving' });
       }
     }
+    
+    setBulkProcessing(false);
+    setBulkProgress({ current: 0, total: 0, action: '' });
     queryClient.invalidateQueries(['employees']);
     setSelectedEmployees([]);
   };
 
   const handleReject = async (employeeIds) => {
-    for (const id of employeeIds) {
+    const total = employeeIds.length;
+    if (total > 1) {
+      setBulkProcessing(true);
+      setBulkProgress({ current: 0, total, action: 'Rejecting' });
+    }
+    
+    for (let i = 0; i < employeeIds.length; i++) {
+      const id = employeeIds[i];
       await base44.entities.Employee.update(id, { bg_verification_status: 'rejected' });
       
       const emp = employees.find(e => e.id === id);
       if (emp) {
-        // Send in-app notification
         await base44.entities.Notification.create({
           recipient_email: emp.email,
           title: 'Background Verification Update',
           message: 'Your background verification could not be approved. Please contact HR for more details.',
           type: 'alert'
         });
-
-        // Email disabled for now - will enable later
+      }
+      
+      if (total > 1) {
+        setBulkProgress({ current: i + 1, total, action: 'Rejecting' });
       }
     }
+    
+    setBulkProcessing(false);
+    setBulkProgress({ current: 0, total: 0, action: '' });
     queryClient.invalidateQueries(['employees']);
     setSelectedEmployees([]);
   };
@@ -211,7 +236,7 @@ export default function BackgroundVerification() {
           <h2 className="text-2xl font-bold text-slate-800">Background Verification</h2>
           <p className="text-slate-500">Verify and approve employee backgrounds</p>
         </div>
-        {selectedEmployees.length > 0 && (
+        {selectedEmployees.length > 0 && !bulkProcessing && (
           <div className="flex gap-2">
             <Button 
               onClick={() => handleApprove(selectedEmployees)}
@@ -230,6 +255,34 @@ export default function BackgroundVerification() {
           </div>
         )}
       </div>
+
+      {/* Bulk Processing Progress */}
+      {bulkProcessing && (
+        <Card className="border-0 shadow-sm border-l-4 border-l-indigo-500">
+          <CardContent className="py-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                  <span className="font-medium text-slate-800">
+                    {bulkProgress.action} BGV...
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-indigo-600">
+                  {bulkProgress.current} / {bulkProgress.total}
+                </span>
+              </div>
+              <Progress 
+                value={(bulkProgress.current / bulkProgress.total) * 100} 
+                className="h-2"
+              />
+              <p className="text-xs text-slate-500">
+                Please wait while processing. Do not close this page.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
