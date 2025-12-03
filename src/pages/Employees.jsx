@@ -1416,16 +1416,7 @@ export default function Employees() {
                 </SelectContent>
               </Select>
             </div>
-            {formData.employment_type === 'contractual' && (
-              <div className="space-y-2">
-                <Label>Contract End Date</Label>
-                <Input
-                  type="date"
-                  value={formData.contract_end_date}
-                  onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })}
-                />
-              </div>
-            )}
+
             <div className="space-y-2">
               <Label>Date of Joining</Label>
               <Input
@@ -1649,12 +1640,7 @@ export default function Employees() {
                       <p className="text-sm text-slate-500">Date of Joining</p>
                       <p className="font-medium">{selectedEmployee.date_of_joining && !isNaN(new Date(selectedEmployee.date_of_joining).getTime()) ? format(new Date(selectedEmployee.date_of_joining), 'MMM d, yyyy') : '-'}</p>
                     </div>
-                    {selectedEmployee.employment_type === 'contractual' && (
-                      <div className="p-4 bg-purple-50 rounded-xl">
-                        <p className="text-sm text-purple-600">Contract End Date</p>
-                        <p className="font-medium text-purple-700">{selectedEmployee.contract_end_date && !isNaN(new Date(selectedEmployee.contract_end_date).getTime()) ? format(new Date(selectedEmployee.contract_end_date), 'MMM d, yyyy') : '-'}</p>
-                      </div>
-                    )}
+
                     <div className="p-4 bg-slate-50 rounded-xl">
                       <p className="text-sm text-slate-500">Salary</p>
                       <p className="font-medium">₹{selectedEmployee.salary?.toLocaleString() || '-'}</p>
