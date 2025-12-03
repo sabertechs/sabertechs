@@ -807,7 +807,8 @@ export default function Employees() {
 
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-                         emp.email?.toLowerCase().includes(search.toLowerCase());
+                               emp.email?.toLowerCase().includes(search.toLowerCase()) ||
+                               emp.phone?.includes(search);
     const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
     const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
     const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
