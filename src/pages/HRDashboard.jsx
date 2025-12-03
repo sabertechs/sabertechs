@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   TrendingUp,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  CalendarClock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,12 +37,24 @@ export default function HRDashboard() {
     queryFn: () => base44.entities.Employee.filter({ bg_verification_status: 'pending' }),
   });
 
+  const { data: attendance = [] } = useQuery({
+    queryKey: ['todayAttendance'],
+    queryFn: () => base44.entities.Attendance.filter({ date: format(new Date(), 'yyyy-MM-dd') }),
+  });
+
+  // Calculate pending attendance
+  const permanentEmployees = employees.filter(e => e.employment_type === 'permanent' && e.status === 'active');
+  const pendingAttendanceCount = permanentEmployees.filter(emp => 
+    !attendance.find(a => a.employee_email === emp.email)
+  ).length;
+
   const stats = {
     totalEmployees: employees.length,
     activeEmployees: employees.filter(e => e.status === 'active').length,
     pendingEmployees: employees.filter(e => e.status === 'pending').length,
     pendingExpenses: expenses.length,
-    pendingBGV: pendingVerifications.length
+    pendingBGV: pendingVerifications.length,
+    pendingAttendance: pendingAttendanceCount
   };
 
   const departmentStats = employees.reduce((acc, emp) => {
@@ -102,6 +115,30 @@ export default function HRDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Attendance Alert */}
+      {stats.pendingAttendance > 0 && (
+        <Link to={createPageUrl("AttendanceManagement")}>
+          <Card className="border-0 shadow-sm border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <CalendarClock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800">Pending Attendance Today</p>
+                    <p className="text-sm text-slate-500">{stats.pendingAttendance} permanent employee(s) haven't marked attendance</p>
+                  </div>
+                </div>
+                <Badge className="bg-orange-100 text-orange-700 text-lg px-4 py-2">
+                  {stats.pendingAttendance}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

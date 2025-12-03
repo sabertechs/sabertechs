@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { 
   Users, Receipt, CheckCircle, Clock, ChevronRight, 
   UserPlus, Mail, FileText, ShieldCheck, Shield, Settings,
-  Calendar, TrendingUp, AlertCircle
+  Calendar, TrendingUp, AlertCircle, CalendarClock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export default function DeptHeadDashboard() {
 
   const teamMembers = allEmployees.filter(e => e.department === employee?.department && e.status === 'active');
   const pendingBGV = allEmployees.filter(e => e.bg_verification_status === 'pending');
+  const permanentEmployees = allEmployees.filter(e => e.employment_type === 'permanent' && e.status === 'active');
 
   const { data: pendingExpenses = [] } = useQuery({
     queryKey: ['pendingExpenses'],
@@ -48,12 +49,23 @@ export default function DeptHeadDashboard() {
     staleTime: 30000,
   });
 
+  const { data: todayAttendance = [] } = useQuery({
+    queryKey: ['todayAttendance'],
+    queryFn: () => base44.entities.Attendance.filter({ date: format(new Date(), 'yyyy-MM-dd') }),
+    staleTime: 30000,
+  });
+
+  // Calculate pending attendance
+  const pendingAttendanceCount = permanentEmployees.filter(emp => 
+    !todayAttendance.find(a => a.employee_email === emp.email)
+  ).length;
+
   const quickActions = [
     { name: "Employees", icon: Users, page: "Employees", color: "bg-blue-100 text-blue-600", count: allEmployees.length },
     { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload", color: "bg-indigo-100 text-indigo-600" },
     { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement", color: "bg-purple-100 text-purple-600", count: pendingOnboarding.length },
     { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement", color: "bg-pink-100 text-pink-600" },
-    { name: "Attendance", icon: Clock, page: "AttendanceManagement", color: "bg-cyan-100 text-cyan-600" },
+    { name: "Attendance", icon: Clock, page: "AttendanceManagement", color: "bg-cyan-100 text-cyan-600", count: pendingAttendanceCount },
     { name: "Payslips", icon: FileText, page: "PayslipManagement", color: "bg-emerald-100 text-emerald-600" },
     { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification", color: "bg-amber-100 text-amber-600", count: pendingBGV.length },
     { name: "Expenses", icon: Receipt, page: "ExpenseApproval", color: "bg-orange-100 text-orange-600", count: pendingExpenses.length },
@@ -135,6 +147,30 @@ export default function DeptHeadDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Attendance Alert */}
+      {pendingAttendanceCount > 0 && (
+        <Link to={createPageUrl("AttendanceManagement")}>
+          <Card className="border-0 shadow-sm border-l-4 border-l-orange-500 hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <CalendarClock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800">Pending Attendance Today</p>
+                    <p className="text-sm text-slate-500">{pendingAttendanceCount} permanent employee(s) haven't marked attendance</p>
+                  </div>
+                </div>
+                <Badge className="bg-orange-100 text-orange-700 text-lg px-4 py-2">
+                  {pendingAttendanceCount}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Quick Actions Grid */}
       <Card className="border-0 shadow-sm">
