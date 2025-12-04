@@ -99,7 +99,7 @@ export default function Employees() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
-    staleTime: 30000,
+    staleTime: 5000,
   });
 
   const { data: offerLetters = [] } = useQuery({
@@ -111,7 +111,7 @@ export default function Employees() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['employees']);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
       resetForm();
     }
@@ -120,7 +120,7 @@ export default function Employees() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['employees']);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
       setSelectedEmployee(null);
       resetForm();
@@ -129,7 +129,7 @@ export default function Employees() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Employee.delete(id),
-    onSuccess: () => queryClient.invalidateQueries(['employees'])
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] })
   });
 
   const resetForm = () => {

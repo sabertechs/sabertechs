@@ -239,7 +239,8 @@ export default function NotificationCenter() {
         scheduled_time: new Date().toISOString()
       });
 
-      queryClient.invalidateQueries(['scheduledNotifications']);
+      queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       
       // Show detailed success message
       const parts = [];
