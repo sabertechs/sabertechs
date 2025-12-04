@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Camera, QrCode, Keyboard } from "lucide-react";
+import { Camera, ScanBarcode, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -95,14 +95,16 @@ export default function QRScanner({ open, onClose, onScan }) {
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Try BarcodeDetector API (Chrome, Edge, Opera)
+    // Try BarcodeDetector API (Chrome, Edge, Opera) - supports both QR and barcodes
     if ("BarcodeDetector" in window) {
       try {
-        const barcodeDetector = new BarcodeDetector({ formats: ["qr_code"] });
+        const barcodeDetector = new BarcodeDetector({ 
+          formats: ["qr_code", "ean_13", "ean_8", "code_128", "code_39", "code_93", "upc_a", "upc_e", "itf", "codabar"] 
+        });
         const barcodes = await barcodeDetector.detect(canvas);
         if (barcodes.length > 0) {
-          const qrData = barcodes[0].rawValue;
-          handleScanSuccess(qrData);
+          const scannedData = barcodes[0].rawValue;
+          handleScanSuccess(scannedData);
           return;
         }
       } catch (e) {
@@ -137,8 +139,8 @@ export default function QRScanner({ open, onClose, onScan }) {
       <DialogContent className="max-w-md p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2">
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-indigo-600" />
-            {manualMode ? "Enter Asset ID" : "Scan Asset QR Code"}
+            <ScanBarcode className="w-5 h-5 text-indigo-600" />
+            {manualMode ? "Enter Asset ID" : "Scan QR Code or Barcode"}
           </DialogTitle>
         </DialogHeader>
         
@@ -203,7 +205,7 @@ export default function QRScanner({ open, onClose, onScan }) {
                   {scanning && (
                     <div className="absolute bottom-4 left-0 right-0 text-center">
                       <span className="bg-black/60 text-white text-sm px-3 py-1 rounded-full">
-                        Point at QR code
+                        Point at QR code or barcode
                       </span>
                     </div>
                   )}
