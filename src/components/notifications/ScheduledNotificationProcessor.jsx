@@ -8,8 +8,8 @@ export default function ScheduledNotificationProcessor() {
   useEffect(() => {
     const checkAndProcess = async () => {
       const now = Date.now();
-      // Only run every 60 seconds to avoid too many API calls
-      if (now - lastRunRef.current < 60000) return;
+      // Only run every 2 minutes to avoid too many API calls
+      if (now - lastRunRef.current < 120000) return;
       lastRunRef.current = now;
 
       try {
@@ -26,8 +26,8 @@ export default function ScheduledNotificationProcessor() {
     // Run immediately on mount
     checkAndProcess();
 
-    // Then run every 60 seconds
-    const interval = setInterval(checkAndProcess, 60000);
+    // Then run every 2 minutes for better performance
+    const interval = setInterval(checkAndProcess, 120000);
 
     return () => clearInterval(interval);
   }, []);
