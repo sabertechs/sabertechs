@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -99,11 +99,13 @@ export default function Employees() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
+    staleTime: 30000,
   });
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
     queryFn: () => base44.entities.OfferLetter.list(),
+    staleTime: 60000,
   });
 
   const createMutation = useMutation({
@@ -174,7 +176,7 @@ export default function Employees() {
     }
   };
 
-  const getOfferLetter = (email) => offerLetters.find(ol => ol.employee_email === email);
+  const getOfferLetter = useCallback((email) => offerLetters.find(ol => ol.employee_email === email), [offerLetters]);
 
   // Generate PDF using PDFMonkey
   const generatePDFWithMonkey = async (emp, docType) => {
@@ -807,43 +809,46 @@ export default function Employees() {
     }
   };
 
-  const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-                               emp.email?.toLowerCase().includes(search.toLowerCase()) ||
-                               emp.phone?.includes(search);
-    const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
-    const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
-    const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
-    const matchesDesignation = designationFilter === "all" || emp.designation === designationFilter;
-    const matchesEmploymentType = employmentTypeFilter === "all" || emp.employment_type === employmentTypeFilter;
-    
-    let matchesJoiningDate = true;
-    if (joiningDateFrom && emp.date_of_joining) {
-      matchesJoiningDate = matchesJoiningDate && emp.date_of_joining >= joiningDateFrom;
-    }
-    if (joiningDateTo && emp.date_of_joining) {
-      matchesJoiningDate = matchesJoiningDate && emp.date_of_joining <= joiningDateTo;
-    }
-    
-    return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesEmploymentType && matchesJoiningDate;
-  }).sort((a, b) => {
-    let aVal = a[sortField] || '';
-    let bVal = b[sortField] || '';
-    
-    if (sortField === 'salary') {
-      aVal = parseFloat(aVal) || 0;
-      bVal = parseFloat(bVal) || 0;
-    }
-    
-    if (sortOrder === 'asc') {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
+  const filteredEmployees = useMemo(() => {
+    const searchLower = search.toLowerCase();
+    return employees.filter(emp => {
+      const matchesSearch = emp.full_name?.toLowerCase().includes(searchLower) ||
+                                 emp.email?.toLowerCase().includes(searchLower) ||
+                                 emp.phone?.includes(search);
+      const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
+      const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
+      const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
+      const matchesDesignation = designationFilter === "all" || emp.designation === designationFilter;
+      const matchesEmploymentType = employmentTypeFilter === "all" || emp.employment_type === employmentTypeFilter;
+      
+      let matchesJoiningDate = true;
+      if (joiningDateFrom && emp.date_of_joining) {
+        matchesJoiningDate = matchesJoiningDate && emp.date_of_joining >= joiningDateFrom;
+      }
+      if (joiningDateTo && emp.date_of_joining) {
+        matchesJoiningDate = matchesJoiningDate && emp.date_of_joining <= joiningDateTo;
+      }
+      
+      return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesEmploymentType && matchesJoiningDate;
+    }).sort((a, b) => {
+      let aVal = a[sortField] || '';
+      let bVal = b[sortField] || '';
+      
+      if (sortField === 'salary') {
+        aVal = parseFloat(aVal) || 0;
+        bVal = parseFloat(bVal) || 0;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+  }, [employees, search, statusFilter, bgvFilter, departmentFilter, designationFilter, employmentTypeFilter, joiningDateFrom, joiningDateTo, sortField, sortOrder]);
 
-  const departments = [...new Set(employees.map(e => e.department).filter(Boolean))];
-  const designations = [...new Set(employees.map(e => e.designation).filter(Boolean))];
+  const departments = useMemo(() => [...new Set(employees.map(e => e.department).filter(Boolean))], [employees]);
+  const designations = useMemo(() => [...new Set(employees.map(e => e.designation).filter(Boolean))], [employees]);
 
   // Pagination
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
@@ -103,11 +103,13 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['notifications', user?.email],
     queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }),
     enabled: !!user?.email,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every minute instead of constantly
   });
 
-  const userRole = employeeData?.role || user?.role || 'employee';
+  const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
 
-  const getNavItems = () => {
+  const getNavItems = useCallback(() => {
     const items = [];
     const sectionAccess = employeeData?.section_access || [];
 
@@ -175,9 +177,9 @@ export default function Layout({ children, currentPageName }) {
     }
 
     return items;
-  };
+  }, [userRole, employeeData?.section_access]);
 
-  const navItems = getNavItems();
+  const navItems = useMemo(() => getNavItems(), [getNavItems]);
 
   if (currentPageName === "Registration" || currentPageName === "Login") {
     return <>{children}</>;

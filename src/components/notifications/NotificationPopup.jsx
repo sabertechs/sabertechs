@@ -48,7 +48,7 @@ export default function NotificationPopup({ userEmail }) {
     };
 
     checkNotifications();
-    const interval = setInterval(checkNotifications, 10000);
+    const interval = setInterval(checkNotifications, 30000);
     
     return () => clearInterval(interval);
   }, [userEmail, seenIds]);
