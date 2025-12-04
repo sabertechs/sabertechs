@@ -83,7 +83,7 @@ export default function NotificationCenter() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.ScheduledNotification.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['scheduledNotifications']);
+      queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       resetForm();
       setShowDialog(false);
       toast.success('Notification scheduled successfully');
@@ -93,7 +93,7 @@ export default function NotificationCenter() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ScheduledNotification.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['scheduledNotifications']);
+      queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       resetForm();
       setShowDialog(false);
       toast.success('Notification updated successfully');
@@ -103,7 +103,7 @@ export default function NotificationCenter() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.ScheduledNotification.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['scheduledNotifications']);
+      queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       toast.success('Notification deleted');
     }
   });
@@ -272,7 +272,7 @@ export default function NotificationCenter() {
 
   const cancelScheduled = async (notification) => {
     await base44.entities.ScheduledNotification.update(notification.id, { status: 'cancelled' });
-    queryClient.invalidateQueries(['scheduledNotifications']);
+    queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
     toast.success('Notification cancelled');
   };
 
