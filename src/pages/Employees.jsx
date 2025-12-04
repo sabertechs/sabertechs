@@ -150,6 +150,7 @@ export default function Employees() {
   };
 
   const handleEdit = (employee) => {
+    setShowViewDialog(false); // Close view dialog first
     setSelectedEmployee(employee);
     setFormData({
       full_name: employee.full_name || "",
