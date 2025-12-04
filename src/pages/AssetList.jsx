@@ -581,12 +581,24 @@ export default function AssetList() {
         open={showQRScanner}
         onClose={() => setShowQRScanner(false)}
         onScan={(scannedData) => {
-          const asset = assets.find(a => a.asset_id === scannedData || a.id === scannedData);
+          // Check if asset exists by asset_id, serial_number, or id
+          const asset = assets.find(a => 
+            a.asset_id === scannedData || 
+            a.id === scannedData || 
+            a.serial_number === scannedData
+          );
           if (asset) {
             setSelectedAsset(asset);
             setShowViewDialog(true);
           } else {
-            alert(`Asset not found: ${scannedData}`);
+            // Asset not found - offer to create new asset with scanned barcode as serial number
+            const createNew = window.confirm(`No asset found with code: ${scannedData}\n\nWould you like to add a new asset with this as the serial number?`);
+            if (createNew) {
+              resetForm();
+              setFormData(prev => ({ ...prev, serial_number: scannedData }));
+              setSelectedAsset(null);
+              setShowAddDialog(true);
+            }
           }
         }}
       />
