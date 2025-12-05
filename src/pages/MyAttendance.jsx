@@ -19,10 +19,12 @@ export default function MyAttendance() {
     const fetchUser = async () => {
       const userData = await base44.auth.me();
       setUser(userData);
-      // Fetch employee record
-      const employees = await base44.entities.Employee.filter({ email: userData.email });
-      if (employees.length > 0) {
-        setEmployee(employees[0]);
+      // Fetch employee record - use case-insensitive matching
+      const userEmail = userData.email.toLowerCase().trim();
+      const allEmployees = await base44.entities.Employee.list();
+      const matchedEmployee = allEmployees.find(emp => emp.email?.toLowerCase().trim() === userEmail);
+      if (matchedEmployee) {
+        setEmployee(matchedEmployee);
       }
     };
     fetchUser();
