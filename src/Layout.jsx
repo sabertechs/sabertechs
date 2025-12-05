@@ -23,7 +23,8 @@ import {
   Megaphone,
   Newspaper,
   BookOpen,
-  Package
+  Package,
+  Gamepad2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -174,7 +175,7 @@ export default function Layout({ children, currentPageName }) {
       // All employees can access policies and their assets
       items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
       items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
-      items.push({ name: "Games", icon: Users, page: "OfficeOpsArena" });
+      items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
     }
 
     return items;
