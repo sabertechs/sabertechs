@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import {
   Gamepad2,
-  Zap,
-  Coins,
   Trophy,
-  Clock,
-  Users,
   Settings,
-  Play,
-  Lock,
-  AlertTriangle,
-  RefreshCw
+  X,
+  ChevronRight,
+  Building2,
+  Plus
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +30,7 @@ export default function OfficeOpsArena() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
-  const [showGame, setShowGame] = useState(false);
+  const [currentView, setCurrentView] = useState("home"); // home, game, leaderboard
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const [adminSettings, setAdminSettings] = useState({});
 
@@ -88,7 +81,6 @@ export default function OfficeOpsArena() {
     const today = new Date().toISOString().split('T')[0];
     
     if (!gamePlayer) {
-      // Create new player
       const newPlayer = await base44.entities.GamePlayer.create({
         employee_email: user.email,
         display_name: employee.full_name,
@@ -103,7 +95,6 @@ export default function OfficeOpsArena() {
       return newPlayer;
     }
     
-    // Check if tokens need regeneration (new day)
     if (gamePlayer.last_token_regen !== today) {
       await base44.entities.GamePlayer.update(gamePlayer.id, {
         tokens_left: settings?.tokens_per_day || 10,
@@ -118,19 +109,18 @@ export default function OfficeOpsArena() {
   };
 
   const canPlay = () => {
-    if (!settings?.game_enabled) return { can: false, reason: "Game is disabled by admin" };
+    if (!settings?.game_enabled) return { can: false, reason: "Game is disabled" };
     if (!gamePlayer) return { can: true, reason: "" };
-    if (gamePlayer.tokens_left <= 0) return { can: false, reason: "No tokens left today" };
+    if (gamePlayer.tokens_left <= 0) return { can: false, reason: "No tokens left" };
     if (gamePlayer.cooldown_until && new Date(gamePlayer.cooldown_until) > new Date()) {
       const mins = Math.ceil((new Date(gamePlayer.cooldown_until) - new Date()) / 60000);
-      return { can: false, reason: `Cooldown active (${mins} min left)` };
+      return { can: false, reason: `Cooldown (${mins}m)` };
     }
     
-    // Check office hours if enabled
     if (settings?.office_hours_only) {
       const hour = new Date().getHours();
       if (hour < (settings.office_start_hour || 9) || hour >= (settings.office_end_hour || 18)) {
-        return { can: false, reason: "Games only available during office hours" };
+        return { can: false, reason: "Office hours only" };
       }
     }
     
@@ -144,14 +134,13 @@ export default function OfficeOpsArena() {
       toast.error(check.reason);
       return;
     }
-    setShowGame(true);
+    setCurrentView("game");
   };
 
   const handleGameComplete = async (result) => {
-    setShowGame(false);
+    setCurrentView("home");
     
     try {
-      // Save score
       await base44.entities.GameScore.create({
         player_email: user.email,
         player_name: employee?.full_name || user.full_name,
@@ -162,7 +151,6 @@ export default function OfficeOpsArena() {
         duration_seconds: 30
       });
 
-      // Update player stats
       const newConsecutive = (gamePlayer?.consecutive_plays || 0) + 1;
       const maxConsec = settings?.max_consecutive_plays || 5;
       
@@ -174,15 +162,13 @@ export default function OfficeOpsArena() {
         last_play_time: new Date().toISOString()
       };
 
-      // Set cooldown if max consecutive reached
       if (newConsecutive >= maxConsec) {
         const cooldownMins = settings?.cooldown_minutes || 30;
         updateData.cooldown_until = new Date(Date.now() + cooldownMins * 60000).toISOString();
         updateData.consecutive_plays = 0;
-        toast.info(`Cooldown activated! Take a ${cooldownMins} minute break.`);
+        toast.info(`Cooldown! Take a ${cooldownMins} min break.`);
       }
 
-      // Update best reaction time
       if (!gamePlayer?.best_reaction_time || result.avgReactionTime < gamePlayer.best_reaction_time) {
         updateData.best_reaction_time = result.avgReactionTime;
       }
@@ -195,7 +181,7 @@ export default function OfficeOpsArena() {
       queryClient.invalidateQueries({ queryKey: ['gameScores'] });
       queryClient.invalidateQueries({ queryKey: ['gamePlayers'] });
 
-      toast.success(`Score saved! +${result.score} points`);
+      toast.success(`+${result.score} points!`);
     } catch (err) {
       toast.error('Failed to save score');
     }
@@ -213,210 +199,176 @@ export default function OfficeOpsArena() {
       setShowAdminDialog(false);
       toast.success('Settings saved');
     } catch (err) {
-      toast.error('Failed to save settings');
+      toast.error('Failed to save');
     }
   };
 
   const playStatus = canPlay();
   const tokensLeft = gamePlayer?.tokens_left ?? (settings?.tokens_per_day || 10);
-  const maxTokens = settings?.tokens_per_day || 10;
 
-  // Get user stats
-  const userScores = scores.filter(s => s.player_email === user?.email);
-  const todayScores = userScores.filter(s => s.created_date?.startsWith(new Date().toISOString().split('T')[0]));
-  const todayPoints = todayScores.reduce((sum, s) => sum + s.score, 0);
+  // Game View
+  if (currentView === "game") {
+    return (
+      <ReactionGame
+        employee={employee}
+        onComplete={handleGameComplete}
+        onCancel={() => setCurrentView("home")}
+      />
+    );
+  }
 
+  // Leaderboard View
+  if (currentView === "leaderboard") {
+    return (
+      <GameLeaderboard
+        scores={scores}
+        players={players}
+        currentUserEmail={user?.email}
+        onBack={() => setCurrentView("home")}
+      />
+    );
+  }
+
+  // Home View - Main Arena Screen
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Gamepad2 className="w-7 h-7 text-indigo-600" />
-            Office Ops Arena
-          </h2>
-          <p className="text-slate-500">Department vs Department mini-games</p>
-        </div>
-        {isAdmin && (
-          <Button variant="outline" onClick={() => { setAdminSettings(settings || {}); setShowAdminDialog(true); }}>
-            <Settings className="w-4 h-4 mr-2" />
-            Admin Settings
-          </Button>
-        )}
-      </div>
-
-      {/* Disabled Banner */}
-      {!settings?.game_enabled && (
-        <Card className="border-0 shadow-sm bg-amber-50 border-l-4 border-l-amber-500">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <p className="text-amber-800 font-medium">Games are currently disabled by admin</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-yellow-100 rounded-xl">
-                <Coins className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{tokensLeft}</p>
-                <p className="text-sm text-slate-500">Tokens Left</p>
-              </div>
-            </div>
-            <Progress value={(tokensLeft / maxTokens) * 100} className="mt-3 h-2" />
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-100 rounded-xl">
-                <Trophy className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{gamePlayer?.total_score || 0}</p>
-                <p className="text-sm text-slate-500">Total Score</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <Zap className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{todayPoints}</p>
-                <p className="text-sm text-slate-500">Today's Points</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Clock className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">
-                  {gamePlayer?.best_reaction_time ? `${gamePlayer.best_reaction_time}ms` : '-'}
-                </p>
-                <p className="text-sm text-slate-500">Best Reaction</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Game Modes */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-semibold text-slate-800">Game Modes</h3>
-          
-          {/* Reaction Speed Test */}
-          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-4 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl">
-                  <Zap className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-slate-800">Reaction Speed Test</h4>
-                  <p className="text-slate-500 mt-1">
-                    Test your reflexes! Click as fast as you can when the screen turns green.
-                  </p>
-                  <div className="flex items-center gap-4 mt-3">
-                    <Badge variant="outline" className="text-slate-500">
-                      <Clock className="w-3 h-3 mr-1" /> 30 seconds
-                    </Badge>
-                    <Badge variant="outline" className="text-slate-500">
-                      <Trophy className="w-3 h-3 mr-1" /> 5 rounds
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  {playStatus.can ? (
-                    <Button 
-                      onClick={handleStartGame}
-                      className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Play Now
-                    </Button>
-                  ) : (
-                    <Button disabled className="bg-slate-300">
-                      <Lock className="w-4 h-4 mr-2" />
-                      Locked
-                    </Button>
-                  )}
-                  {!playStatus.can && (
-                    <p className="text-xs text-red-500">{playStatus.reason}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Coming Soon Games */}
-          <Card className="border-0 shadow-sm opacity-60">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-4 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl">
-                  <Gamepad2 className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-slate-800">Quick Puzzle</h4>
-                  <p className="text-slate-500 mt-1">
-                    Solve pattern matching puzzles against the clock.
-                  </p>
-                  <Badge className="mt-3 bg-slate-200 text-slate-600">Coming Soon</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm opacity-60">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-slate-800">Department Battle</h4>
-                  <p className="text-slate-500 mt-1">
-                    Challenge other departments to live PvP matches.
-                  </p>
-                  <Badge className="mt-3 bg-slate-200 text-slate-600">Coming Soon</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Leaderboard */}
-        <div>
-          <GameLeaderboard scores={scores} players={players} currentUserEmail={user?.email} />
-        </div>
-      </div>
-
-      {/* Game Modal */}
-      {showGame && (
-        <ReactionGame
-          onComplete={handleGameComplete}
-          onCancel={() => setShowGame(false)}
+    <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
+      {/* Main Game Card */}
+      <div 
+        className="relative w-full max-w-md rounded-3xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #1e3a5f 0%, #0d1f3c 100%)'
+        }}
+      >
+        {/* City Skyline Background */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect fill='%231a365d' x='20' y='80' width='30' height='120'/%3E%3Crect fill='%231a365d' x='60' y='60' width='25' height='140'/%3E%3Crect fill='%231a365d' x='95' y='90' width='35' height='110'/%3E%3Crect fill='%231a365d' x='140' y='50' width='40' height='150'/%3E%3Crect fill='%231a365d' x='190' y='70' width='30' height='130'/%3E%3Crect fill='%231a365d' x='230' y='100' width='25' height='100'/%3E%3Crect fill='%231a365d' x='265' y='55' width='35' height='145'/%3E%3Crect fill='%231a365d' x='310' y='75' width='30' height='125'/%3E%3Crect fill='%231a365d' x='350' y='85' width='30' height='115'/%3E%3C/svg%3E")`,
+            backgroundPosition: 'bottom',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'cover'
+          }}
         />
-      )}
+
+        {/* Admin Settings Button */}
+        {isAdmin && (
+          <button 
+            onClick={() => { setAdminSettings(settings || {}); setShowAdminDialog(true); }}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          >
+            <Settings className="w-5 h-5 text-white/80" />
+          </button>
+        )}
+
+        {/* Tokens Display */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-slate-800/60 px-3 py-1.5 rounded-full">
+          <div className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center">
+            <span className="text-xs font-bold text-yellow-900">🪙</span>
+          </div>
+          <span className="text-white font-bold">{tokensLeft}</span>
+          <Plus className="w-4 h-4 text-green-400" />
+        </div>
+
+        <div className="relative z-10 p-8 pt-16 pb-10 flex flex-col items-center">
+          {/* Title */}
+          <h1 
+            className="text-4xl font-black text-white tracking-tight mb-1"
+            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}
+          >
+            OFFICE OPS
+          </h1>
+          <h2 
+            className="text-5xl font-black mb-8"
+            style={{ 
+              color: '#f59e0b',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.4)',
+              fontStyle: 'italic'
+            }}
+          >
+            ARENA
+          </h2>
+
+          {/* Player Avatar */}
+          <div className="relative mb-8">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-xl bg-slate-700">
+              {employee?.profile_photo ? (
+                <img 
+                  src={employee.profile_photo} 
+                  alt={employee.full_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <span className="text-4xl font-bold text-white">
+                    {employee?.full_name?.[0] || user?.full_name?.[0] || '?'}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Level Badge */}
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-indigo-600 px-3 py-1 rounded-full">
+              <span className="text-white text-xs font-bold">
+                {gamePlayer?.games_played || 0} Games
+              </span>
+            </div>
+          </div>
+
+          {/* Player Name */}
+          <p className="text-white font-semibold text-lg mb-1">
+            {employee?.full_name || user?.full_name}
+          </p>
+          <p className="text-white/60 text-sm capitalize mb-8">
+            {employee?.department || 'Player'}
+          </p>
+
+          {/* Play Button */}
+          <button
+            onClick={handleStartGame}
+            disabled={!playStatus.can}
+            className={`
+              w-48 py-4 rounded-full font-bold text-xl uppercase tracking-wide
+              transition-all transform hover:scale-105 active:scale-95
+              ${playStatus.can 
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 hover:from-orange-400 hover:to-orange-500' 
+                : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+              }
+            `}
+          >
+            {playStatus.can ? 'PLAY' : playStatus.reason}
+          </button>
+
+          {/* Leaderboard Button */}
+          <button
+            onClick={() => setCurrentView("leaderboard")}
+            className="mt-4 px-6 py-3 bg-slate-700/50 border border-white/20 rounded-full text-white font-semibold hover:bg-slate-600/50 transition-colors flex items-center gap-2"
+          >
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            LEADERBOARD
+          </button>
+        </div>
+
+        {/* Bottom Stats Bar */}
+        <div className="relative z-10 grid grid-cols-3 border-t border-white/10">
+          <button
+            onClick={() => setCurrentView("leaderboard")}
+            className="py-4 text-center hover:bg-white/5 transition-colors"
+          >
+            <Building2 className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
+            <span className="text-white/60 text-xs uppercase">Department</span>
+          </button>
+          <div className="py-4 text-center border-x border-white/10">
+            <p className="text-2xl font-bold text-white">{gamePlayer?.total_score || 0}</p>
+            <span className="text-white/60 text-xs uppercase">Total Score</span>
+          </div>
+          <div className="py-4 text-center">
+            <p className="text-2xl font-bold text-white">
+              {gamePlayer?.best_reaction_time || '-'}
+              <span className="text-sm text-white/60">ms</span>
+            </p>
+            <span className="text-white/60 text-xs uppercase">Best Time</span>
+          </div>
+        </div>
+      </div>
 
       {/* Admin Settings Dialog */}
       <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
@@ -441,7 +393,7 @@ export default function OfficeOpsArena() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Max Consecutive Plays (before cooldown)</Label>
+              <Label>Max Consecutive Plays</Label>
               <Input
                 type="number"
                 value={adminSettings.max_consecutive_plays || 5}
@@ -449,7 +401,7 @@ export default function OfficeOpsArena() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Cooldown Duration (minutes)</Label>
+              <Label>Cooldown (minutes)</Label>
               <Input
                 type="number"
                 value={adminSettings.cooldown_minutes || 30}
@@ -463,34 +415,10 @@ export default function OfficeOpsArena() {
                 onCheckedChange={(v) => setAdminSettings({ ...adminSettings, office_hours_only: v })}
               />
             </div>
-            {adminSettings.office_hours_only && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Start Hour</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={23}
-                    value={adminSettings.office_start_hour || 9}
-                    onChange={(e) => setAdminSettings({ ...adminSettings, office_start_hour: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>End Hour</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={23}
-                    value={adminSettings.office_end_hour || 18}
-                    onChange={(e) => setAdminSettings({ ...adminSettings, office_end_hour: parseInt(e.target.value) })}
-                  />
-                </div>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdminDialog(false)}>Cancel</Button>
-            <Button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700">Save Settings</Button>
+            <Button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

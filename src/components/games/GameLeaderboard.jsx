@@ -1,10 +1,26 @@
 import React from "react";
-import { Trophy, Medal, Zap, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy, Medal, ArrowLeft, Building2, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
-export default function GameLeaderboard({ scores, players, currentUserEmail }) {
+export default function GameLeaderboard({ scores, players, currentUserEmail, onBack }) {
+  // Fetch all employees to get profile photos
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employeesForLeaderboard'],
+    queryFn: () => base44.entities.Employee.list()
+  });
+
+  const getEmployeePhoto = (email) => {
+    const emp = employees.find(e => e.email === email);
+    return emp?.profile_photo;
+  };
+
+  const getEmployeeDept = (email) => {
+    const emp = employees.find(e => e.email === email);
+    return emp?.department;
+  };
+
   // Get today's scores
   const today = new Date().toISOString().split('T')[0];
   const todayScores = scores.filter(s => s.created_date?.startsWith(today));
@@ -22,7 +38,7 @@ export default function GameLeaderboard({ scores, players, currentUserEmail }) {
         playerScores[s.player_email] = {
           email: s.player_email,
           name: s.player_name,
-          department: s.department,
+          department: s.department || getEmployeeDept(s.player_email),
           totalScore: 0,
           gamesPlayed: 0,
           bestReaction: Infinity
@@ -41,12 +57,13 @@ export default function GameLeaderboard({ scores, players, currentUserEmail }) {
   const aggregateDeptScores = (scoreList) => {
     const deptScores = {};
     scoreList.forEach(s => {
-      if (!s.department) return;
-      if (!deptScores[s.department]) {
-        deptScores[s.department] = { department: s.department, totalScore: 0, players: new Set() };
+      const dept = s.department || getEmployeeDept(s.player_email);
+      if (!dept) return;
+      if (!deptScores[dept]) {
+        deptScores[dept] = { department: dept, totalScore: 0, players: new Set() };
       }
-      deptScores[s.department].totalScore += s.score;
-      deptScores[s.department].players.add(s.player_email);
+      deptScores[dept].totalScore += s.score;
+      deptScores[dept].players.add(s.player_email);
     });
     return Object.values(deptScores)
       .map(d => ({ ...d, playerCount: d.players.size }))
@@ -57,89 +74,152 @@ export default function GameLeaderboard({ scores, players, currentUserEmail }) {
   const weeklyLeaderboard = aggregateScores(weekScores);
   const deptLeaderboard = aggregateDeptScores(weekScores);
 
-  const getRankIcon = (rank) => {
-    if (rank === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (rank === 1) return <Medal className="w-5 h-5 text-slate-400" />;
-    if (rank === 2) return <Medal className="w-5 h-5 text-amber-600" />;
-    return <span className="w-5 h-5 text-center text-slate-500 text-sm font-bold">{rank + 1}</span>;
+  const getRankBadge = (rank) => {
+    if (rank === 0) return (
+      <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center">
+        <Trophy className="w-4 h-4 text-yellow-900" />
+      </div>
+    );
+    if (rank === 1) return (
+      <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center">
+        <Medal className="w-4 h-4 text-slate-700" />
+      </div>
+    );
+    if (rank === 2) return (
+      <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center">
+        <Medal className="w-4 h-4 text-amber-100" />
+      </div>
+    );
+    return (
+      <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center">
+        <span className="text-white text-sm font-bold">{rank + 1}</span>
+      </div>
+    );
   };
 
-  const LeaderboardList = ({ data, showDept = true }) => (
-    <div className="space-y-2">
-      {data.length === 0 ? (
-        <p className="text-center text-slate-500 py-8">No games played yet</p>
-      ) : (
-        data.slice(0, 10).map((player, idx) => (
-          <div
-            key={player.email}
-            className={`flex items-center gap-3 p-3 rounded-xl ${
-              player.email === currentUserEmail ? 'bg-indigo-50 border border-indigo-200' : 'bg-slate-50'
-            }`}
-          >
-            <div className="w-8 flex justify-center">{getRankIcon(idx)}</div>
-            <div className="flex-1">
-              <p className="font-medium text-slate-800">{player.name}</p>
-              {showDept && player.department && (
-                <p className="text-xs text-slate-500 capitalize">{player.department}</p>
-              )}
+  const PlayerRow = ({ player, rank }) => {
+    const photo = getEmployeePhoto(player.email);
+    const isCurrentUser = player.email === currentUserEmail;
+    
+    return (
+      <div className={`flex items-center gap-3 p-3 rounded-xl ${isCurrentUser ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-slate-700/50'}`}>
+        {getRankBadge(rank)}
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-600 flex-shrink-0">
+          {photo ? (
+            <img src={photo} alt={player.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-500">
+              <span className="text-white font-bold">{player.name?.[0] || '?'}</span>
             </div>
-            <div className="text-right">
-              <p className="font-bold text-indigo-600">{player.totalScore.toLocaleString()}</p>
-              <p className="text-xs text-slate-500">{player.gamesPlayed} games</p>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-semibold truncate">{player.name}</p>
+          <p className="text-white/50 text-xs capitalize">{player.department || 'N/A'}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-yellow-500 font-bold">{player.totalScore.toLocaleString()}</p>
+          <p className="text-white/50 text-xs">{player.gamesPlayed} games</p>
+        </div>
+      </div>
+    );
+  };
 
-  const DeptLeaderboardList = ({ data }) => (
-    <div className="space-y-2">
-      {data.length === 0 ? (
-        <p className="text-center text-slate-500 py-8">No department scores yet</p>
-      ) : (
-        data.slice(0, 10).map((dept, idx) => (
-          <div key={dept.department} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-            <div className="w-8 flex justify-center">{getRankIcon(idx)}</div>
-            <div className="flex-1">
-              <p className="font-medium text-slate-800 capitalize">{dept.department}</p>
-              <p className="text-xs text-slate-500">{dept.playerCount} players</p>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-indigo-600">{dept.totalScore.toLocaleString()}</p>
-            </div>
-          </div>
-        ))
-      )}
+  const DeptRow = ({ dept, rank }) => (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/50">
+      {getRankBadge(rank)}
+      <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+        <Building2 className="w-5 h-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-semibold capitalize">{dept.department}</p>
+        <p className="text-white/50 text-xs">{dept.playerCount} players</p>
+      </div>
+      <div className="text-right">
+        <p className="text-yellow-500 font-bold">{dept.totalScore.toLocaleString()}</p>
+      </div>
     </div>
   );
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
-          Leaderboard
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="daily">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="daily">Today</TabsTrigger>
-            <TabsTrigger value="weekly">This Week</TabsTrigger>
-            <TabsTrigger value="department">Departments</TabsTrigger>
-          </TabsList>
-          <TabsContent value="daily">
-            <LeaderboardList data={dailyLeaderboard} />
-          </TabsContent>
-          <TabsContent value="weekly">
-            <LeaderboardList data={weeklyLeaderboard} />
-          </TabsContent>
-          <TabsContent value="department">
-            <DeptLeaderboardList data={deptLeaderboard} />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="min-h-[80vh] flex flex-col items-center justify-start p-4">
+      <div 
+        className="relative w-full max-w-md rounded-3xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #1e3a5f 0%, #0d1f3c 100%)'
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <button 
+            onClick={onBack}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            <span className="text-white font-bold uppercase">Leaderboard</span>
+          </div>
+          <div className="w-9" />
+        </div>
+
+        {/* Tabs */}
+        <div className="p-4">
+          <Tabs defaultValue="daily" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-slate-700/50 p-1 rounded-xl mb-4">
+              <TabsTrigger value="daily" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-lg text-white/60">
+                Today
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-lg text-white/60">
+                Week
+              </TabsTrigger>
+              <TabsTrigger value="department" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-lg text-white/60">
+                Dept
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="daily" className="space-y-2 mt-0">
+              {dailyLeaderboard.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/50">No games played today</p>
+                </div>
+              ) : (
+                dailyLeaderboard.slice(0, 10).map((player, idx) => (
+                  <PlayerRow key={player.email} player={player} rank={idx} />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="weekly" className="space-y-2 mt-0">
+              {weeklyLeaderboard.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/50">No games this week</p>
+                </div>
+              ) : (
+                weeklyLeaderboard.slice(0, 10).map((player, idx) => (
+                  <PlayerRow key={player.email} player={player} rank={idx} />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="department" className="space-y-2 mt-0">
+              {deptLeaderboard.length === 0 ? (
+                <div className="text-center py-12">
+                  <Building2 className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                  <p className="text-white/50">No department scores</p>
+                </div>
+              ) : (
+                deptLeaderboard.slice(0, 10).map((dept, idx) => (
+                  <DeptRow key={dept.department} dept={dept} rank={idx} />
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
   );
 }
