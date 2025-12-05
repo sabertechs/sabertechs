@@ -34,6 +34,8 @@ import QuickPuzzleGame from "@/components/games/QuickPuzzleGame";
 import SprintTapGame from "@/components/games/SprintTapGame";
 import QuizBattleGame from "@/components/games/QuizBattleGame";
 import GameLeaderboard from "@/components/games/GameLeaderboard";
+import PlayerCard from "@/components/games/PlayerCard";
+import { getDepartmentTheme, getPlayerTitle, getPlayerFrame } from "@/components/games/DepartmentThemes";
 
 const GAMES = [
   { id: 'reaction', name: 'Reaction Speed', icon: Zap, color: 'from-orange-500 to-red-500', desc: 'Test your reflexes!' },
@@ -315,25 +317,12 @@ export default function OfficeOpsArena() {
 
         <div className="relative z-10 p-8 pt-16 pb-10 flex flex-col items-center">
           <h1 className="text-4xl font-black text-white tracking-tight mb-1" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>OFFICE OPS</h1>
-          <h2 className="text-5xl font-black mb-8" style={{ color: '#f59e0b', textShadow: '2px 2px 4px rgba(0,0,0,0.4)', fontStyle: 'italic' }}>ARENA</h2>
+          <h2 className="text-5xl font-black mb-6" style={{ color: '#f59e0b', textShadow: '2px 2px 4px rgba(0,0,0,0.4)', fontStyle: 'italic' }}>ARENA</h2>
 
-          <div className="relative mb-8">
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/20 shadow-xl bg-slate-700">
-              {employee?.profile_photo ? (
-                <img src={employee.profile_photo} alt={employee.full_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <span className="text-4xl font-bold text-white">{employee?.full_name?.[0] || user?.full_name?.[0] || '?'}</span>
-                </div>
-              )}
-            </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-indigo-600 px-3 py-1 rounded-full">
-              <span className="text-white text-xs font-bold">{gamePlayer?.games_played || 0} Games</span>
-            </div>
-          </div>
+          {/* Player Card with Department Theme */}
+          <PlayerCard employee={employee} gamePlayer={gamePlayer} size="large" showBadges={true} />
 
-          <p className="text-white font-semibold text-lg mb-1">{employee?.full_name || user?.full_name}</p>
-          <p className="text-white/60 text-sm capitalize mb-8">{employee?.department || 'Player'}</p>
+          <div className="mt-4" />
 
           <button
             onClick={() => setCurrentView("games")}

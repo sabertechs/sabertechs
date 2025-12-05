@@ -3,6 +3,7 @@ import { Trophy, Medal, ArrowLeft, Building2, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { getDepartmentTheme, getPlayerFrame } from "./DepartmentThemes";
 
 export default function GameLeaderboard({ scores, players, currentUserEmail, onBack }) {
   // Fetch all employees to get profile photos
@@ -100,22 +101,26 @@ export default function GameLeaderboard({ scores, players, currentUserEmail, onB
   const PlayerRow = ({ player, rank }) => {
     const photo = getEmployeePhoto(player.email);
     const isCurrentUser = player.email === currentUserEmail;
+    const theme = getDepartmentTheme(player.department);
     
     return (
       <div className={`flex items-center gap-3 p-3 rounded-xl ${isCurrentUser ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-slate-700/50'}`}>
         {getRankBadge(rank)}
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-600 flex-shrink-0">
-          {photo ? (
-            <img src={photo} alt={player.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-500">
-              <span className="text-white font-bold">{player.name?.[0] || '?'}</span>
-            </div>
-          )}
+        <div className="relative">
+          <div className={`w-10 h-10 rounded-full overflow-hidden bg-slate-600 flex-shrink-0 border-2 ${theme.textColor.replace('text-', 'border-')}`}>
+            {photo ? (
+              <img src={photo} alt={player.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${theme.color}`}>
+                <span className="text-white font-bold">{player.name?.[0] || '?'}</span>
+              </div>
+            )}
+          </div>
+          <span className="absolute -bottom-1 -right-1 text-xs">{theme.icon}</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold truncate">{player.name}</p>
-          <p className="text-white/50 text-xs capitalize">{player.department || 'N/A'}</p>
+          <p className={`text-xs ${theme.textColor}`}>{theme.class} • {theme.name}</p>
         </div>
         <div className="text-right">
           <p className="text-yellow-500 font-bold">{player.totalScore.toLocaleString()}</p>
@@ -125,21 +130,24 @@ export default function GameLeaderboard({ scores, players, currentUserEmail, onB
     );
   };
 
-  const DeptRow = ({ dept, rank }) => (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/50">
-      {getRankBadge(rank)}
-      <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
-        <Building2 className="w-5 h-5 text-white" />
+  const DeptRow = ({ dept, rank }) => {
+    const theme = getDepartmentTheme(dept.department);
+    return (
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/50">
+        {getRankBadge(rank)}
+        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${theme.color} flex items-center justify-center flex-shrink-0`}>
+          <span className="text-xl">{theme.icon}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-semibold capitalize">{theme.name}</p>
+          <p className={`text-xs ${theme.textColor}`}>{theme.class} Class • {dept.playerCount} players</p>
+        </div>
+        <div className="text-right">
+          <p className="text-yellow-500 font-bold">{dept.totalScore.toLocaleString()}</p>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold capitalize">{dept.department}</p>
-        <p className="text-white/50 text-xs">{dept.playerCount} players</p>
-      </div>
-      <div className="text-right">
-        <p className="text-yellow-500 font-bold">{dept.totalScore.toLocaleString()}</p>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-start p-4">
