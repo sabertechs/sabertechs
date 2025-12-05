@@ -139,6 +139,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
         { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
+        { name: "Games", icon: Gamepad2, page: "OfficeOpsArena" },
         { name: "Settings", icon: Settings, page: "Settings" },
       );
     } else if (userRole === 'department_head') {
@@ -156,6 +157,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
         { name: "Access Control", icon: Shield, page: "AccessControl" },
         { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
+        { name: "Games", icon: Gamepad2, page: "OfficeOpsArena" },
         { name: "Settings", icon: Settings, page: "Settings" },
       );
     } else {
