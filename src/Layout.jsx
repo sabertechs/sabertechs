@@ -174,6 +174,7 @@ export default function Layout({ children, currentPageName }) {
       // All employees can access policies and their assets
       items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
       items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
+      items.push({ name: "Games", icon: Users, page: "OfficeOpsArena" });
     }
 
     return items;
