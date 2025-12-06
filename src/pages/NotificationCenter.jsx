@@ -57,6 +57,7 @@ export default function NotificationCenter() {
     message: "",
     target_type: "all",
     target_value: "",
+    target_values: [],
     notification_type: "info",
     send_email: false,
     send_in_app: true,
@@ -114,6 +115,7 @@ export default function NotificationCenter() {
       message: "",
       target_type: "all",
       target_value: "",
+      target_values: [],
       notification_type: "info",
       send_email: false,
       send_in_app: true,
@@ -128,11 +130,13 @@ export default function NotificationCenter() {
 
   const handleEdit = (notification) => {
     setEditingNotification(notification);
+    const targetValues = notification.target_value ? notification.target_value.split(',') : [];
     setFormData({
       title: notification.title || "",
       message: notification.message || "",
       target_type: notification.target_type || "all",
       target_value: notification.target_value || "",
+      target_values: targetValues,
       notification_type: notification.notification_type || "info",
       send_email: notification.send_email || false,
       send_in_app: notification.send_in_app !== false,
@@ -154,7 +158,7 @@ export default function NotificationCenter() {
       return employees.filter(e => e.designation === formData.target_value);
     }
     if (formData.target_type === "specific") {
-      return employees.filter(e => e.email === formData.target_value);
+      return employees.filter(e => formData.target_values.includes(e.email));
     }
     return [];
   };
@@ -234,6 +238,7 @@ export default function NotificationCenter() {
       // Save to scheduled notifications as sent
       await base44.entities.ScheduledNotification.create({
         ...formData,
+        target_value: formData.target_type === 'specific' ? formData.target_values.join(',') : formData.target_value,
         status: "sent",
         sent_count: targetEmployees.length,
         scheduled_time: new Date().toISOString()
@@ -263,10 +268,15 @@ export default function NotificationCenter() {
       return;
     }
     
+    const dataToSave = {
+      ...formData,
+      target_value: formData.target_type === 'specific' ? formData.target_values.join(',') : formData.target_value
+    };
+    
     if (editingNotification) {
-      updateMutation.mutate({ id: editingNotification.id, data: formData });
+      updateMutation.mutate({ id: editingNotification.id, data: dataToSave });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(dataToSave);
     }
   };
 
@@ -626,17 +636,37 @@ export default function NotificationCenter() {
 
               {formData.target_type === 'specific' && (
                 <div className="space-y-2">
-                  <Label>Select Employee</Label>
-                  <Select value={formData.target_value} onValueChange={(v) => setFormData({ ...formData, target_value: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map(emp => (
-                        <SelectItem key={emp.id} value={emp.email}>{emp.full_name} ({emp.email})</SelectItem>
+                  <Label>Select Employees</Label>
+                  <div className="border rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
+                    {employees
+                      .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''))
+                      .map(emp => (
+                        <label key={emp.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.target_values.includes(emp.email)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({ 
+                                  ...formData, 
+                                  target_values: [...formData.target_values, emp.email] 
+                                });
+                              } else {
+                                setFormData({ 
+                                  ...formData, 
+                                  target_values: formData.target_values.filter(email => email !== emp.email) 
+                                });
+                              }
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{emp.full_name} <span className="text-slate-500">({emp.email})</span></span>
+                        </label>
                       ))}
-                    </SelectContent>
-                  </Select>
+                  </div>
+                  {formData.target_values.length > 0 && (
+                    <p className="text-xs text-slate-500">{formData.target_values.length} employee(s) selected</p>
+                  )}
                 </div>
               )}
 
