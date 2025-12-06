@@ -12,13 +12,6 @@ Deno.serve(async (req) => {
   };
 
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Step 1: Check credentials
     addStep(1, 'start', 'Checking environment variables...');
     const clientId = Deno.env.get('DEEPVUE_CLIENT_ID');
