@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Plus, Eye, CheckCircle, XCircle, Clock, TestTube } from "lucide-react";
 import { toast } from "sonner";
 
 export default function APIModule() {
@@ -43,7 +43,12 @@ export default function APIModule() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showTestDialog, setShowTestDialog] = useState(false);
   const [selectedVerification, setSelectedVerification] = useState(null);
+  const [testPanNumber, setTestPanNumber] = useState("");
+  const [testName, setTestName] = useState("");
+  const [testResult, setTestResult] = useState(null);
+  const [testLoading, setTestLoading] = useState(false);
   const [formData, setFormData] = useState({
     employee_email: "",
     employee_name: "",
@@ -104,6 +109,45 @@ export default function APIModule() {
     });
   };
 
+  const handleTestPAN = async () => {
+    if (!testPanNumber) {
+      toast.error('Please enter PAN number');
+      return;
+    }
+    setTestLoading(true);
+    setTestResult(null);
+    
+    try {
+      // Simulated API call for now - will be replaced with actual API
+      const simulatedResponse = {
+        code: 200,
+        timestamp: Date.now(),
+        transaction_id: `TXN${Date.now()}`,
+        data: {
+          pan_number: testPanNumber,
+          name: testName || "Test Name",
+          category: "Individual",
+          status: "Valid"
+        }
+      };
+      
+      setTimeout(() => {
+        setTestResult(simulatedResponse);
+        setTestLoading(false);
+        toast.success('PAN verified (simulated)');
+      }, 1500);
+    } catch (error) {
+      setTestLoading(false);
+      toast.error('Test failed');
+    }
+  };
+
+  const resetTest = () => {
+    setTestPanNumber("");
+    setTestName("");
+    setTestResult(null);
+  };
+
   const filteredVerifications = verifications.filter(v =>
     v.employee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     v.employee_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -127,10 +171,16 @@ export default function APIModule() {
           <h2 className="text-2xl font-bold text-slate-800">API Verification Module</h2>
           <p className="text-slate-600">Manual verification requests</p>
         </div>
-        <Button onClick={() => setShowAddDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          New Request
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowTestDialog(true)} variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+            <TestTube className="w-4 h-4 mr-2" />
+            Test PAN API
+          </Button>
+          <Button onClick={() => setShowAddDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" />
+            New Request
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -252,6 +302,111 @@ export default function APIModule() {
             </Button>
             <Button onClick={handleCreate} className="bg-indigo-600 hover:bg-indigo-700">
               Create Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test PAN Dialog */}
+      <Dialog open={showTestDialog} onOpenChange={(open) => {
+        setShowTestDialog(open);
+        if (!open) resetTest();
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Test PAN Verification API</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>PAN Number *</Label>
+                <Input
+                  value={testPanNumber}
+                  onChange={(e) => setTestPanNumber(e.target.value.toUpperCase())}
+                  placeholder="ABCDE1234F"
+                  maxLength={10}
+                  className="uppercase"
+                />
+                <p className="text-xs text-slate-500">Format: 5 letters + 4 digits + 1 letter</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Name (Optional)</Label>
+                <Input
+                  value={testName}
+                  onChange={(e) => setTestName(e.target.value)}
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleTestPAN} 
+              disabled={testLoading}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              {testLoading ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Verify PAN
+                </>
+              )}
+            </Button>
+
+            {testResult && (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="font-semibold text-green-800">API Response</span>
+                  <Badge className="bg-green-600">Success</Badge>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-600">PAN Number</Label>
+                      <p className="font-medium">{testResult.data.pan_number}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">Status</Label>
+                      <p className="font-medium text-green-600">{testResult.data.status}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">Name</Label>
+                      <p className="font-medium">{testResult.data.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">Category</Label>
+                      <p className="font-medium">{testResult.data.category}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200">
+                    <Label className="text-xs text-slate-600">Transaction ID</Label>
+                    <p className="text-sm font-mono text-slate-700">{testResult.transaction_id}</p>
+                  </div>
+
+                  <details className="pt-2">
+                    <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">
+                      View Full Response JSON
+                    </summary>
+                    <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-48">
+                      {JSON.stringify(testResult, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowTestDialog(false);
+              resetTest();
+            }}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
