@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const DEEPVUE_AUTH_URL = 'https://api.deepvue.tech/v1/authorize';
+const DEEPVUE_AUTH_URL = 'https://production.deepvue.tech/v1/authorize';
 const TOKEN_CACHE_KEY = 'deepvue_token_cache';
 
 // In-memory cache for token

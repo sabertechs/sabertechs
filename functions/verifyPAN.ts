@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const DEEPVUE_PAN_URL = 'https://api.deepvue.tech/v1/verification/pan';
+const DEEPVUE_PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
 
 Deno.serve(async (req) => {
   try {
