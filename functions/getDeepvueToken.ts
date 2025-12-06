@@ -39,9 +39,6 @@ function isTokenValid() {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    
-    // Service role is needed for background token management
     const clientId = Deno.env.get('DEEPVUE_CLIENT_ID');
     const clientSecret = Deno.env.get('DEEPVUE_CLIENT_SECRET');
 

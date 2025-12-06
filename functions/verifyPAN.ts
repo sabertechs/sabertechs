@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     }
 
     // Get access token using cached token function
-    const tokenResponse = await base44.functions.invoke('getDeepvueToken', {});
+    const tokenResponse = await base44.asServiceRole.functions.invoke('getDeepvueToken', {});
     
     if (!tokenResponse.data.success) {
       throw new Error('Failed to get access token');
