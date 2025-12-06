@@ -76,11 +76,12 @@ Deno.serve(async (req) => {
 
     // Step 3: Test PAN Verification Endpoint
     addStep(3, 'start', 'Testing PAN verification endpoint...');
-    const TEST_PAN = 'AAAPL1234C'; // Standard test PAN format
+    const TEST_PAN = 'BYYPS7607N'; // Valid test PAN format
     const PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
     
     const params = new URLSearchParams({
-      pan_number: TEST_PAN
+      pan_number: TEST_PAN,
+      name: 'Test User'
     });
 
     addStep(3, 'info', 'Calling PAN API', {
