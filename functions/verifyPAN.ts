@@ -49,8 +49,17 @@ Deno.serve(async (req) => {
 
     const result = await verifyResponse.json();
 
+    if (!verifyResponse.ok) {
+      return Response.json({
+        success: false,
+        statusCode: verifyResponse.status,
+        error: result.detail || result.message || 'Verification failed',
+        data: result
+      });
+    }
+
     return Response.json({
-      success: verifyResponse.ok,
+      success: true,
       statusCode: verifyResponse.status,
       data: result
     });

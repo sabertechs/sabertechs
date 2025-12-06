@@ -114,23 +114,44 @@ export default function APIModule() {
       toast.error('Please enter PAN number');
       return;
     }
+    
+    // Validate PAN format (5 letters + 4 digits + 1 letter)
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(testPanNumber)) {
+      toast.error('Invalid PAN format. Use: ABCDE1234F');
+      return;
+    }
+    
     setTestLoading(true);
     setTestResult(null);
     
     try {
       const response = await base44.functions.invoke('verifyPAN', {
         pan_number: testPanNumber,
-        name: testName
+        name: testName || undefined
       });
 
       if (response.data.success) {
-        setTestResult(response.data.data);
+        setTestResult({ 
+          success: true, 
+          statusCode: response.data.statusCode,
+          ...response.data.data 
+        });
         toast.success('PAN verified successfully');
       } else {
-        setTestResult({ error: true, ...response.data.data });
-        toast.error('Verification failed');
+        setTestResult({ 
+          success: false,
+          error: response.data.error || 'Verification failed',
+          statusCode: response.data.statusCode,
+          ...response.data.data 
+        });
+        toast.error(response.data.error || 'Verification failed');
       }
     } catch (error) {
+      setTestResult({ 
+        success: false, 
+        error: error.message || 'Verification failed' 
+      });
       toast.error(error.message || 'Verification failed');
     } finally {
       setTestLoading(false);
@@ -354,14 +375,16 @@ export default function APIModule() {
 
             {testResult && (
               <div className="mt-4 space-y-3">
-                <div className={`flex items-center justify-between p-3 rounded-lg ${testResult.error ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-                  <span className={`font-semibold ${testResult.error ? 'text-red-800' : 'text-green-800'}`}>API Response</span>
-                  <Badge className={testResult.error ? 'bg-red-600' : 'bg-green-600'}>
-                    {testResult.error ? 'Failed' : 'Success'}
+                <div className={`flex items-center justify-between p-3 rounded-lg ${!testResult.success ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                  <span className={`font-semibold ${!testResult.success ? 'text-red-800' : 'text-green-800'}`}>
+                    API Response {testResult.statusCode && `(${testResult.statusCode})`}
+                  </span>
+                  <Badge className={!testResult.success ? 'bg-red-600' : 'bg-green-600'}>
+                    {testResult.success ? 'Success' : 'Failed'}
                   </Badge>
                 </div>
 
-                {!testResult.error && testResult.data && (
+                {testResult.success && testResult.data ? (
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -372,14 +395,18 @@ export default function APIModule() {
                         <Label className="text-xs text-slate-600">Status</Label>
                         <p className="font-medium text-green-600">{testResult.data.status || 'Valid'}</p>
                       </div>
-                      <div>
-                        <Label className="text-xs text-slate-600">Name</Label>
-                        <p className="font-medium">{testResult.data.name || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-slate-600">Category</Label>
-                        <p className="font-medium">{testResult.data.category || 'N/A'}</p>
-                      </div>
+                      {testResult.data.name && (
+                        <div>
+                          <Label className="text-xs text-slate-600">Name</Label>
+                          <p className="font-medium">{testResult.data.name}</p>
+                        </div>
+                      )}
+                      {testResult.data.category && (
+                        <div>
+                          <Label className="text-xs text-slate-600">Category</Label>
+                          <p className="font-medium">{testResult.data.category}</p>
+                        </div>
+                      )}
                     </div>
 
                     {testResult.transaction_id && (
@@ -388,6 +415,11 @@ export default function APIModule() {
                         <p className="text-sm font-mono text-slate-700">{testResult.transaction_id}</p>
                       </div>
                     )}
+                  </div>
+                ) : testResult.error && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <Label className="text-xs text-red-600">Error</Label>
+                    <p className="text-sm text-red-800 font-medium mt-1">{testResult.error}</p>
                   </div>
                 )}
 
