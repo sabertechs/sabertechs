@@ -44,6 +44,9 @@ export default function APIModule() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showConnectionTest, setShowConnectionTest] = useState(false);
+  const [connectionTestResult, setConnectionTestResult] = useState(null);
+  const [connectionTestLoading, setConnectionTestLoading] = useState(false);
   const [selectedVerification, setSelectedVerification] = useState(null);
   const [testPanNumber, setTestPanNumber] = useState("");
   const [testName, setTestName] = useState("");
@@ -164,6 +167,31 @@ export default function APIModule() {
     setTestResult(null);
   };
 
+  const handleConnectionTest = async () => {
+    setConnectionTestLoading(true);
+    setConnectionTestResult(null);
+    
+    try {
+      const response = await base44.functions.invoke('testDeepvueConnection', {});
+      setConnectionTestResult(response.data);
+      
+      if (response.data.success) {
+        toast.success('Connection successful!');
+      } else {
+        toast.error(response.data.finalMessage || 'Connection failed');
+      }
+    } catch (error) {
+      setConnectionTestResult({
+        success: false,
+        finalMessage: error.message,
+        steps: []
+      });
+      toast.error('Connection test failed');
+    } finally {
+      setConnectionTestLoading(false);
+    }
+  };
+
   const filteredVerifications = verifications.filter(v =>
     v.employee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     v.employee_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -188,6 +216,10 @@ export default function APIModule() {
           <p className="text-slate-600">Manual verification requests</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setShowConnectionTest(true)} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+            <Settings className="w-4 h-4 mr-2" />
+            Test Connection
+          </Button>
           <Button onClick={() => setShowTestDialog(true)} variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
             <TestTube className="w-4 h-4 mr-2" />
             Test PAN API
@@ -439,6 +471,103 @@ export default function APIModule() {
               setShowTestDialog(false);
               resetTest();
             }}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connection Test Dialog */}
+      <Dialog open={showConnectionTest} onOpenChange={setShowConnectionTest}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Deepvue Connection Test</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div>
+                <p className="font-semibold text-blue-900">Connection Diagnostics</p>
+                <p className="text-sm text-blue-700">Tests credentials, authorization, and API connectivity</p>
+              </div>
+              <Button 
+                onClick={handleConnectionTest} 
+                disabled={connectionTestLoading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {connectionTestLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <TestTube className="w-4 h-4 mr-2" />
+                    Run Test
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {connectionTestResult && (
+              <div className="space-y-3">
+                <div className={`p-4 rounded-lg border-2 ${connectionTestResult.success ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+                  <div className="flex items-center gap-2">
+                    {connectionTestResult.success ? (
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    ) : (
+                      <AlertCircle className="w-6 h-6 text-red-600" />
+                    )}
+                    <div>
+                      <p className={`font-bold ${connectionTestResult.success ? 'text-green-900' : 'text-red-900'}`}>
+                        {connectionTestResult.success ? 'All Tests Passed' : 'Test Failed'}
+                      </p>
+                      <p className={`text-sm ${connectionTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                        {connectionTestResult.finalMessage}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Test Steps:</Label>
+                  {connectionTestResult.steps.map((step, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 bg-slate-50">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          step.status === 'success' ? 'bg-green-500' : 
+                          step.status === 'failed' ? 'bg-red-500' : 
+                          step.status === 'info' ? 'bg-blue-500' : 'bg-yellow-500'
+                        }`}>
+                          {step.status === 'success' ? (
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          ) : step.status === 'failed' ? (
+                            <XCircle className="w-4 h-4 text-white" />
+                          ) : (
+                            <span className="text-white text-xs font-bold">{step.step}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{step.message}</p>
+                          {step.data && (
+                            <details className="mt-2">
+                              <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">
+                                View Details
+                              </summary>
+                              <pre className="mt-1 p-2 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-32">
+                                {JSON.stringify(step.data, null, 2)}
+                              </pre>
+                            </details>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConnectionTest(false)}>
               Close
             </Button>
           </DialogFooter>

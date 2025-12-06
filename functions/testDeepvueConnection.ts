@@ -1,0 +1,145 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+
+Deno.serve(async (req) => {
+  const results = {
+    steps: [],
+    success: false,
+    finalMessage: ""
+  };
+
+  const addStep = (step, status, message, data = null) => {
+    results.steps.push({ step, status, message, data, timestamp: new Date().toISOString() });
+  };
+
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Step 1: Check credentials
+    addStep(1, 'start', 'Checking environment variables...');
+    const clientId = Deno.env.get('DEEPVUE_CLIENT_ID');
+    const clientSecret = Deno.env.get('DEEPVUE_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      addStep(1, 'failed', 'Credentials not found in environment');
+      results.finalMessage = 'API credentials not configured';
+      return Response.json(results, { status: 500 });
+    }
+
+    addStep(1, 'success', 'Credentials found', {
+      clientId: clientId.substring(0, 8) + '...',
+      clientSecretLength: clientSecret.length
+    });
+
+    // Step 2: Test Authorization Endpoint
+    addStep(2, 'start', 'Testing authorization endpoint...');
+    const AUTH_URL = 'https://api.deepvue.tech/v1/oauth/token/create';
+    
+    const authPayload = {
+      client_id: clientId,
+      client_secret: clientSecret
+    };
+
+    addStep(2, 'info', 'Sending request to authorization endpoint', {
+      url: AUTH_URL,
+      method: 'POST'
+    });
+
+    const authResponse = await fetch(AUTH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(authPayload)
+    });
+
+    const authData = await authResponse.json();
+
+    if (!authResponse.ok) {
+      addStep(2, 'failed', `Authorization failed with status ${authResponse.status}`, {
+        status: authResponse.status,
+        statusText: authResponse.statusText,
+        response: authData
+      });
+      results.finalMessage = 'Authorization failed';
+      return Response.json(results, { status: authResponse.status });
+    }
+
+    const accessToken = authData.data?.access_token;
+    
+    if (!accessToken) {
+      addStep(2, 'failed', 'No access token in response', authData);
+      results.finalMessage = 'Invalid token response';
+      return Response.json(results, { status: 500 });
+    }
+
+    addStep(2, 'success', 'Access token received', {
+      tokenPrefix: accessToken.substring(0, 20) + '...',
+      tokenType: authData.data?.token_type,
+      expiresIn: authData.data?.expires_in
+    });
+
+    // Step 3: Test PAN Verification Endpoint
+    addStep(3, 'start', 'Testing PAN verification endpoint...');
+    const TEST_PAN = 'AAAPL1234C'; // Standard test PAN format
+    const PAN_URL = 'https://api.deepvue.tech/v1/government/pan/lite';
+    
+    const params = new URLSearchParams({
+      pan_number: TEST_PAN,
+      consent: 'Y',
+      consent_text: 'I hereby consent to verify PAN details'
+    });
+
+    addStep(3, 'info', 'Calling PAN API', {
+      url: `${PAN_URL}?${params}`,
+      pan: TEST_PAN
+    });
+
+    const panResponse = await fetch(`${PAN_URL}?${params}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-api-key': clientSecret
+      }
+    });
+
+    const panData = await panResponse.json();
+
+    if (!panResponse.ok) {
+      addStep(3, 'failed', `PAN verification failed with status ${panResponse.status}`, {
+        status: panResponse.status,
+        statusText: panResponse.statusText,
+        response: panData
+      });
+      results.finalMessage = 'PAN API call failed';
+      return Response.json(results, { status: panResponse.status });
+    }
+
+    addStep(3, 'success', 'PAN API responded successfully', {
+      status: panResponse.status,
+      response: panData
+    });
+
+    // Step 4: Summary
+    addStep(4, 'success', 'All tests passed!', {
+      message: 'Deepvue integration is working correctly'
+    });
+
+    results.success = true;
+    results.finalMessage = 'Connection successful - All systems operational';
+    
+    return Response.json(results);
+
+  } catch (error) {
+    addStep('error', 'failed', 'Unexpected error occurred', {
+      error: error.message,
+      stack: error.stack
+    });
+    results.finalMessage = error.message;
+    return Response.json(results, { status: 500 });
+  }
+});
