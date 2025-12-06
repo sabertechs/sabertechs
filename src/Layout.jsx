@@ -133,6 +133,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
         { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
+        { name: "API Verification", icon: ShieldCheck, page: "APIModule" },
         { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
         { name: "Assets", icon: Package, page: "AssetDashboard" },
         { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
@@ -142,7 +143,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Games", icon: Gamepad2, page: "OfficeOpsArena" },
         { name: "Settings", icon: Settings, page: "Settings" },
       );
-    } else if (userRole === 'department_head') {
+      } else if (userRole === 'department_head') {
       items.push(
         { name: "Employees", icon: Users, page: "Employees" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
