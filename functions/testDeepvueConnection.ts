@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Step 2: Test Authorization Endpoint
     addStep(2, 'start', 'Testing authorization endpoint...');
-    const AUTH_URL = 'https://api.deepvue.tech/v1/oauth/token/create';
+    const AUTH_URL = 'https://production.deepvue.tech/v1/authorize';
     
     const authPayload = {
       client_id: clientId,
@@ -77,12 +77,10 @@ Deno.serve(async (req) => {
     // Step 3: Test PAN Verification Endpoint
     addStep(3, 'start', 'Testing PAN verification endpoint...');
     const TEST_PAN = 'AAAPL1234C'; // Standard test PAN format
-    const PAN_URL = 'https://api.deepvue.tech/v1/government/pan/lite';
+    const PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
     
     const params = new URLSearchParams({
-      pan_number: TEST_PAN,
-      consent: 'Y',
-      consent_text: 'I hereby consent to verify PAN details'
+      pan_number: TEST_PAN
     });
 
     addStep(3, 'info', 'Calling PAN API', {
@@ -94,7 +92,8 @@ Deno.serve(async (req) => {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'x-api-key': clientSecret
+        'x-api-key': clientSecret,
+        'Content-Type': 'application/json'
       }
     });
 
