@@ -1,27 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const DEEPVUE_AUTH_URL = 'https://api.deepvue.tech/v1/authorize';
 const DEEPVUE_PAN_URL = 'https://api.deepvue.tech/v1/verification/pan';
-
-async function getAccessToken(clientId, clientSecret) {
-  const response = await fetch(DEEPVUE_AUTH_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Auth failed: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.access_token;
-}
 
 Deno.serve(async (req) => {
   try {
@@ -38,15 +17,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'PAN number is required' }, { status: 400 });
     }
 
-    const clientId = Deno.env.get('DEEPVUE_CLIENT_ID');
     const clientSecret = Deno.env.get('DEEPVUE_CLIENT_SECRET');
 
-    if (!clientId || !clientSecret) {
+    if (!clientSecret) {
       return Response.json({ error: 'API credentials not configured' }, { status: 500 });
     }
 
-    // Get access token
-    const accessToken = await getAccessToken(clientId, clientSecret);
+    // Get access token using cached token function
+    const tokenResponse = await base44.functions.invoke('getDeepvueToken', {});
+    
+    if (!tokenResponse.data.success) {
+      throw new Error('Failed to get access token');
+    }
+    
+    const accessToken = tokenResponse.data.access_token;
 
     // Build query params
     const params = new URLSearchParams({ pan_number });
