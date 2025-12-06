@@ -118,27 +118,22 @@ export default function APIModule() {
     setTestResult(null);
     
     try {
-      // Simulated API call for now - will be replaced with actual API
-      const simulatedResponse = {
-        code: 200,
-        timestamp: Date.now(),
-        transaction_id: `TXN${Date.now()}`,
-        data: {
-          pan_number: testPanNumber,
-          name: testName || "Test Name",
-          category: "Individual",
-          status: "Valid"
-        }
-      };
-      
-      setTimeout(() => {
-        setTestResult(simulatedResponse);
-        setTestLoading(false);
-        toast.success('PAN verified (simulated)');
-      }, 1500);
+      const response = await base44.functions.invoke('verifyPAN', {
+        pan_number: testPanNumber,
+        name: testName
+      });
+
+      if (response.data.success) {
+        setTestResult(response.data.data);
+        toast.success('PAN verified successfully');
+      } else {
+        setTestResult({ error: true, ...response.data.data });
+        toast.error('Verification failed');
+      }
     } catch (error) {
+      toast.error(error.message || 'Verification failed');
+    } finally {
       setTestLoading(false);
-      toast.error('Test failed');
     }
   };
 
@@ -359,45 +354,51 @@ export default function APIModule() {
 
             {testResult && (
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="font-semibold text-green-800">API Response</span>
-                  <Badge className="bg-green-600">Success</Badge>
+                <div className={`flex items-center justify-between p-3 rounded-lg ${testResult.error ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                  <span className={`font-semibold ${testResult.error ? 'text-red-800' : 'text-green-800'}`}>API Response</span>
+                  <Badge className={testResult.error ? 'bg-red-600' : 'bg-green-600'}>
+                    {testResult.error ? 'Failed' : 'Success'}
+                  </Badge>
                 </div>
 
-                <div className="p-4 bg-slate-50 rounded-lg space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-slate-600">PAN Number</Label>
-                      <p className="font-medium">{testResult.data.pan_number}</p>
+                {!testResult.error && testResult.data && (
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-slate-600">PAN Number</Label>
+                        <p className="font-medium">{testResult.data.pan_number || testPanNumber}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600">Status</Label>
+                        <p className="font-medium text-green-600">{testResult.data.status || 'Valid'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600">Name</Label>
+                        <p className="font-medium">{testResult.data.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600">Category</Label>
+                        <p className="font-medium">{testResult.data.category || 'N/A'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-xs text-slate-600">Status</Label>
-                      <p className="font-medium text-green-600">{testResult.data.status}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-600">Name</Label>
-                      <p className="font-medium">{testResult.data.name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-600">Category</Label>
-                      <p className="font-medium">{testResult.data.category}</p>
-                    </div>
-                  </div>
 
-                  <div className="pt-3 border-t border-slate-200">
-                    <Label className="text-xs text-slate-600">Transaction ID</Label>
-                    <p className="text-sm font-mono text-slate-700">{testResult.transaction_id}</p>
+                    {testResult.transaction_id && (
+                      <div className="pt-3 border-t border-slate-200">
+                        <Label className="text-xs text-slate-600">Transaction ID</Label>
+                        <p className="text-sm font-mono text-slate-700">{testResult.transaction_id}</p>
+                      </div>
+                    )}
                   </div>
+                )}
 
-                  <details className="pt-2">
-                    <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">
-                      View Full Response JSON
-                    </summary>
-                    <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-48">
-                      {JSON.stringify(testResult, null, 2)}
-                    </pre>
-                  </details>
-                </div>
+                <details className="pt-2">
+                  <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">
+                    View Full Response JSON
+                  </summary>
+                  <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-48">
+                    {JSON.stringify(testResult, null, 2)}
+                  </pre>
+                </details>
               </div>
             )}
           </div>
