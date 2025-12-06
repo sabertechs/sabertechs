@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Eye, CheckCircle, XCircle, Clock, TestTube } from "lucide-react";
+import { Search, Plus, Eye, CheckCircle, XCircle, Clock, TestTube, Settings, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function APIModule() {
