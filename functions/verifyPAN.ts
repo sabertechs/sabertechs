@@ -40,24 +40,40 @@ Deno.serve(async (req) => {
 
     const fullUrl = `${DEEPVUE_PAN_URL}?${params.toString()}`;
 
-    // Call PAN verification API (following Python example structure)
+    // Log the request details for debugging
+    console.log('=== PAN Verification Request ===');
+    console.log('URL:', fullUrl);
+    console.log('PAN:', pan_number);
+    console.log('Name:', name || 'Not provided');
+    console.log('Token prefix:', accessToken.substring(0, 20) + '...');
+
+    // Call PAN verification API (GET request, no Content-Type needed)
     const verifyResponse = await fetch(fullUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'x-api-key': clientSecret,
-        'Content-Type': 'application/json'
+        'x-api-key': clientSecret
       }
     });
 
     const result = await verifyResponse.json();
+
+    // Log the response
+    console.log('=== PAN Verification Response ===');
+    console.log('Status:', verifyResponse.status);
+    console.log('Response:', JSON.stringify(result, null, 2));
 
     if (!verifyResponse.ok) {
       return Response.json({
         success: false,
         statusCode: verifyResponse.status,
         error: result.detail || result.message || 'Verification failed',
-        data: result
+        data: result,
+        requestUrl: fullUrl,
+        requestHeaders: {
+          hasAuth: !!accessToken,
+          hasApiKey: !!clientSecret
+        }
       });
     }
 
