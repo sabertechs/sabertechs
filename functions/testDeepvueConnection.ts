@@ -26,26 +26,23 @@ Deno.serve(async (req) => {
       clientSecretLength: clientSecret.length
     });
 
-    // Step 2: Test Authorization Endpoint
-    addStep(2, 'start', 'Testing authorization endpoint...');
+    // Step 2: Test Authorization Endpoint with FormData
+    addStep(2, 'start', 'Testing authorization endpoint with FormData...');
     const AUTH_URL = 'https://production.deepvue.tech/v1/authorize';
     
-    const authPayload = {
-      client_id: clientId,
-      client_secret: clientSecret
-    };
+    const formData = new FormData();
+    formData.append('client_id', clientId);
+    formData.append('client_secret', clientSecret);
 
-    addStep(2, 'info', 'Sending request to authorization endpoint', {
+    addStep(2, 'info', 'Sending POST request with FormData', {
       url: AUTH_URL,
-      method: 'POST'
+      method: 'POST',
+      bodyType: 'FormData'
     });
 
     const authResponse = await fetch(AUTH_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(authPayload)
+      body: formData
     });
 
     const authData = await authResponse.json();
@@ -56,11 +53,11 @@ Deno.serve(async (req) => {
         statusText: authResponse.statusText,
         response: authData
       });
-      results.finalMessage = 'Authorization failed';
+      results.finalMessage = `Auth failed: ${authData.detail || 'Unknown error'}`;
       return Response.json(results, { status: authResponse.status });
     }
 
-    const accessToken = authData.data?.access_token;
+    const accessToken = authData.access_token;
     
     if (!accessToken) {
       addStep(2, 'failed', 'No access token in response', authData);
@@ -70,29 +67,22 @@ Deno.serve(async (req) => {
 
     addStep(2, 'success', 'Access token received', {
       tokenPrefix: accessToken.substring(0, 20) + '...',
-      tokenType: authData.data?.token_type,
-      expiresIn: authData.data?.expires_in
+      tokenType: authData.token_type,
+      expiresIn: authData.expiry
     });
 
     // Step 3: Test PAN Verification Endpoint
     addStep(3, 'start', 'Testing PAN verification endpoint...');
-    const TEST_PAN = 'BKMPS9943P'; // Test PAN
+    const TEST_PAN = 'BKMPS9943P';
     const PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
-
-    const params = new URLSearchParams({
-      pan_number: TEST_PAN
-    });
-
+    
+    const params = new URLSearchParams({ pan_number: TEST_PAN });
     const fullPanUrl = `${PAN_URL}?${params.toString()}`;
 
     addStep(3, 'info', 'Calling PAN API', {
       url: fullPanUrl,
       pan: TEST_PAN,
-      method: 'GET',
-      headers: {
-        hasAuth: !!accessToken,
-        hasApiKey: !!clientSecret
-      }
+      method: 'GET'
     });
 
     const panResponse = await fetch(fullPanUrl, {
@@ -108,9 +98,7 @@ Deno.serve(async (req) => {
     if (!panResponse.ok) {
       addStep(3, 'failed', `PAN verification failed with status ${panResponse.status}`, {
         status: panResponse.status,
-        statusText: panResponse.statusText,
-        response: panData,
-        fullUrl: fullPanUrl
+        response: panData
       });
       results.finalMessage = `PAN API Error ${panResponse.status}: ${panData.message || 'Unknown error'}`;
       return Response.json(results, { status: panResponse.status });

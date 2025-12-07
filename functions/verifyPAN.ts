@@ -23,16 +23,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'API credentials not configured' }, { status: 500 });
     }
 
-    // Get access token using cached token function
+    // Get access token
     const tokenResponse = await base44.asServiceRole.functions.invoke('getDeepvueToken', {});
-
+    
     if (!tokenResponse.data.success) {
       throw new Error('Failed to get access token');
     }
-
+    
     const accessToken = tokenResponse.data.access_token;
 
-    // Build query params exactly as Python example
+    // Build URL with query parameters
     const params = new URLSearchParams({ pan_number: pan_number });
     if (name) {
       params.append('name', name);
@@ -40,14 +40,13 @@ Deno.serve(async (req) => {
 
     const fullUrl = `${DEEPVUE_PAN_URL}?${params.toString()}`;
 
-    // Log the request details for debugging
-    console.log('=== PAN Verification Request ===');
-    console.log('URL:', fullUrl);
-    console.log('PAN:', pan_number);
-    console.log('Name:', name || 'Not provided');
-    console.log('Token prefix:', accessToken.substring(0, 20) + '...');
+    console.log('PAN Verification Request:', {
+      url: fullUrl,
+      pan: pan_number,
+      hasName: !!name
+    });
 
-    // Call PAN verification API (GET request, no Content-Type needed)
+    // GET request with Bearer token and x-api-key
     const verifyResponse = await fetch(fullUrl, {
       method: 'GET',
       headers: {
@@ -58,22 +57,17 @@ Deno.serve(async (req) => {
 
     const result = await verifyResponse.json();
 
-    // Log the response
-    console.log('=== PAN Verification Response ===');
-    console.log('Status:', verifyResponse.status);
-    console.log('Response:', JSON.stringify(result, null, 2));
+    console.log('PAN Verification Response:', {
+      status: verifyResponse.status,
+      data: result
+    });
 
     if (!verifyResponse.ok) {
       return Response.json({
         success: false,
         statusCode: verifyResponse.status,
-        error: result.detail || result.message || 'Verification failed',
-        data: result,
-        requestUrl: fullUrl,
-        requestHeaders: {
-          hasAuth: !!accessToken,
-          hasApiKey: !!clientSecret
-        }
+        error: result.message || result.detail || 'Verification failed',
+        data: result
       });
     }
 
@@ -84,6 +78,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    console.error('PAN Verification Error:', error);
     return Response.json({ 
       error: error.message,
       success: false

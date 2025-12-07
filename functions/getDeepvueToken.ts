@@ -1,40 +1,35 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+// Token cache to avoid unnecessary API calls
+let cachedToken = null;
+let tokenExpiry = null;
 
-const DEEPVUE_AUTH_URL = 'https://production.deepvue.tech/v1/authorize';
-const TOKEN_CACHE_KEY = 'deepvue_token_cache';
-
-// In-memory cache for token
-let tokenCache = null;
+const AUTH_URL = 'https://production.deepvue.tech/v1/authorize';
 
 async function fetchNewToken(clientId, clientSecret) {
-  const response = await fetch(DEEPVUE_AUTH_URL, {
+  // Use FormData as per Deepvue documentation
+  const formData = new FormData();
+  formData.append('client_id', clientId);
+  formData.append('client_secret', clientSecret);
+
+  const response = await fetch(AUTH_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret
-    })
+    body: formData
   });
 
   if (!response.ok) {
-    throw new Error(`Authorization failed: ${response.statusText}`);
+    const error = await response.text();
+    throw new Error(`Auth failed (${response.status}): ${error}`);
   }
 
   const data = await response.json();
-  
-  // Cache token with expiry (23 hours to be safe, token valid for 24h)
-  tokenCache = {
-    access_token: data.access_token,
-    expires_at: Date.now() + (23 * 60 * 60 * 1000) // 23 hours
-  };
-
-  return data.access_token;
+  return data;
 }
 
 function isTokenValid() {
-  return tokenCache && tokenCache.expires_at > Date.now();
+  if (!cachedToken || !tokenExpiry) {
+    return false;
+  }
+  // Check if token expires in next 5 minutes
+  return Date.now() < (tokenExpiry - 5 * 60 * 1000);
 }
 
 Deno.serve(async (req) => {
@@ -43,29 +38,43 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get('DEEPVUE_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
-      return Response.json({ error: 'API credentials not configured' }, { status: 500 });
+      return Response.json({ 
+        success: false, 
+        error: 'API credentials not configured' 
+      }, { status: 500 });
     }
 
-    let accessToken;
-
-    // Check if cached token is still valid
+    // Return cached token if valid
     if (isTokenValid()) {
-      accessToken = tokenCache.access_token;
-    } else {
-      // Fetch new token
-      accessToken = await fetchNewToken(clientId, clientSecret);
+      return Response.json({
+        success: true,
+        access_token: cachedToken,
+        cached: true
+      });
     }
+
+    // Fetch new token
+    const authData = await fetchNewToken(clientId, clientSecret);
+    
+    if (!authData.access_token) {
+      throw new Error('No access token in response');
+    }
+
+    // Cache the token (valid for 24 hours as per docs)
+    cachedToken = authData.access_token;
+    tokenExpiry = Date.now() + (23 * 60 * 60 * 1000); // 23 hours to be safe
 
     return Response.json({
       success: true,
-      access_token: accessToken,
-      cached: isTokenValid()
+      access_token: cachedToken,
+      token_type: authData.token_type,
+      cached: false
     });
 
   } catch (error) {
     return Response.json({ 
-      error: error.message,
-      success: false
+      success: false, 
+      error: error.message 
     }, { status: 500 });
   }
 });
