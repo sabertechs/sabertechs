@@ -480,12 +480,6 @@ export default function APIModule() {
                         <Label className="text-xs text-slate-600">Full Name</Label>
                         <p className="font-medium text-lg">{testPlusResult.full_name}</p>
                       </div>
-                      {testPlusResult.father_name && (
-                        <div className="col-span-2">
-                          <Label className="text-xs text-slate-600">Father's Name</Label>
-                          <p className="font-medium">{testPlusResult.father_name}</p>
-                        </div>
-                      )}
                       {testPlusResult.dob && (
                         <div>
                           <Label className="text-xs text-slate-600">Date of Birth</Label>

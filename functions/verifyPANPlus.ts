@@ -68,7 +68,6 @@ Deno.serve(async (req) => {
 
     // Extract the relevant fields
     const responseData = result.data || {};
-    const nameSplit = responseData.full_name_split || [];
     
     return Response.json({
       success: true,
@@ -76,9 +75,6 @@ Deno.serve(async (req) => {
       data: {
         pan_number: responseData.pan_number,
         full_name: responseData.full_name,
-        father_name: nameSplit[1] || null, // Second element is typically father's name
-        first_name: nameSplit[0] || null,
-        last_name: nameSplit[2] || null,
         dob: responseData.dob,
         gender: responseData.gender,
         aadhaar_linked: responseData.aadhaar_linked,
