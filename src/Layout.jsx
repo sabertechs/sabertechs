@@ -128,7 +128,6 @@ export default function Layout({ children, currentPageName }) {
       items.push(
         { name: "Employees", icon: Users, page: "Employees" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
-        { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },
@@ -147,7 +146,6 @@ export default function Layout({ children, currentPageName }) {
       items.push(
         { name: "Employees", icon: Users, page: "Employees" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
-        { name: "Onboarding", icon: UserPlus, page: "OnboardingManagement" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
         { name: "Payslips", icon: FileText, page: "PayslipManagement" },

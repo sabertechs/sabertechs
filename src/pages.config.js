@@ -13,7 +13,6 @@ import PayslipManagement from './pages/PayslipManagement';
 import Notifications from './pages/Notifications';
 import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import TeamView from './pages/TeamView';
-import OnboardingManagement from './pages/OnboardingManagement';
 import EmployeeUpload from './pages/EmployeeUpload';
 import AccessControl from './pages/AccessControl';
 import AuthRedirect from './pages/AuthRedirect';
@@ -50,7 +49,6 @@ export const PAGES = {
     "Notifications": Notifications,
     "DeptHeadDashboard": DeptHeadDashboard,
     "TeamView": TeamView,
-    "OnboardingManagement": OnboardingManagement,
     "EmployeeUpload": EmployeeUpload,
     "AccessControl": AccessControl,
     "AuthRedirect": AuthRedirect,
