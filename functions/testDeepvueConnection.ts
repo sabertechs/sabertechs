@@ -78,22 +78,28 @@ Deno.serve(async (req) => {
     addStep(3, 'start', 'Testing PAN verification endpoint...');
     const TEST_PAN = 'BKMPS9943P'; // Test PAN
     const PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
-    
+
     const params = new URLSearchParams({
       pan_number: TEST_PAN
     });
 
+    const fullPanUrl = `${PAN_URL}?${params.toString()}`;
+
     addStep(3, 'info', 'Calling PAN API', {
-      url: `${PAN_URL}?${params}`,
-      pan: TEST_PAN
+      url: fullPanUrl,
+      pan: TEST_PAN,
+      method: 'GET',
+      headers: {
+        hasAuth: !!accessToken,
+        hasApiKey: !!clientSecret
+      }
     });
 
-    const panResponse = await fetch(`${PAN_URL}?${params}`, {
+    const panResponse = await fetch(fullPanUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'x-api-key': clientSecret,
-        'Content-Type': 'application/json'
+        'x-api-key': clientSecret
       }
     });
 
@@ -103,9 +109,10 @@ Deno.serve(async (req) => {
       addStep(3, 'failed', `PAN verification failed with status ${panResponse.status}`, {
         status: panResponse.status,
         statusText: panResponse.statusText,
-        response: panData
+        response: panData,
+        fullUrl: fullPanUrl
       });
-      results.finalMessage = 'PAN API call failed';
+      results.finalMessage = `PAN API Error ${panResponse.status}: ${panData.message || 'Unknown error'}`;
       return Response.json(results, { status: panResponse.status });
     }
 
