@@ -25,21 +25,23 @@ Deno.serve(async (req) => {
 
     // Get access token using cached token function
     const tokenResponse = await base44.asServiceRole.functions.invoke('getDeepvueToken', {});
-    
+
     if (!tokenResponse.data.success) {
       throw new Error('Failed to get access token');
     }
-    
+
     const accessToken = tokenResponse.data.access_token;
 
-    // Build query params
-    const params = new URLSearchParams({ pan_number });
+    // Build query params exactly as Python example
+    const params = new URLSearchParams({ pan_number: pan_number });
     if (name) {
       params.append('name', name);
     }
 
-    // Call PAN verification API (following Deepvue's Java example)
-    const verifyResponse = await fetch(`${DEEPVUE_PAN_URL}?${params}`, {
+    const fullUrl = `${DEEPVUE_PAN_URL}?${params.toString()}`;
+
+    // Call PAN verification API (following Python example structure)
+    const verifyResponse = await fetch(fullUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
