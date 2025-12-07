@@ -38,12 +38,13 @@ Deno.serve(async (req) => {
       params.append('name', name);
     }
 
-    // Call PAN verification API
+    // Call PAN verification API (following Deepvue's Java example)
     const verifyResponse = await fetch(`${DEEPVUE_PAN_URL}?${params}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'x-api-key': clientSecret
+        'x-api-key': clientSecret,
+        'Content-Type': 'application/json'
       }
     });
 
