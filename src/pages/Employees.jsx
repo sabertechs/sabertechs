@@ -108,6 +108,22 @@ export default function Employees() {
     staleTime: 60000,
   });
 
+  const { data: appSettings = [] } = useQuery({
+    queryKey: ['appSettings'],
+    queryFn: () => base44.entities.AppSettings.list(),
+    staleTime: 60000,
+  });
+
+  const settingsDepartments = useMemo(() => {
+    const setting = appSettings.find(s => s.setting_key === 'departments');
+    return setting?.setting_value || [];
+  }, [appSettings]);
+
+  const settingsDesignations = useMemo(() => {
+    const setting = appSettings.find(s => s.setting_key === 'designations');
+    return setting?.setting_value || [];
+  }, [appSettings]);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
     onSuccess: () => {
@@ -1390,25 +1406,28 @@ export default function Employees() {
             <div className="space-y-2">
               <Label>Department</Label>
               <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select department" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="admin">Admin</SelectItem>
-                                      <SelectItem value="quality_analyst">Quality Analyst</SelectItem>
-                                      <SelectItem value="cashifty">Cashifty</SelectItem>
-                                      <SelectItem value="mettl_operations">Mettl operations</SelectItem>
-                                      <SelectItem value="mettl">Mettl</SelectItem>
-                                      <SelectItem value="proctoring">Proctoring</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {settingsDepartments.map(dept => (
+                    <SelectItem key={dept.id} value={dept.id} className="capitalize">{dept.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Designation</Label>
-              <Input
-                value={formData.designation}
-                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-              />
+              <Select value={formData.designation} onValueChange={(v) => setFormData({ ...formData, designation: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select designation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {settingsDesignations.map(des => (
+                    <SelectItem key={des.id} value={des.id}>{des.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Employment Type</Label>
