@@ -44,6 +44,7 @@ export default function APIModule() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [showTestPlusDialog, setShowTestPlusDialog] = useState(false);
   const [showConnectionTest, setShowConnectionTest] = useState(false);
   const [connectionTestResult, setConnectionTestResult] = useState(null);
   const [connectionTestLoading, setConnectionTestLoading] = useState(false);
@@ -52,6 +53,8 @@ export default function APIModule() {
   const [testName, setTestName] = useState("");
   const [testResult, setTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [testPlusResult, setTestPlusResult] = useState(null);
+  const [testPlusLoading, setTestPlusLoading] = useState(false);
   const [formData, setFormData] = useState({
     employee_email: "",
     employee_name: "",
@@ -167,6 +170,58 @@ export default function APIModule() {
     setTestResult(null);
   };
 
+  const handleTestPANPlus = async () => {
+    if (!testPanNumber) {
+      toast.error('Please enter PAN number');
+      return;
+    }
+    
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(testPanNumber)) {
+      toast.error('Invalid PAN format. Use: ABCDE1234F');
+      return;
+    }
+    
+    setTestPlusLoading(true);
+    setTestPlusResult(null);
+    
+    try {
+      const response = await base44.functions.invoke('verifyPANPlus', {
+        pan_number: testPanNumber
+      });
+
+      if (response.data.success) {
+        setTestPlusResult({ 
+          success: true, 
+          statusCode: response.data.statusCode,
+          ...response.data.data 
+        });
+        toast.success('PAN verified successfully with additional details');
+      } else {
+        setTestPlusResult({ 
+          success: false,
+          error: response.data.error || 'Verification failed',
+          statusCode: response.data.statusCode,
+          ...response.data.data 
+        });
+        toast.error(response.data.error || 'Verification failed');
+      }
+    } catch (error) {
+      setTestPlusResult({ 
+        success: false, 
+        error: error.message || 'Verification failed' 
+      });
+      toast.error(error.message || 'Verification failed');
+    } finally {
+      setTestPlusLoading(false);
+    }
+  };
+
+  const resetTestPlus = () => {
+    setTestPanNumber("");
+    setTestPlusResult(null);
+  };
+
   const handleConnectionTest = async () => {
     setConnectionTestLoading(true);
     setConnectionTestResult(null);
@@ -222,7 +277,11 @@ export default function APIModule() {
           </Button>
           <Button onClick={() => setShowTestDialog(true)} variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
             <TestTube className="w-4 h-4 mr-2" />
-            Test PAN API
+            Test PAN Basic
+          </Button>
+          <Button onClick={() => setShowTestPlusDialog(true)} variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+            <TestTube className="w-4 h-4 mr-2" />
+            Test PAN Plus
           </Button>
           <Button onClick={() => setShowAddDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
@@ -355,6 +414,135 @@ export default function APIModule() {
         </DialogContent>
       </Dialog>
 
+      {/* Test PAN Plus Dialog */}
+      <Dialog open={showTestPlusDialog} onOpenChange={(open) => {
+        setShowTestPlusDialog(open);
+        if (!open) resetTestPlus();
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Test PAN Plus API - Enhanced Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>PAN Number *</Label>
+              <Input
+                value={testPanNumber}
+                onChange={(e) => setTestPanNumber(e.target.value.toUpperCase())}
+                placeholder="ABCDE1234F"
+                maxLength={10}
+                className="uppercase"
+              />
+              <p className="text-xs text-slate-500">Format: 5 letters + 4 digits + 1 letter</p>
+            </div>
+
+            <Button 
+              onClick={handleTestPANPlus} 
+              disabled={testPlusLoading}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {testPlusLoading ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Verify PAN Plus
+                </>
+              )}
+            </Button>
+
+            {testPlusResult && (
+              <div className="mt-4 space-y-3">
+                <div className={`flex items-center justify-between p-3 rounded-lg ${!testPlusResult.success ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                  <span className={`font-semibold ${!testPlusResult.success ? 'text-red-800' : 'text-green-800'}`}>
+                    API Response {testPlusResult.statusCode && `(${testPlusResult.statusCode})`}
+                  </span>
+                  <Badge className={!testPlusResult.success ? 'bg-red-600' : 'bg-green-600'}>
+                    {testPlusResult.success ? 'Success' : 'Failed'}
+                  </Badge>
+                </div>
+
+                {testPlusResult.success && (
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-slate-600">PAN Number</Label>
+                        <p className="font-medium">{testPlusResult.pan_number}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600">Category</Label>
+                        <p className="font-medium">{testPlusResult.category}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-slate-600">Full Name</Label>
+                        <p className="font-medium text-lg">{testPlusResult.full_name}</p>
+                      </div>
+                      {testPlusResult.father_name && (
+                        <div className="col-span-2">
+                          <Label className="text-xs text-slate-600">Father's Name</Label>
+                          <p className="font-medium">{testPlusResult.father_name}</p>
+                        </div>
+                      )}
+                      {testPlusResult.dob && (
+                        <div>
+                          <Label className="text-xs text-slate-600">Date of Birth</Label>
+                          <p className="font-medium">{testPlusResult.dob}</p>
+                        </div>
+                      )}
+                      {testPlusResult.gender && (
+                        <div>
+                          <Label className="text-xs text-slate-600">Gender</Label>
+                          <p className="font-medium capitalize">{testPlusResult.gender}</p>
+                        </div>
+                      )}
+                      {testPlusResult.masked_aadhaar && (
+                        <div>
+                          <Label className="text-xs text-slate-600">Masked Aadhaar</Label>
+                          <p className="font-medium font-mono">{testPlusResult.masked_aadhaar}</p>
+                        </div>
+                      )}
+                      <div>
+                        <Label className="text-xs text-slate-600">Aadhaar Linked</Label>
+                        <Badge className={testPlusResult.aadhaar_linked ? 'bg-green-600' : 'bg-red-600'}>
+                          {testPlusResult.aadhaar_linked ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {testPlusResult.error && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <Label className="text-xs text-red-600">Error</Label>
+                    <p className="text-sm text-red-800 font-medium mt-1">{testPlusResult.error}</p>
+                  </div>
+                )}
+
+                <details className="pt-2">
+                  <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">
+                    View Full Response JSON
+                  </summary>
+                  <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-48">
+                    {JSON.stringify(testPlusResult, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowTestPlusDialog(false);
+              resetTestPlus();
+            }}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Test PAN Dialog */}
       <Dialog open={showTestDialog} onOpenChange={(open) => {
         setShowTestDialog(open);
@@ -362,7 +550,7 @@ export default function APIModule() {
       }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Test PAN Verification API</DialogTitle>
+            <DialogTitle>Test PAN Basic Verification API</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
