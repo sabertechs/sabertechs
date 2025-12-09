@@ -15,7 +15,8 @@ import {
   Edit,
   Save,
   X,
-  Loader2
+  Loader2,
+  Mail
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,14 @@ export default function Settings() {
   const [dialogType, setDialogType] = useState("");
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [emailConfig, setEmailConfig] = useState({
+    smtp_host: "smtp.gmail.com",
+    smtp_port: "587",
+    smtp_user: "",
+    smtp_password: "",
+    from_name: "SaberTechs HR",
+    from_email: ""
+  });
 
   // Fetch settings
   const { data: appSettings = [] } = useQuery({
@@ -94,6 +103,14 @@ export default function Settings() {
   const roles = getSetting('roles', DEFAULT_ROLES);
   const designations = getSetting('designations', []);
   const expenseTypes = getSetting('expense_types', DEFAULT_EXPENSE_TYPES);
+
+  // Load email config on mount
+  useEffect(() => {
+    const savedConfig = getSetting('email_config', null);
+    if (savedConfig) {
+      setEmailConfig(savedConfig);
+    }
+  }, [appSettings]);
 
   // Save setting mutation
   const saveSettingMutation = useMutation({
@@ -256,6 +273,18 @@ export default function Settings() {
     }
   };
 
+  const handleSaveEmailConfig = async () => {
+    setSaving(true);
+    try {
+      await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
+      toast.success('Email configuration saved');
+    } catch (error) {
+      toast.error('Failed to save configuration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderListSection = (title, items, type, icon) => (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -312,6 +341,7 @@ export default function Settings() {
           <TabsTrigger value="expenses">Expense Types</TabsTrigger>
           <TabsTrigger value="leaves">Leave Types</TabsTrigger>
           <TabsTrigger value="holidays">Holidays</TabsTrigger>
+          <TabsTrigger value="email">Email Config</TabsTrigger>
         </TabsList>
 
         <TabsContent value="departments" className="mt-6">
@@ -389,6 +419,105 @@ export default function Settings() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="email" className="mt-6">
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Mail className="w-5 h-5 text-blue-600" />
+                Email Configuration (GSuite/Gmail)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-sm text-blue-700 mb-2">
+                  <strong>Setup Instructions for GSuite:</strong>
+                </p>
+                <ol className="text-sm text-blue-700 space-y-1 ml-4 list-decimal">
+                  <li>Go to your Google Account settings</li>
+                  <li>Enable 2-Step Verification if not already enabled</li>
+                  <li>Go to Security → App passwords</li>
+                  <li>Generate a new app password for "Mail"</li>
+                  <li>Use that app password below (not your regular password)</li>
+                </ol>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>SMTP Host</Label>
+                  <Input
+                    value={emailConfig.smtp_host}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, smtp_host: e.target.value })}
+                    placeholder="smtp.gmail.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>SMTP Port</Label>
+                  <Input
+                    value={emailConfig.smtp_port}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, smtp_port: e.target.value })}
+                    placeholder="587"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address (Username)</Label>
+                  <Input
+                    type="email"
+                    value={emailConfig.smtp_user}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, smtp_user: e.target.value, from_email: e.target.value })}
+                    placeholder="your-email@company.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>App Password</Label>
+                  <Input
+                    type="password"
+                    value={emailConfig.smtp_password}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, smtp_password: e.target.value })}
+                    placeholder="Enter app password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sender Name</Label>
+                  <Input
+                    value={emailConfig.from_name}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, from_name: e.target.value })}
+                    placeholder="SaberTechs HR"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>From Email</Label>
+                  <Input
+                    type="email"
+                    value={emailConfig.from_email}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, from_email: e.target.value })}
+                    placeholder="hr@company.com"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button 
+                  onClick={handleSaveEmailConfig} 
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Email Configuration
+                    </>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>

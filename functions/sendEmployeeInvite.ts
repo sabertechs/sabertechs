@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import nodemailer from 'npm:nodemailer@6.9.7';
 
 Deno.serve(async (req) => {
   try {
@@ -15,15 +16,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Employee name and email are required' }, { status: 400 });
     }
 
+    // Get email configuration from settings
+    const settings = await base44.asServiceRole.entities.AppSettings.list();
+    const emailConfigSetting = settings.find(s => s.setting_key === 'email_config');
+    
     // Get app URL for registration link
     const appId = Deno.env.get('BASE44_APP_ID');
     const registrationUrl = `https://${appId}.base44.app`;
 
-    // Send invitation email
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: employee_email,
-      subject: 'Welcome to SaberTechs - Complete Your Registration',
-      body: `
+    const emailBody = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -81,8 +82,36 @@ Deno.serve(async (req) => {
   </div>
 </body>
 </html>
-      `
-    });
+    `;
+
+    if (emailConfigSetting?.setting_value) {
+      // Use custom SMTP configuration
+      const config = emailConfigSetting.setting_value;
+      
+      const transporter = nodemailer.createTransport({
+        host: config.smtp_host,
+        port: parseInt(config.smtp_port),
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: config.smtp_user,
+          pass: config.smtp_password,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"${config.from_name}" <${config.from_email}>`,
+        to: employee_email,
+        subject: 'Welcome to SaberTechs - Complete Your Registration',
+        html: emailBody,
+      });
+    } else {
+      // Fallback to Base44's built-in email service
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: employee_email,
+        subject: 'Welcome to SaberTechs - Complete Your Registration',
+        body: emailBody
+      });
+    }
 
     return Response.json({ 
       success: true, 
