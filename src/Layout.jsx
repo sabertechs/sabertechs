@@ -127,6 +127,7 @@ export default function Layout({ children, currentPageName }) {
     if (userRole === 'hr' || userRole === 'manager') {
       items.push(
         { name: "Employees", icon: Users, page: "Employees" },
+        { name: "Freelancers", icon: Users, page: "Freelancers" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
         { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
