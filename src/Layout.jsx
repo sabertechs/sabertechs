@@ -73,6 +73,8 @@ export default function Layout({ children, currentPageName }) {
               window.location.replace(createPageUrl("HRDashboard"));
             } else if (emp.role === 'department_head') {
               window.location.replace(createPageUrl("DeptHeadDashboard"));
+            } else if (emp.employment_type === 'contractual') {
+              window.location.replace(createPageUrl("FreelancerDashboard"));
             } else {
               window.location.replace(createPageUrl("EmployeeDashboard"));
             }
@@ -114,11 +116,13 @@ export default function Layout({ children, currentPageName }) {
     const items = [];
     const sectionAccess = employeeData?.section_access || [];
 
-    // Dashboard based on role
+    // Dashboard based on role and employment type
     if (userRole === 'hr' || userRole === 'manager') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
     } else if (userRole === 'department_head') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" });
+    } else if (employeeData?.employment_type === 'contractual') {
+      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "FreelancerDashboard" });
     } else {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
     }
@@ -162,27 +166,34 @@ export default function Layout({ children, currentPageName }) {
         { name: "Settings", icon: Settings, page: "Settings" },
       );
     } else {
-      // Employee role - show pages based on section_access or defaults
-      if (sectionAccess.includes('attendance') || sectionAccess.length === 0) {
-        items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
-      }
-      if (sectionAccess.includes('payslips') || sectionAccess.length === 0) {
-        items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
-      }
-      if (sectionAccess.includes('expenses') || sectionAccess.length === 0) {
+      // Employee role - different menu for contractual vs permanent
+      if (employeeData?.employment_type === 'contractual') {
+        // Freelancers only see expenses and policies
         items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+        items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+      } else {
+        // Permanent employees - show pages based on section_access or defaults
+        if (sectionAccess.includes('attendance') || sectionAccess.length === 0) {
+          items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
+        }
+        if (sectionAccess.includes('payslips') || sectionAccess.length === 0) {
+          items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+        }
+        if (sectionAccess.includes('expenses') || sectionAccess.length === 0) {
+          items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+        }
+        if (sectionAccess.includes('team_view')) {
+          items.push({ name: "My Team", icon: Users, page: "TeamView" });
+        }
+        // All permanent employees can access policies, assets, and games
+        items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+        items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
+        items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       }
-      if (sectionAccess.includes('team_view')) {
-        items.push({ name: "My Team", icon: Users, page: "TeamView" });
-      }
-      // All employees can access policies and their assets
-      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
-      items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
-      items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
     }
 
     return items;
-  }, [userRole, employeeData?.section_access]);
+  }, [userRole, employeeData?.section_access, employeeData?.employment_type]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 

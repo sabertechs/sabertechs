@@ -31,6 +31,7 @@ import AssetReports from './pages/AssetReports';
 import OfficeOpsArena from './pages/OfficeOpsArena';
 import APIModule from './pages/APIModule';
 import Freelancers from './pages/Freelancers';
+import FreelancerDashboard from './pages/FreelancerDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -68,6 +69,7 @@ export const PAGES = {
     "OfficeOpsArena": OfficeOpsArena,
     "APIModule": APIModule,
     "Freelancers": Freelancers,
+    "FreelancerDashboard": FreelancerDashboard,
 }
 
 export const pagesConfig = {
