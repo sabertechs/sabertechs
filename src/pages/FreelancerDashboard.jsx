@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { 
   User, Mail, Phone, MapPin, Calendar, Video, PlayCircle,
-  FileText, Download, Clock, Award, BookOpen
+  FileText, Download, Clock, Award, BookOpen, Briefcase
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
