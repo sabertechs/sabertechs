@@ -88,9 +88,7 @@ export default function Freelancers() {
     department: "",
     designation: "",
     employment_type: "contractual",
-    contract_end_date: "",
-    date_of_joining: "",
-    salary: "",
+    date_of_joining: format(new Date(), 'yyyy-MM-dd'),
     status: "active",
     role: "employee"
   });
@@ -159,9 +157,7 @@ export default function Freelancers() {
       department: "",
       designation: "",
       employment_type: "contractual",
-      contract_end_date: "",
-      date_of_joining: "",
-      salary: "",
+      date_of_joining: format(new Date(), 'yyyy-MM-dd'),
       status: "active",
       role: "employee"
     });
@@ -178,9 +174,7 @@ export default function Freelancers() {
       department: employee.department || "",
       designation: employee.designation || "",
       employment_type: employee.employment_type || "contractual",
-      contract_end_date: employee.contract_end_date || "",
-      date_of_joining: employee.date_of_joining || "",
-      salary: employee.salary || "",
+      date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
       status: employee.status || "active",
       role: employee.role || "employee"
     });
@@ -288,7 +282,7 @@ export default function Freelancers() {
       "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
       "Address", "Locality", "City", "State", "Pincode",
       "Aadhaar Number", "PAN Number", "Department", "Designation",
-      "Date of Joining", "Contract End Date", "Salary", "Role", "Status", "BGV Status"
+      "Date of Joining", "Role", "Status", "BGV Status"
     ];
     
     const dataToExport = selectedEmployees.length > 0 
@@ -312,8 +306,6 @@ export default function Freelancers() {
       emp.department || '',
       emp.designation || '',
       emp.date_of_joining || '',
-      emp.contract_end_date || '',
-      emp.salary || '',
       emp.role || '',
       emp.status || '',
       emp.bg_verification_status || ''
@@ -473,8 +465,6 @@ export default function Freelancers() {
                 <SelectItem value="full_name-desc">Name Z-A</SelectItem>
                 <SelectItem value="date_of_joining-desc">Joining (Latest)</SelectItem>
                 <SelectItem value="date_of_joining-asc">Joining (Earliest)</SelectItem>
-                <SelectItem value="salary-desc">Salary (High-Low)</SelectItem>
-                <SelectItem value="salary-asc">Salary (Low-High)</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="sm" onClick={clearFilters}>
@@ -554,7 +544,6 @@ export default function Freelancers() {
                       {sortField === 'date_of_joining' && <ArrowUpDown className="w-3 h-3" />}
                     </div>
                   </th>
-                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Contract End</th>
                   <th className="text-right px-4 py-4 text-sm font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
@@ -612,9 +601,6 @@ export default function Freelancers() {
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {emp.contract_end_date && !isNaN(new Date(emp.contract_end_date).getTime()) ? format(new Date(emp.contract_end_date), 'MMM d, yyyy') : '-'}
                     </td>
                     <td className="px-4 py-4 text-right">
                       <DropdownMenu>
@@ -768,22 +754,6 @@ export default function Freelancers() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Contract End Date</Label>
-              <Input
-                type="date"
-                value={formData.contract_end_date}
-                onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Salary</Label>
-              <Input
-                type="number"
-                value={formData.salary}
-                onChange={(e) => setFormData({ ...formData, salary: parseFloat(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
                 <SelectTrigger>
@@ -841,62 +811,182 @@ export default function Freelancers() {
         </DialogContent>
       </Dialog>
 
-      {/* View Dialog - Simplified version */}
+      {/* View Dialog - Full Details */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Freelancer Details</DialogTitle>
           </DialogHeader>
           {selectedEmployee && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 pb-4 border-b">
-                {selectedEmployee.profile_photo ? (
-                  <img src={selectedEmployee.profile_photo} alt="" className="w-20 h-20 rounded-full object-cover" />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {selectedEmployee.full_name?.[0] || 'F'}
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="basic"><User className="w-4 h-4 mr-2" />Basic</TabsTrigger>
+                <TabsTrigger value="personal"><CreditCard className="w-4 h-4 mr-2" />Personal</TabsTrigger>
+                <TabsTrigger value="address"><MapPin className="w-4 h-4 mr-2" />Address</TabsTrigger>
+                <TabsTrigger value="documents"><FileText className="w-4 h-4 mr-2" />Documents</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic" className="space-y-4">
+                <div className="flex items-center gap-4 pb-4 border-b">
+                  {selectedEmployee.profile_photo ? (
+                    <img src={selectedEmployee.profile_photo} alt="" className="w-20 h-20 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+                      {selectedEmployee.full_name?.[0] || 'F'}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-slate-800">{selectedEmployee.full_name}</h3>
+                    <p className="text-slate-500">{selectedEmployee.designation} • {selectedEmployee.department}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge className="bg-purple-100 text-purple-700">Contractual</Badge>
+                      <Badge className={
+                        selectedEmployee.status === 'active' ? 'bg-green-100 text-green-700' :
+                        'bg-amber-100 text-amber-700'
+                      }>
+                        {selectedEmployee.status}
+                      </Badge>
+                    </div>
                   </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-800">{selectedEmployee.full_name}</h3>
-                  <p className="text-slate-500">{selectedEmployee.designation} • {selectedEmployee.department}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge className="bg-purple-100 text-purple-700">Contractual</Badge>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(selectedEmployee)}>
+                    <Edit className="w-4 h-4 mr-1" /> Edit
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Full Name</p>
+                    <p className="font-medium">{selectedEmployee.full_name}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Father's Name</p>
+                    <p className="font-medium">{selectedEmployee.father_name || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Email</p>
+                    <p className="font-medium">{selectedEmployee.email}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Phone</p>
+                    <p className="font-medium">{selectedEmployee.phone}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Date of Joining</p>
+                    <p className="font-medium">{selectedEmployee.date_of_joining && !isNaN(new Date(selectedEmployee.date_of_joining).getTime()) ? format(new Date(selectedEmployee.date_of_joining), 'MMM d, yyyy') : '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">BGV Status</p>
                     <Badge className={
-                      selectedEmployee.status === 'active' ? 'bg-green-100 text-green-700' :
+                      selectedEmployee.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
+                      selectedEmployee.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
                       'bg-amber-100 text-amber-700'
                     }>
-                      {selectedEmployee.status}
+                      {selectedEmployee.bg_verification_status || 'pending'}
                     </Badge>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => handleEdit(selectedEmployee)}>
-                  <Edit className="w-4 h-4 mr-1" /> Edit
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Email</p>
-                  <p className="font-medium">{selectedEmployee.email}</p>
+              </TabsContent>
+
+              <TabsContent value="personal" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Date of Birth</p>
+                    <p className="font-medium">{selectedEmployee.date_of_birth && !isNaN(new Date(selectedEmployee.date_of_birth).getTime()) ? format(new Date(selectedEmployee.date_of_birth), 'MMM d, yyyy') : '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Gender</p>
+                    <p className="font-medium capitalize">{selectedEmployee.gender || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Aadhaar Number</p>
+                    <p className="font-medium">{selectedEmployee.aadhaar_number || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">PAN Number</p>
+                    <p className="font-medium">{selectedEmployee.pan_number || '-'}</p>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Phone</p>
-                  <p className="font-medium">{selectedEmployee.phone}</p>
+              </TabsContent>
+
+              <TabsContent value="address" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Address</p>
+                    <p className="font-medium">{selectedEmployee.address || '-'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Locality</p>
+                      <p className="font-medium">{selectedEmployee.locality || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">City</p>
+                      <p className="font-medium">{selectedEmployee.city || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">State</p>
+                      <p className="font-medium">{selectedEmployee.state || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-sm text-slate-500">Pincode</p>
+                      <p className="font-medium">{selectedEmployee.pincode || '-'}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Date of Joining</p>
-                  <p className="font-medium">{selectedEmployee.date_of_joining && !isNaN(new Date(selectedEmployee.date_of_joining).getTime()) ? format(new Date(selectedEmployee.date_of_joining), 'MMM d, yyyy') : '-'}</p>
+              </TabsContent>
+
+              <TabsContent value="documents" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500 mb-2">Profile Photo</p>
+                    {selectedEmployee.profile_photo ? (
+                      <a href={selectedEmployee.profile_photo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-purple-600 hover:underline">
+                        <FileText className="w-4 h-4" />
+                        View Photo
+                      </a>
+                    ) : (
+                      <p className="text-slate-400">Not uploaded</p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500 mb-2">Aadhaar Document</p>
+                    {selectedEmployee.aadhaar_document ? (
+                      <a href={selectedEmployee.aadhaar_document} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-purple-600 hover:underline">
+                        <FileText className="w-4 h-4" />
+                        View Document
+                      </a>
+                    ) : (
+                      <p className="text-slate-400">Not uploaded</p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500 mb-2">PAN Document</p>
+                    {selectedEmployee.pan_document ? (
+                      <a href={selectedEmployee.pan_document} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-purple-600 hover:underline">
+                        <FileText className="w-4 h-4" />
+                        View Document
+                      </a>
+                    ) : (
+                      <p className="text-slate-400">Not uploaded</p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500 mb-2">Education Certificates</p>
+                    {selectedEmployee.education_certificates && selectedEmployee.education_certificates.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedEmployee.education_certificates.map((cert, idx) => (
+                          <a key={idx} href={cert} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-purple-600 hover:underline">
+                            <FileText className="w-4 h-4" />
+                            Certificate {idx + 1}
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400">No certificates uploaded</p>
+                    )}
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Contract End Date</p>
-                  <p className="font-medium">{selectedEmployee.contract_end_date && !isNaN(new Date(selectedEmployee.contract_end_date).getTime()) ? format(new Date(selectedEmployee.contract_end_date), 'MMM d, yyyy') : '-'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-sm text-slate-500">Salary</p>
-                  <p className="font-medium">₹{selectedEmployee.salary?.toLocaleString() || '-'}</p>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
