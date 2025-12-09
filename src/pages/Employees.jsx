@@ -81,6 +81,17 @@ export default function Employees() {
           const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
           const [deletingAll, setDeletingAll] = useState(false);
   const employeesPerPage = 40;
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteData, setInviteData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    department: "",
+    designation: "",
+    date_of_joining: "",
+    salary: ""
+  });
+  const [sendingInvite, setSendingInvite] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -193,6 +204,49 @@ export default function Employees() {
       updateMutation.mutate({ id: selectedEmployee.id, data: formData });
     } else {
       createMutation.mutate({ ...formData, bg_verification_status: "pending" });
+    }
+  };
+
+  const handleSendInvite = async () => {
+    if (!inviteData.full_name || !inviteData.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+
+    setSendingInvite(true);
+    try {
+      // Create employee record with pending status
+      await base44.entities.Employee.create({
+        ...inviteData,
+        employment_type: "permanent",
+        status: "pending",
+        role: "employee",
+        bg_verification_status: "pending"
+      });
+
+      // Send invitation email
+      await base44.functions.invoke('sendEmployeeInvite', {
+        employee_name: inviteData.full_name,
+        employee_email: inviteData.email
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      setShowInviteDialog(false);
+      setInviteData({
+        full_name: "",
+        email: "",
+        phone: "",
+        department: "",
+        designation: "",
+        date_of_joining: "",
+        salary: ""
+      });
+      toast.success('Invitation sent successfully');
+    } catch (error) {
+      toast.error('Failed to send invitation');
+      console.error(error);
+    } finally {
+      setSendingInvite(false);
     }
   };
 
@@ -980,22 +1034,30 @@ export default function Employees() {
         </div>
         <div className="flex gap-2">
           <Button 
-                            variant="outline"
-                            onClick={exportToCSV}
-                            className="border-green-600 text-green-600 hover:bg-green-50"
-                          >
-                            <FileSpreadsheet className="w-4 h-4 mr-2" />
-                            Export All
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            onClick={() => setShowDeleteAllDialog(true)}
-                            className="border-red-600 text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete All
-                          </Button>
-                          <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            variant="outline"
+            onClick={() => setShowInviteDialog(true)}
+            className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Invite Employee
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={exportToCSV}
+            className="border-green-600 text-green-600 hover:bg-green-50"
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setShowDeleteAllDialog(true)}
+            className="border-red-600 text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete All
+          </Button>
+          <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Employee
           </Button>
@@ -1781,6 +1843,112 @@ export default function Employees() {
                                         onClose={() => { setShowWhatsAppDialog(false); setWhatsAppEmployee(null); }}
                                         employee={whatsAppEmployee}
                                       />
+
+                            {/* Invite Employee Dialog */}
+                            <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Invite Permanent Employee</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                                    <p className="text-sm text-blue-700">
+                                      <strong>Note:</strong> An invitation email will be sent to the employee with instructions to complete their registration and onboarding.
+                                    </p>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <Label>Full Name *</Label>
+                                      <Input
+                                        value={inviteData.full_name}
+                                        onChange={(e) => setInviteData({ ...inviteData, full_name: e.target.value })}
+                                        placeholder="Employee full name"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Email *</Label>
+                                      <Input
+                                        type="email"
+                                        value={inviteData.email}
+                                        onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                                        placeholder="official@email.com"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Phone</Label>
+                                      <Input
+                                        value={inviteData.phone}
+                                        onChange={(e) => setInviteData({ ...inviteData, phone: e.target.value })}
+                                        placeholder="+91 XXXXX XXXXX"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Department</Label>
+                                      <Select value={inviteData.department} onValueChange={(v) => setInviteData({ ...inviteData, department: v })}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {settingsDepartments.map(dept => (
+                                            <SelectItem key={dept.id} value={dept.id} className="capitalize">{dept.name}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Designation</Label>
+                                      <Select value={inviteData.designation} onValueChange={(v) => setInviteData({ ...inviteData, designation: v })}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select designation" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {settingsDesignations.map(des => (
+                                            <SelectItem key={des.id} value={des.id}>{des.name}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Date of Joining</Label>
+                                      <Input
+                                        type="date"
+                                        value={inviteData.date_of_joining}
+                                        onChange={(e) => setInviteData({ ...inviteData, date_of_joining: e.target.value })}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Salary</Label>
+                                      <Input
+                                        type="number"
+                                        value={inviteData.salary}
+                                        onChange={(e) => setInviteData({ ...inviteData, salary: parseFloat(e.target.value) })}
+                                        placeholder="Monthly salary"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
+                                  <Button 
+                                    onClick={handleSendInvite} 
+                                    disabled={sendingInvite}
+                                    className="bg-indigo-600 hover:bg-indigo-700"
+                                  >
+                                    {sendingInvite ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Sending...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Mail className="w-4 h-4 mr-2" />
+                                        Send Invitation
+                                      </>
+                                    )}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
 
                             {/* Delete All Confirmation Dialog */}
                             <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>

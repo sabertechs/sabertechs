@@ -108,9 +108,25 @@ export default function Registration() {
           return;
         }
         
-        // No employee record - show registration form
+        // No employee record or incomplete record - show registration form
         if (isMounted && !redirecting) {
-          setFormData(prev => ({ ...prev, email: userData.email, full_name: userData.full_name || "" }));
+          // Check if HR has pre-created a partial record
+          if (employees.length > 0) {
+            const emp = employees[0];
+            // Pre-fill data from HR-created record
+            setFormData(prev => ({
+              ...prev,
+              full_name: emp.full_name || userData.full_name || "",
+              email: emp.email || userData.email,
+              phone: emp.phone || "",
+              department: emp.department || "",
+              designation: emp.designation || "",
+              date_of_joining: emp.date_of_joining || "",
+              salary: emp.salary || "",
+            }));
+          } else {
+            setFormData(prev => ({ ...prev, email: userData.email, full_name: userData.full_name || "" }));
+          }
           setInitialLoading(false);
         }
       } catch (error) {
@@ -273,19 +289,46 @@ export default function Registration() {
     if (!validateStep3()) return;
     
     setLoading(true);
-    await base44.entities.Employee.create({
-      ...formData,
-      email: formData.email.toLowerCase().trim(),
-      pan_number: formData.pan_number.toUpperCase(),
-      aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
-      bank_ifsc: formData.bank_ifsc.toUpperCase(),
-      employment_type: "contractual",
-      status: "pending",
-      role: "employee",
-      bg_verification_status: "pending"
-    });
-    setLoading(false);
-    navigate(createPageUrl("EmployeeDashboard"));
+    try {
+      const userData = await base44.auth.me();
+      const userEmail = userData.email.toLowerCase().trim();
+      
+      // Check if employee record already exists (created by HR)
+      const allEmployees = await base44.entities.Employee.list();
+      const existingEmployee = allEmployees.find(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
+      
+      if (existingEmployee) {
+        // Update existing record with completed information
+        await base44.entities.Employee.update(existingEmployee.id, {
+          ...formData,
+          email: formData.email.toLowerCase().trim(),
+          pan_number: formData.pan_number.toUpperCase(),
+          aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
+          bank_ifsc: formData.bank_ifsc.toUpperCase(),
+          status: "active",
+          bg_verification_status: "pending"
+        });
+      } else {
+        // Create new contractual employee record (public registration)
+        await base44.entities.Employee.create({
+          ...formData,
+          email: formData.email.toLowerCase().trim(),
+          pan_number: formData.pan_number.toUpperCase(),
+          aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
+          bank_ifsc: formData.bank_ifsc.toUpperCase(),
+          employment_type: "contractual",
+          status: "pending",
+          role: "employee",
+          bg_verification_status: "pending"
+        });
+      }
+      
+      setLoading(false);
+      navigate(createPageUrl("EmployeeDashboard"));
+    } catch (error) {
+      console.error('Registration error:', error);
+      setLoading(false);
+    }
   };
 
   const steps = [
