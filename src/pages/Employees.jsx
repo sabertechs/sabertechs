@@ -96,11 +96,14 @@ export default function Employees() {
     role: "employee"
   });
 
-  const { data: employees = [] } = useQuery({
+  // Fetch only permanent employees
+  const { data: allEmployees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
     staleTime: 5000,
   });
+
+  const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'permanent'), [allEmployees]);
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
