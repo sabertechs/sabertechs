@@ -29,7 +29,8 @@ import {
   User,
   MapPin,
   Briefcase,
-  MessageCircle
+  MessageCircle,
+  Mail
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
