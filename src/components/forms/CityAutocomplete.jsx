@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { filterCities } from "@/utils/indiaData";
+import { filterCities } from "@/components/data/indiaData";
 
 export default function CityAutocomplete({ value, onChange, placeholder, error }) {
   const [suggestions, setSuggestions] = useState([]);

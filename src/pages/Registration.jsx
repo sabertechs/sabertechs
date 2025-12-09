@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import CityAutocomplete from "@/components/forms/CityAutocomplete";
+import { INDIAN_STATES } from "@/components/data/indiaData";
 
 const InputWithError = ({ label, field, value, onChange, error, type = "text", placeholder, ...props }) => (
   <div className="space-y-2">
@@ -444,8 +446,41 @@ export default function Registration() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputWithError label="Locality" field="locality" value={formData.locality} onChange={(e) => handleChange("locality", e.target.value)} error={errors.locality} placeholder="Locality / Area" />
-                    <InputWithError label="City" field="city" value={formData.city} onChange={(e) => handleChange("city", e.target.value)} error={errors.city} placeholder="City" />
-                    <InputWithError label="State" field="state" value={formData.state} onChange={(e) => handleChange("state", e.target.value)} error={errors.state} placeholder="State" />
+                    
+                    <div className="space-y-2">
+                      <Label>State *</Label>
+                      <Select value={formData.state} onValueChange={(v) => handleChange("state", v)}>
+                        <SelectTrigger className={errors.state ? "border-red-500" : ""}>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INDIAN_STATES.map(state => (
+                            <SelectItem key={state} value={state}>{state}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.state && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {errors.state}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>City *</Label>
+                      <CityAutocomplete
+                        value={formData.city}
+                        onChange={(v) => handleChange("city", v)}
+                        placeholder="Start typing city name..."
+                        error={errors.city}
+                      />
+                      {errors.city && (
+                        <p className="text-red-500 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {errors.city}
+                        </p>
+                      )}
+                    </div>
+                    
                     <InputWithError label="Pincode" field="pincode" value={formData.pincode} onChange={(e) => handleChange("pincode", e.target.value)} error={errors.pincode} placeholder="XXXXXX" />
                   </div>
                 </div>
