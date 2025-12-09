@@ -30,6 +30,7 @@ import MyAssets from './pages/MyAssets';
 import AssetReports from './pages/AssetReports';
 import OfficeOpsArena from './pages/OfficeOpsArena';
 import APIModule from './pages/APIModule';
+import Freelancers from './pages/Freelancers';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "AssetReports": AssetReports,
     "OfficeOpsArena": OfficeOpsArena,
     "APIModule": APIModule,
+    "Freelancers": Freelancers,
 }
 
 export const pagesConfig = {
