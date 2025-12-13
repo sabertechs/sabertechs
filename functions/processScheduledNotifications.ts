@@ -59,6 +59,21 @@ Deno.serve(async (req) => {
                 is_read: false
               });
               inAppCount++;
+              
+              // Send push notification
+              try {
+                await base44.asServiceRole.functions.invoke('sendPushNotification', {
+                  user_email: emp.email,
+                  title: notification.title,
+                  body: notification.message,
+                  data: {
+                    type: notification.notification_type || 'info',
+                    link: notification.link_url || null
+                  }
+                });
+              } catch (pushErr) {
+                console.error('Push notification error:', pushErr);
+              }
             } catch (err) {
               console.error('In-app notification error:', err);
             }
