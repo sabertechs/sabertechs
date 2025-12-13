@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
 import { 
   User, Mail, Phone, MapPin, Calendar, Video, PlayCircle,
   FileText, Download, Clock, Award, BookOpen, Briefcase
@@ -179,9 +181,11 @@ export default function FreelancerDashboard() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">Recent Expense Submissions</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => window.location.href = '/MyExpenses'}>
-            View All
-          </Button>
+          <Link to={createPageUrl("MyExpenses")}>
+            <Button variant="outline" size="sm">
+              View All
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent>
           {expenses.length === 0 ? (
