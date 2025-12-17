@@ -75,7 +75,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "MyAttendance",
+    mainPage: "Registration",
     Pages: PAGES,
     Layout: __Layout,
 };
