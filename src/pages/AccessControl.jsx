@@ -21,22 +21,29 @@ import {
 const AVAILABLE_SECTIONS = [
   { id: 'dashboard', name: 'Dashboard', description: 'View main dashboard' },
   { id: 'employees', name: 'Employees', description: 'Manage employee records' },
+  { id: 'freelancers', name: 'Freelancers', description: 'Manage contractual employees' },
   { id: 'employee_upload', name: 'Employee Upload', description: 'Bulk upload employees' },
   { id: 'onboarding', name: 'Onboarding', description: 'Manage employee onboarding' },
   { id: 'offer_letters', name: 'Offer Letters', description: 'Create and manage offer letters' },
   { id: 'bg_verification', name: 'Background Verification', description: 'Verify employee backgrounds' },
+  { id: 'api_verification', name: 'API Verification', description: 'External API verifications' },
   { id: 'attendance', name: 'Attendance', description: 'View and manage attendance' },
   { id: 'payslips', name: 'Payslips', description: 'Generate and manage payslips' },
   { id: 'expenses', name: 'Expenses', description: 'Manage expense claims' },
+  { id: 'assets', name: 'Assets', description: 'Manage company assets' },
+  { id: 'company_feed', name: 'Company Feed', description: 'View and manage company posts' },
+  { id: 'policies', name: 'Policies', description: 'View company policies' },
   { id: 'team_view', name: 'Team View', description: 'View team members' },
-  { id: 'notifications', name: 'Notifications', description: 'View notifications' },
+  { id: 'notifications', name: 'Notifications', description: 'Send and view notifications' },
+  { id: 'games', name: 'Games', description: 'Access office games' },
+  { id: 'settings', name: 'Settings', description: 'App settings and configuration' },
 ];
 
 const DEFAULT_ACCESS_BY_ROLE = {
-  hr: ['dashboard', 'employees', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'attendance', 'payslips', 'expenses', 'notifications'],
-  manager: ['dashboard', 'employees', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'attendance', 'payslips', 'expenses', 'team_view', 'notifications'],
-  department_head: ['dashboard', 'team_view', 'attendance', 'expenses', 'notifications'],
-  employee: ['dashboard', 'attendance', 'payslips', 'expenses', 'notifications'],
+  hr: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'api_verification', 'attendance', 'payslips', 'expenses', 'assets', 'company_feed', 'policies', 'notifications', 'games', 'settings'],
+  manager: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'api_verification', 'attendance', 'payslips', 'expenses', 'assets', 'company_feed', 'policies', 'team_view', 'notifications', 'games', 'settings'],
+  department_head: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'offer_letters', 'attendance', 'payslips', 'bg_verification', 'expenses', 'assets', 'company_feed', 'policies', 'team_view', 'notifications', 'games', 'settings'],
+  employee: ['dashboard', 'attendance', 'payslips', 'expenses', 'policies', 'games'],
 };
 
 export default function AccessControl() {
