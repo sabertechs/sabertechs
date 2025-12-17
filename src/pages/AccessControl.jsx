@@ -19,31 +19,55 @@ import {
 } from "@/components/ui/dialog";
 
 const AVAILABLE_SECTIONS = [
-  { id: 'dashboard', name: 'Dashboard', description: 'View main dashboard' },
-  { id: 'employees', name: 'Employees', description: 'Manage employee records' },
-  { id: 'freelancers', name: 'Freelancers', description: 'Manage contractual employees' },
-  { id: 'employee_upload', name: 'Employee Upload', description: 'Bulk upload employees' },
-  { id: 'onboarding', name: 'Onboarding', description: 'Manage employee onboarding' },
-  { id: 'offer_letters', name: 'Offer Letters', description: 'Create and manage offer letters' },
-  { id: 'bg_verification', name: 'Background Verification', description: 'Verify employee backgrounds' },
-  { id: 'api_verification', name: 'API Verification', description: 'External API verifications' },
-  { id: 'attendance', name: 'Attendance', description: 'View and manage attendance' },
-  { id: 'payslips', name: 'Payslips', description: 'Generate and manage payslips' },
-  { id: 'expenses', name: 'Expenses', description: 'Manage expense claims' },
-  { id: 'assets', name: 'Assets', description: 'Manage company assets' },
-  { id: 'company_feed', name: 'Company Feed', description: 'View and manage company posts' },
-  { id: 'policies', name: 'Policies', description: 'View company policies' },
-  { id: 'team_view', name: 'Team View', description: 'View team members' },
-  { id: 'notifications', name: 'Notifications', description: 'Send and view notifications' },
-  { id: 'games', name: 'Games', description: 'Access office games' },
-  { id: 'settings', name: 'Settings', description: 'App settings and configuration' },
+  // Core Management (HR & Manager only)
+  { id: 'employees', name: 'Employees', description: 'Full employee management', category: 'Management' },
+  { id: 'freelancers', name: 'Freelancers', description: 'Manage contractual staff', category: 'Management' },
+  { id: 'employee_upload', name: 'Employee Upload', description: 'Bulk upload employees', category: 'Management' },
+  { id: 'offer_letters', name: 'Offer Letters', description: 'Create and manage offers', category: 'Management' },
+  { id: 'bg_verification', name: 'Background Verification', description: 'Employee verification', category: 'Management' },
+  { id: 'api_verification', name: 'API Verification', description: 'External API checks', category: 'Management' },
+  
+  // Operations (Manager & Dept Head)
+  { id: 'attendance', name: 'Attendance', description: 'Attendance management', category: 'Operations' },
+  { id: 'payslips', name: 'Payslips', description: 'Payslip generation', category: 'Operations' },
+  { id: 'expenses', name: 'Expenses', description: 'Expense approvals', category: 'Operations' },
+  { id: 'team_view', name: 'Team View', description: 'View team members', category: 'Operations' },
+  
+  // Assets & Resources (HR only)
+  { id: 'assets', name: 'Asset Management', description: 'Full asset control', category: 'Resources' },
+  { id: 'settings', name: 'Settings', description: 'App configuration', category: 'Resources' },
+  
+  // Communication (All)
+  { id: 'company_feed', name: 'Company Feed', description: 'Posts and updates', category: 'Communication' },
+  { id: 'policies', name: 'Policies', description: 'Company policies', category: 'Communication' },
+  { id: 'notifications', name: 'Notifications', description: 'Notifications', category: 'Communication' },
+  { id: 'games', name: 'Games', description: 'Office games', category: 'Engagement' },
 ];
 
 const DEFAULT_ACCESS_BY_ROLE = {
-  hr: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'api_verification', 'attendance', 'payslips', 'expenses', 'assets', 'company_feed', 'policies', 'notifications', 'games', 'settings'],
-  manager: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'onboarding', 'offer_letters', 'bg_verification', 'api_verification', 'attendance', 'payslips', 'expenses', 'assets', 'company_feed', 'policies', 'team_view', 'notifications', 'games', 'settings'],
-  department_head: ['dashboard', 'employees', 'freelancers', 'employee_upload', 'offer_letters', 'attendance', 'payslips', 'bg_verification', 'expenses', 'assets', 'company_feed', 'policies', 'team_view', 'notifications', 'games', 'settings'],
-  employee: ['dashboard', 'attendance', 'payslips', 'expenses', 'policies', 'games'],
+  hr: [
+    // Full system access
+    'employees', 'freelancers', 'employee_upload', 'offer_letters', 
+    'bg_verification', 'api_verification', 'attendance', 'payslips', 
+    'expenses', 'assets', 'settings', 'company_feed', 'policies', 
+    'notifications', 'games'
+  ],
+  manager: [
+    // Team management + operations (NO assets/settings)
+    'employees', 'freelancers', 'employee_upload', 'offer_letters',
+    'bg_verification', 'api_verification', 'attendance', 'payslips',
+    'expenses', 'team_view', 'company_feed', 'policies', 
+    'notifications', 'games'
+  ],
+  department_head: [
+    // Department-level only (filtered by department in backend/UI)
+    'employees', 'freelancers', 'attendance', 'payslips', 'expenses',
+    'team_view', 'company_feed', 'policies', 'notifications', 'games'
+  ],
+  employee: [
+    // Self-service only
+    'attendance', 'payslips', 'expenses', 'policies', 'company_feed', 'games'
+  ],
 };
 
 export default function AccessControl() {
@@ -136,6 +160,32 @@ export default function AccessControl() {
           <p className="text-slate-500">Manage user roles and section permissions</p>
         </div>
       </div>
+
+      {/* Role Explanation */}
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-indigo-50 to-purple-50">
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-slate-800 mb-3">Role vs Designation</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium text-indigo-600 mb-1">Role (System Access)</p>
+              <ul className="text-slate-600 space-y-1">
+                <li>• <strong>HR:</strong> Full system access</li>
+                <li>• <strong>Manager:</strong> Team management (no assets/settings)</li>
+                <li>• <strong>Dept Head:</strong> Department-level access only</li>
+                <li>• <strong>Employee:</strong> Self-service only</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium text-purple-600 mb-1">Designation & Department</p>
+              <ul className="text-slate-600 space-y-1">
+                <li>• <strong>Designation:</strong> Job title for display (e.g., Sr. Developer)</li>
+                <li>• <strong>Department:</strong> Team grouping (e.g., Engineering)</li>
+                <li>• Used for filtering, not access control</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Role Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -302,30 +352,47 @@ export default function AccessControl() {
                 </Button>
               </div>
 
-              {/* Section Access Checkboxes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {AVAILABLE_SECTIONS.map(section => (
-                  <div 
-                    key={section.id}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedAccess.includes(section.id) 
-                        ? 'border-indigo-500 bg-indigo-50' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                    onClick={() => toggleSection(section.id)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        checked={selectedAccess.includes(section.id)}
-                        onCheckedChange={() => toggleSection(section.id)}
-                      />
-                      <div>
-                        <p className="font-medium text-slate-800">{section.name}</p>
-                        <p className="text-sm text-slate-500">{section.description}</p>
+              {/* Section Access Checkboxes - Grouped by Category */}
+              <div className="space-y-4">
+                {['Management', 'Operations', 'Resources', 'Communication', 'Engagement'].map(category => {
+                  const sectionsInCategory = AVAILABLE_SECTIONS.filter(s => s.category === category);
+                  if (sectionsInCategory.length === 0) return null;
+                  
+                  return (
+                    <div key={category}>
+                      <h4 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        {category}
+                        <Badge variant="outline" className="text-xs">
+                          {sectionsInCategory.filter(s => selectedAccess.includes(s.id)).length}/{sectionsInCategory.length}
+                        </Badge>
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {sectionsInCategory.map(section => (
+                          <div 
+                            key={section.id}
+                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                              selectedAccess.includes(section.id) 
+                                ? 'border-indigo-500 bg-indigo-50' 
+                                : 'border-slate-200 hover:border-slate-300'
+                            }`}
+                            onClick={() => toggleSection(section.id)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <Checkbox 
+                                checked={selectedAccess.includes(section.id)}
+                                onCheckedChange={() => toggleSection(section.id)}
+                              />
+                              <div>
+                                <p className="font-medium text-slate-800">{section.name}</p>
+                                <p className="text-sm text-slate-500">{section.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
