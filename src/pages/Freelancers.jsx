@@ -97,7 +97,7 @@ export default function Freelancers() {
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
-    staleTime: 5000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'contractual'), [allEmployees]);
@@ -105,13 +105,13 @@ export default function Freelancers() {
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
     queryFn: () => base44.entities.OfferLetter.list(),
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: appSettings = [] } = useQuery({
     queryKey: ['appSettings'],
     queryFn: () => base44.entities.AppSettings.list(),
-    staleTime: 60000,
+    staleTime: 10 * 60 * 1000,
   });
 
   const settingsDepartments = useMemo(() => {

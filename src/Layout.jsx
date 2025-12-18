@@ -106,8 +106,8 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['notifications', user?.email],
     queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }),
     enabled: !!user?.email,
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // Refetch every minute instead of constantly
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 3 * 60 * 1000,
   });
 
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);

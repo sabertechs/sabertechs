@@ -83,6 +83,7 @@ export default function AccessControl() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list('-created_date'),
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateMutation = useMutation({
