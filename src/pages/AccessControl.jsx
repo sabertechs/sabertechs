@@ -23,6 +23,7 @@ const AVAILABLE_SECTIONS = [
   { id: 'employees', name: 'Employees', description: 'Full employee management', category: 'Management' },
   { id: 'freelancers', name: 'Freelancers', description: 'Manage contractual staff', category: 'Management' },
   { id: 'employee_upload', name: 'Employee Upload', description: 'Bulk upload employees', category: 'Management' },
+  { id: 'freelancer_upload', name: 'Freelancer Upload', description: 'Bulk upload freelancers', category: 'Management' },
   { id: 'offer_letters', name: 'Offer Letters', description: 'Create and manage offers', category: 'Management' },
   { id: 'bg_verification', name: 'Background Verification', description: 'Employee verification', category: 'Management' },
   { id: 'api_verification', name: 'API Verification', description: 'External API checks', category: 'Management' },
@@ -47,14 +48,14 @@ const AVAILABLE_SECTIONS = [
 const DEFAULT_ACCESS_BY_ROLE = {
   hr: [
     // Full system access
-    'employees', 'freelancers', 'employee_upload', 'offer_letters', 
+    'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters', 
     'bg_verification', 'api_verification', 'attendance', 'payslips', 
     'expenses', 'assets', 'settings', 'company_feed', 'policies', 
     'notifications', 'games'
   ],
   manager: [
     // Team management + operations (NO assets/settings)
-    'employees', 'freelancers', 'employee_upload', 'offer_letters',
+    'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters',
     'bg_verification', 'api_verification', 'attendance', 'payslips',
     'expenses', 'team_view', 'company_feed', 'policies', 
     'notifications', 'games'

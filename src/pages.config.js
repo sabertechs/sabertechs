@@ -33,6 +33,7 @@ import APIModule from './pages/APIModule';
 import Freelancers from './pages/Freelancers';
 import FreelancerDashboard from './pages/FreelancerDashboard';
 import PushNotificationTest from './pages/PushNotificationTest';
+import FreelancerUpload from './pages/FreelancerUpload';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +73,7 @@ export const PAGES = {
     "Freelancers": Freelancers,
     "FreelancerDashboard": FreelancerDashboard,
     "PushNotificationTest": PushNotificationTest,
+    "FreelancerUpload": FreelancerUpload,
 }
 
 export const pagesConfig = {

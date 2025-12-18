@@ -115,6 +115,7 @@ export default function Layout({ children, currentPageName }) {
   const getNavItems = useCallback(() => {
     const items = [];
     const sectionAccess = employeeData?.section_access || [];
+    const hasAccess = (sectionId) => sectionAccess.length === 0 || sectionAccess.includes(sectionId);
 
     // Dashboard based on role and employment type
     if (userRole === 'hr' || userRole === 'manager') {
@@ -153,18 +154,15 @@ export default function Layout({ children, currentPageName }) {
         { name: "Freelancers", icon: Users, page: "Freelancers" },
         { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
         { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
-        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
-        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
-        { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
-        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
-        { name: "Assets", icon: Package, page: "AssetDashboard" },
-        { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
-        { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
-        { name: "Access Control", icon: Shield, page: "AccessControl" },
-        { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
-        { name: "Games", icon: Gamepad2, page: "OfficeOpsArena" },
-        { name: "Settings", icon: Settings, page: "Settings" },
-      );
+        if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+        if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
+        if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
+        if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
+        if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+        if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
+        if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
+        if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+        items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else {
       // Employee role - different menu for contractual vs permanent
       if (employeeData?.employment_type === 'contractual') {
