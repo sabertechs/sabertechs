@@ -1,3 +1,4 @@
+
 import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
@@ -8,6 +9,11 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       retry: 1,
+      networkMode: 'online',
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'online',
     },
   },
 });
