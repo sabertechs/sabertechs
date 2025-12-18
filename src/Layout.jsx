@@ -130,39 +130,38 @@ export default function Layout({ children, currentPageName }) {
 
     // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
-      items.push(
-        { name: "Employees", icon: Users, page: "Employees" },
-        { name: "Freelancers", icon: Users, page: "Freelancers" },
-        { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
-        { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
-        { name: "Attendance", icon: Clock, page: "AttendanceManagement" },
-        { name: "Payslips", icon: FileText, page: "PayslipManagement" },
-        { name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" },
-        { name: "API Verification", icon: ShieldCheck, page: "APIModule" },
-        { name: "Expenses", icon: Receipt, page: "ExpenseApproval" },
-        { name: "Assets", icon: Package, page: "AssetDashboard" },
-        { name: "Company Feed", icon: Newspaper, page: "CompanyFeed" },
-        { name: "Policies", icon: BookOpen, page: "PolicyManagement" },
-        { name: "Access Control", icon: Shield, page: "AccessControl" },
-        { name: "Notifications", icon: Megaphone, page: "NotificationCenter" },
-        { name: "Games", icon: Gamepad2, page: "OfficeOpsArena" },
-        { name: "Settings", icon: Settings, page: "Settings" },
-      );
+      if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
+      if (hasAccess('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+      if (hasAccess('freelancer_upload')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+      if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+      if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
+      if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
+      if (hasAccess('api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
+      if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
+      if (hasAccess('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
+      if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+      if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
+      if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
+      if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
+      items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       } else if (userRole === 'department_head') {
-      items.push(
-        { name: "Employees", icon: Users, page: "Employees" },
-        { name: "Freelancers", icon: Users, page: "Freelancers" },
-        { name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" },
-        { name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" },
-        if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
-        if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
-        if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
-        if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-        if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-        if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
-        if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-        if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-        items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+      if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
+      if (hasAccess('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+      if (hasAccess('freelancer_upload')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+      if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+      if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
+      if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
+      if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
+      if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+      if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
+      if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
+      if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else {
       // Employee role - different menu for contractual vs permanent
       if (employeeData?.employment_type === 'contractual') {
