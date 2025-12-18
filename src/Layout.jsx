@@ -147,7 +147,7 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
       items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
-      } else if (userRole === 'department_head') {
+    } else if (userRole === 'department_head') {
       if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
       if (hasAccess('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
