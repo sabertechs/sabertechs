@@ -208,6 +208,40 @@ export default function Employees() {
     }
   };
 
+  const sendInvite = async (employee) => {
+    setSendingInvite(employee.id);
+    try {
+      await base44.functions.invoke('sendEmployeeInvite', {
+        employee_name: employee.full_name,
+        employee_email: employee.email
+      });
+      toast.success(`Invitation sent to ${employee.full_name}`);
+    } catch (error) {
+      toast.error('Failed to send invitation');
+    }
+    setSendingInvite(null);
+  };
+
+  const rejectDocuments = async (employee, reason) => {
+    try {
+      await base44.entities.Employee.update(employee.id, {
+        status: 'pending',
+        bg_verification_status: 'pending'
+      });
+
+      await base44.functions.invoke('sendDocumentRejection', {
+        employee_name: employee.full_name,
+        employee_email: employee.email,
+        rejection_reason: reason
+      });
+
+      queryClient.invalidateQueries(['employees']);
+      toast.success('Documents rejected and notification sent');
+    } catch (error) {
+      toast.error('Failed to reject documents');
+    }
+  };
+
   const handleSendInvite = async () => {
     if (!inviteData.full_name || !inviteData.email) {
       toast.error('Name and email are required');
@@ -1730,6 +1764,34 @@ export default function Employees() {
 
                 {/* Documents Tab */}
                 <TabsContent value="documents" className="mt-4">
+                  {selectedEmployee.status === 'pending' && (selectedEmployee.aadhaar_document || selectedEmployee.pan_document) && (
+                    <Card className="border-red-200 bg-red-50 mb-4">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-3">
+                          <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-red-800 mb-2">Document Review</h4>
+                            <p className="text-sm text-red-700 mb-3">If documents are unclear or incorrect, you can reject them and notify the employee.</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-300 text-red-700 hover:bg-red-100"
+                              onClick={() => {
+                                const reason = prompt('Enter rejection reason (will be sent to employee):');
+                                if (reason) {
+                                  rejectDocuments(selectedEmployee, reason);
+                                  setShowViewDialog(false);
+                                }
+                              }}
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject Documents
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 rounded-xl">
                       <p className="text-sm text-slate-500">Aadhaar Number</p>
