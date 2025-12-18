@@ -17,23 +17,29 @@ export default function MyAttendance() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const userData = await base44.auth.me();
-      setUser(userData);
-      // Fetch employee record - use case-insensitive matching
-      const userEmail = userData.email.toLowerCase().trim();
-      const allEmployees = await base44.entities.Employee.list();
-      const matchedEmployee = allEmployees.find(emp => emp.email?.toLowerCase().trim() === userEmail);
-      if (matchedEmployee) {
-        setEmployee(matchedEmployee);
+      try {
+        const userData = await base44.auth.me();
+        setUser(userData);
+        // Fetch employee record - use case-insensitive matching
+        const userEmail = userData.email.toLowerCase().trim();
+        const allEmployees = await base44.entities.Employee.list();
+        const matchedEmployee = allEmployees.find(emp => emp.email?.toLowerCase().trim() === userEmail);
+        if (matchedEmployee) {
+          setEmployee(matchedEmployee);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        toast.error('Failed to load user data');
       }
     };
     fetchUser();
   }, []);
 
-  const { data: attendance = [] } = useQuery({
+  const { data: attendance = [], isLoading, isError } = useQuery({
     queryKey: ['attendance', user?.email],
     queryFn: () => base44.entities.Attendance.filter({ employee_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 2 * 60 * 1000,
   });
 
   const daysInMonth = eachDayOfInterval({
@@ -128,6 +134,27 @@ export default function MyAttendance() {
     const [outH, outM] = checkOut.split(':').map(Number);
     return ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="border-0 shadow-sm max-w-md">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <p className="text-slate-600">Failed to load attendance data. Please refresh the page.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
