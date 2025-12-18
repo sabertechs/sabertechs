@@ -291,7 +291,6 @@ export default function Employees() {
         payload = {
           employee_name: emp.full_name,
           employee_id: emp.employee_id || emp.id,
-          phone: emp.phone || 'N/A',
           date_of_birth: emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) 
             ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') 
             : 'N/A',
