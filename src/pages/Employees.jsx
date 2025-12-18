@@ -1343,26 +1343,7 @@ export default function Employees() {
                                                         <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
                                                       </DropdownMenuItem>
                                                       <DropdownMenuSeparator />
-
-
-                                                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
-                                                            {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                                                            Download Offer Letter
-                                                          </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)} disabled={generatingPdf[`${emp.id}-bgv`]}>
-                                                            {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                                                            Download BGV Report
-                                                          </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => generatePolicyAgreement(emp)}>
-                                                            <FileText className="w-4 h-4 mr-2" />
-                                                            Policy Agreement
-                                                          </DropdownMenuItem>
-                                                          <DropdownMenuItem onClick={() => downloadAllDocsAsZip(emp)} disabled={generatingPdf[`${emp.id}-zip`]}>
-                                                            {generatingPdf[`${emp.id}-zip`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Archive className="w-4 h-4 mr-2" />}
-                                                            Download All (ZIP)
-                                                          </DropdownMenuItem>
-                                                          <DropdownMenuSeparator />
-                                                          <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
+                                                      <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -1638,10 +1619,6 @@ export default function Employees() {
                   <Button size="sm" variant="outline" onClick={() => handleEdit(selectedEmployee)}>
                     <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => downloadAllDocsAsZip(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-zip`]} className="bg-indigo-50 border-indigo-300 text-indigo-700">
-                    {generatingPdf[`${selectedEmployee.id}-zip`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Archive className="w-4 h-4 mr-1" />}
-                    Download All
-                  </Button>
                 </div>
               </div>
 
@@ -1780,24 +1757,7 @@ export default function Employees() {
                     </div>
                   </div>
 
-                  {/* Download Buttons */}
-                  <div className="mt-6 pt-4 border-t">
-                    <p className="text-sm text-slate-500 mb-3">Generate Documents</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
-                        {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                        Offer Letter
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
-                        {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                        BGV Report
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
-                        <FileText className="w-4 h-4 mr-1" />
-                        Policy Agreement
-                      </Button>
-                    </div>
-                  </div>
+
                 </TabsContent>
 
                 {/* Banking Tab */}

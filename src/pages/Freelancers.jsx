@@ -191,6 +191,525 @@ export default function Freelancers() {
 
   const getOfferLetter = useCallback((email) => offerLetters.find(ol => ol.employee_email === email), [offerLetters]);
 
+  // Generate PDF using PDFMonkey
+  const generatePDFWithMonkey = async (emp, docType) => {
+    const empKey = `${emp.id}-${docType}`;
+    setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
+    
+    try {
+      const offerLetter = getOfferLetter(emp.email);
+      
+      // Fallback to HTML generation
+      if (docType === 'offer') {
+        generateOfferLetterHTML(emp, true);
+      } else {
+        generateBGVHTML(emp, true);
+      }
+      
+      toast.success(`${docType === 'offer' ? 'Offer Letter' : 'BGV Report'} ready for download`);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF');
+    } finally {
+      setGeneratingPdf(prev => ({ ...prev, [empKey]: false }));
+    }
+  };
+
+  const generateOfferLetterHTML = (emp, standalone = true) => {
+    const offerLetter = getOfferLetter(emp.email);
+    const headerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
+    const footerImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9fddeba2e_image001.jpg";
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Appointment Letter - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @page { margin: 0; }
+    body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; font-size: 12pt; line-height: 1.5; }
+    .header { width: 100%; text-align: center; }
+    .header img { width: 100%; max-height: 120px; object-fit: contain; }
+    .footer { width: 100%; position: fixed; bottom: 0; text-align: center; }
+    .footer img { width: 100%; max-height: 80px; object-fit: contain; }
+    .content { padding: 20px 60px; min-height: calc(100vh - 250px); }
+    .date { text-align: right; margin-bottom: 20px; }
+    .subject { text-align: center; font-weight: bold; text-decoration: underline; margin: 20px 0; }
+    .salutation { margin: 20px 0; }
+    p { text-align: justify; margin: 10px 0; }
+    .terms { margin: 20px 0; }
+    .terms ol { margin-left: 20px; }
+    .terms li { margin: 8px 0; text-align: justify; }
+    .signature { margin-top: 40px; }
+    .employee-name { font-weight: bold; }
+    .digital-signature {
+      position: fixed;
+      bottom: 100px;
+      right: 60px;
+      text-align: right;
+      font-family: 'Dancing Script', cursive;
+      font-size: 17pt;
+      color: #1a365d;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="${headerImg}" alt="Company Header" />
+  </div>
+  
+  <div class="content">
+    <p class="date">Date: ${format(new Date(), 'MMMM d, yyyy')}</p>
+    
+    <p class="subject">APPOINTMENT LETTER</p>
+    
+    <p class="salutation">Dear <span class="employee-name">${emp.full_name}</span>,</p>
+    
+    <p>With reference to your application and subsequent interview, we are pleased to appoint you as <strong>${emp.designation || offerLetter?.designation || 'Employee'}</strong> in our organization with effect from <strong>${emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMMM d, yyyy') : 'the date of joining'}</strong>.</p>
+    
+    <p>Your appointment is subject to the following terms and conditions:</p>
+    
+    <div class="terms">
+      <ol>
+        <li><strong>Designation:</strong> You will be designated as ${emp.designation || offerLetter?.designation || 'Employee'} in the ${emp.department || offerLetter?.department || 'Company'}.</li>
+        <li><strong>Working Hours:</strong> You will be required to work as per the company's standard working hours and follow all rules and regulations of the company.</li>
+        <li><strong>Confidentiality:</strong> You shall maintain strict confidentiality regarding all company matters, trade secrets, and proprietary information both during and after your employment.</li>
+        <li><strong>Other Terms:</strong> You will be governed by all other terms and conditions as applicable to contractual employees of your grade as per company policy from time to time.</li>
+      </ol>
+    </div>
+    
+    <p>We are confident that you will contribute positively to the growth of the organization. Please sign the duplicate copy of this letter as a token of your acceptance of the above terms and conditions.</p>
+    
+    <p>We welcome you to our organization and wish you a successful career with us.</p>
+    
+    <div class="signature">
+      <p>Yours sincerely,</p>
+      <p><strong>For Saber Technologies Pvt. Ltd.</strong></p>
+      <br/><br/>
+      <p>Authorized Signatory</p>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <img src="${footerImg}" alt="Company Footer" />
+  </div>
+  
+  <div class="digital-signature">
+    ${emp.full_name}
+  </div>
+</body>
+</html>`;
+    
+    if (standalone) {
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(content);
+      newWindow.document.close();
+      newWindow.onload = () => {
+        newWindow.print();
+      };
+    }
+    return content;
+  };
+
+  const generateOfferLetterPDF = (emp) => {
+    generatePDFWithMonkey(emp, 'offer');
+  };
+
+  const generateBGVHTML = (emp, standalone = true) => {
+    const logoImg = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg";
+    const verificationDate = format(new Date(), 'dd-MM-yyyy');
+    const verificationTime = format(new Date(), 'hh:mm a');
+    
+    const calculateAge = (dob) => {
+      if (!dob) return 'N/A';
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+      return age;
+    };
+
+    const age = calculateAge(emp.date_of_birth);
+    const ageBand = age !== 'N/A' ? `${Math.floor(age/10)*10}-${Math.floor(age/10)*10 + 10}` : 'N/A';
+    const maskedAadhaar = emp.aadhaar_number ? 'XXXXXXXX' + emp.aadhaar_number.slice(-4) : 'N/A';
+    const genderShort = emp.gender === 'male' ? 'M' : emp.gender === 'female' ? 'F' : 'O';
+    const fullAddress = [emp.address, emp.locality, emp.city, emp.state, emp.pincode].filter(Boolean).join(', ') || 'N/A';
+    const bgvStatus = emp.bg_verification_status === 'approved' ? 'Success' : emp.bg_verification_status === 'rejected' ? 'Failed' : 'Pending';
+    const statusColor = emp.bg_verification_status === 'approved' ? '#7cb342' : emp.bg_verification_status === 'rejected' ? '#e53935' : '#ffa000';
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Background Verification - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+    .page { width: 210mm; min-height: 297mm; padding: 0; margin: 0 auto; background: white; page-break-after: always; position: relative; }
+    .page:last-child { page-break-after: auto; }
+    .digital-signature {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      text-align: right;
+      font-family: 'Dancing Script', cursive;
+      font-size: 17pt;
+      color: #1a365d;
+    }
+    .logo-header { text-align: center; padding: 15px 0; }
+    .logo-header img { height: 60px; }
+    .title-bar { background: #f57c00; color: white; text-align: center; padding: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+    .profile-section { display: flex; padding: 20px 30px; border: 1px solid #e0e0e0; margin: 20px 30px; border-radius: 8px; }
+    .profile-photo { width: 120px; height: 140px; background: #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 30px; overflow: hidden; }
+    .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-info { flex: 1; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-item { margin: 5px 0; }
+    .info-label { color: #666; font-size: 11px; }
+    .info-value { font-weight: bold; font-size: 13px; }
+    .name-section { margin-top: 15px; }
+    .emp-name { font-size: 18px; font-weight: bold; }
+    .emp-id { color: #666; font-size: 11px; margin-top: 3px; }
+    .status-bar { display: flex; justify-content: space-around; padding: 15px 30px; background: #f5f5f5; margin: 0 30px; border-radius: 8px; }
+    .status-item { text-align: center; }
+    .status-label { color: #666; font-size: 11px; }
+    .status-value { font-size: 16px; font-weight: bold; margin-top: 5px; }
+    .verification-table { margin: 20px 30px; border-collapse: collapse; width: calc(100% - 60px); }
+    .verification-table th, .verification-table td { border: 1px solid #e0e0e0; padding: 12px 15px; text-align: left; }
+    .verification-table th { background: #f5f5f5; font-weight: bold; color: #333; }
+    .verification-table td.success { color: #7cb342; font-weight: bold; }
+    .verification-table td.pending { color: #ffa000; font-weight: bold; }
+    .verification-table td.failed { color: #e53935; font-weight: bold; }
+    
+    .report-title { background: #8bc34a; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; }
+    .section-title { background: #f5f5f5; padding: 10px 15px; font-weight: bold; margin: 20px 30px 0; border-left: 4px solid #f57c00; }
+    .data-table { margin: 0 30px 20px; border-collapse: collapse; width: calc(100% - 60px); }
+    .data-table td { border: 1px solid #e0e0e0; padding: 12px 15px; }
+    .data-table td:first-child { background: #fafafa; font-weight: bold; width: 40%; }
+    .result-row { background: #8bc34a !important; }
+    .result-row td { color: white !important; font-weight: bold !important; }
+    .result-row td:first-child { background: #8bc34a !important; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
+    </div>
+    
+    <div class="title-bar">VERIFICATIONS SUMMARY</div>
+    
+    <div class="profile-section">
+      <div class="profile-photo">
+        ${emp.profile_photo ? `<img src="${emp.profile_photo}" alt="Profile" />` : `<span style="color:#999;font-size:40px;">${emp.full_name?.[0] || 'E'}</span>`}
+      </div>
+      <div class="profile-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Staff ID</div>
+            <div class="info-value">${emp.employee_id || emp.id || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Date of Birth</div>
+            <div class="info-value">${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Father's/Guardian's name</div>
+            <div class="info-value">${emp.father_name || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Current Address</div>
+            <div class="info-value">${fullAddress}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Permanent Address</div>
+            <div class="info-value">${fullAddress}</div>
+          </div>
+        </div>
+        <div class="name-section">
+          <div class="emp-name">${emp.full_name}</div>
+          <div class="emp-id">Individual ID ${emp.employee_id || emp.id || 'N/A'}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-label">Overall Status</div>
+        <div class="status-value" style="color: ${statusColor}">${bgvStatus}</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">Initiation Date</div>
+        <div class="status-value">${verificationDate}</div>
+      </div>
+    </div>
+    
+    <table class="verification-table">
+      <thead>
+        <tr>
+          <th>Verifications</th>
+          <th>Created Date</th>
+          <th>Updated Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Aadhaar Verification</td>
+          <td>${verificationDate}</td>
+          <td>${verificationDate}</td>
+          <td class="${emp.bg_verification_status === 'approved' ? 'success' : emp.bg_verification_status === 'rejected' ? 'failed' : 'pending'}">${bgvStatus}</td>
+        </tr>
+        <tr>
+          <td>PAN Card Verification</td>
+          <td>${verificationDate}</td>
+          <td>${verificationDate}</td>
+          <td class="${emp.bg_verification_status === 'approved' ? 'success' : emp.bg_verification_status === 'rejected' ? 'failed' : 'pending'}">${bgvStatus}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="digital-signature">${emp.full_name}</div>
+  </div>
+  
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
+    </div>
+    
+    <div class="report-title">AADHAAR VERIFICATION REPORT</div>
+    
+    <div class="section-title">GIVEN INFORMATION</div>
+    <table class="data-table">
+      <tr><td>AADHAAR NUMBER</td><td>${emp.aadhaar_number || 'N/A'}</td></tr>
+      <tr><td>LOCATION</td><td>${emp.state || 'N/A'}</td></tr>
+      <tr><td>GENDER</td><td>${emp.gender ? emp.gender.charAt(0).toUpperCase() + emp.gender.slice(1) : 'N/A'}</td></tr>
+      <tr><td>AGE</td><td>${age}</td></tr>
+    </table>
+    
+    <div class="section-title">VERIFIED INFORMATION*</div>
+    <table class="data-table">
+      <tr><td>AADHAAR NUMBER</td><td>${maskedAadhaar}</td></tr>
+      <tr><td>GENDER</td><td>${genderShort}</td></tr>
+      <tr><td>STATE</td><td>${emp.state || 'N/A'}</td></tr>
+      <tr><td>AGE BAND</td><td>${ageBand}</td></tr>
+    </table>
+    
+    <table class="data-table">
+      <tr class="result-row"><td>RESULT</td><td>${bgvStatus}</td></tr>
+      <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
+      <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
+    </table>
+    <div class="digital-signature">${emp.full_name}</div>
+  </div>
+  
+  <div class="page">
+    <div class="logo-header">
+      <img src="${logoImg}" alt="Saber Technologies" />
+    </div>
+    
+    <div class="report-title">PAN CARD VERIFICATION REPORT</div>
+    
+    <div class="section-title">GIVEN INFORMATION</div>
+    <table class="data-table">
+      <tr><td>NAME ON PAN CARD</td><td>${emp.full_name}</td></tr>
+      <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
+      <tr><td>DATE OF BIRTH</td><td>${emp.date_of_birth && !isNaN(new Date(emp.date_of_birth).getTime()) ? format(new Date(emp.date_of_birth), 'dd-MM-yyyy') : 'N/A'}</td></tr>
+    </table>
+    
+    <div class="section-title">VERIFIED INFORMATION*</div>
+    <table class="data-table">
+      <tr><td>PAN NUMBER</td><td>${emp.pan_number || 'N/A'}</td></tr>
+      <tr><td>NAME</td><td>${emp.full_name?.toUpperCase()}</td></tr>
+      <tr><td>CATEGORY</td><td>Individual</td></tr>
+    </table>
+    
+    <table class="data-table">
+      <tr class="result-row"><td>RESULT</td><td>${bgvStatus}</td></tr>
+      <tr><td>DATE OF VERIFICATION</td><td>${verificationDate}</td></tr>
+      <tr><td>TIME OF VERIFICATION</td><td>${verificationTime}</td></tr>
+    </table>
+    <div class="digital-signature">${emp.full_name}</div>
+  </div>
+</body>
+</html>`;
+    
+    if (standalone) {
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(content);
+      newWindow.document.close();
+      newWindow.onload = () => {
+        newWindow.print();
+      };
+    }
+    return content;
+  };
+
+  const generateBGVPDF = (emp) => {
+    generatePDFWithMonkey(emp, 'bgv');
+  };
+
+  const generatePolicyAgreement = (emp) => {
+    const policyImages = [
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/26ed80578_Screenshot2025-11-28at14140PM.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/fca4f55f8_2.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/be4a967d7_3.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/9b90d22fd_4.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/da075ad19_5.png',
+      'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/a6348a5ee_6.png'
+    ];
+    
+    const content = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Policy Agreement - ${emp.full_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 0; }
+    @media print {
+      .no-print { display: none !important; }
+      .page { page-break-after: always; }
+      .page:last-child { page-break-after: auto; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    .instructions {
+      background: #f0f4f8;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #4f46e5;
+    }
+    .instructions h2 { color: #1e293b; margin-bottom: 10px; }
+    .instructions p { color: #64748b; margin: 5px 0; }
+    .print-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    .print-btn:hover { background: #4338ca; }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 20px auto;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .page img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .signature-block {
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
+      text-align: right;
+    }
+    .signature-name {
+      font-family: 'Dancing Script', cursive;
+      font-size: 17pt;
+      color: #1a365d;
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions no-print">
+    <h2>📋 Policy Agreement for: ${emp.full_name}</h2>
+    <p>This document contains the Policy for Proctor/Assessors with employee signature.</p>
+    <p>Click the button below to print or save as PDF.</p>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  
+  ${policyImages.map((img, index) => `
+  <div class="page">
+    <img src="${img}" alt="Policy Page ${index + 1}" />
+    <div class="signature-block">
+      <div class="signature-name">${emp.full_name}</div>
+    </div>
+  </div>
+  `).join('')}
+</body>
+</html>`;
+    
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(content);
+    newWindow.document.close();
+  };
+
+  const downloadAllDocsAsZip = async (emp) => {
+    const empKey = `${emp.id}-zip`;
+    setGeneratingPdf(prev => ({ ...prev, [empKey]: true }));
+    
+    try {
+      const response = await base44.functions.invoke('generateEmployeeZip', { employeeId: emp.id });
+      
+      const base64 = response.data.zipBase64;
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/zip' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.data.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success('ZIP file downloaded successfully');
+    } catch (error) {
+      console.error('ZIP download error:', error);
+      toast.error('Failed to generate ZIP. Opening documents individually...');
+      generateOfferLetterHTML(emp, true);
+      setTimeout(() => generateBGVHTML(emp, true), 500);
+      setTimeout(() => generatePolicyAgreement(emp), 1000);
+    } finally {
+      setGeneratingPdf(prev => ({ ...prev, [empKey]: false }));
+    }
+  };
+
+  const downloadBulkZip = async () => {
+    if (selectedEmployees.length === 0) return;
+    
+    setDownloading(true);
+    
+    for (const empId of selectedEmployees) {
+      const emp = employees.find(e => e.id === empId);
+      if (emp) {
+        generateOfferLetterHTML(emp, true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        generateBGVHTML(emp, true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        generatePolicyAgreement(emp);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    toast.success(`Downloaded documents for ${selectedEmployees.length} freelancer(s)`);
+    setDownloading(false);
+    setSelectedEmployees([]);
+  };
+
   const toggleSelectEmployee = (empId) => {
     setSelectedEmployees(prev => 
       prev.includes(empId) ? prev.filter(id => id !== empId) : [...prev, empId]
@@ -502,6 +1021,16 @@ export default function Freelancers() {
                   Export CSV
                 </Button>
                 <Button 
+                  onClick={downloadBulkZip} 
+                  disabled={downloading}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                  Download Docs
+                </Button>
+                <Button 
                   size="sm" 
                   variant="ghost"
                   onClick={() => setSelectedEmployees([])}
@@ -618,6 +1147,23 @@ export default function Freelancers() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
                             <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => generateOfferLetterPDF(emp)} disabled={generatingPdf[`${emp.id}-offer`]}>
+                            {generatingPdf[`${emp.id}-offer`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                            Download Offer Letter
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateBGVPDF(emp)} disabled={generatingPdf[`${emp.id}-bgv`]}>
+                            {generatingPdf[`${emp.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                            Download BGV Report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generatePolicyAgreement(emp)}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Policy Agreement
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadAllDocsAsZip(emp)} disabled={generatingPdf[`${emp.id}-zip`]}>
+                            {generatingPdf[`${emp.id}-zip`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Archive className="w-4 h-4 mr-2" />}
+                            Download All (ZIP)
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
@@ -851,6 +1397,10 @@ export default function Freelancers() {
                   <Button size="sm" variant="outline" onClick={() => handleEdit(selectedEmployee)}>
                     <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => downloadAllDocsAsZip(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-zip`]} className="bg-purple-50 border-purple-300 text-purple-700">
+                    {generatingPdf[`${selectedEmployee.id}-zip`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Archive className="w-4 h-4 mr-1" />}
+                    Download All
+                  </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-50 rounded-xl">
@@ -983,6 +1533,25 @@ export default function Freelancers() {
                     ) : (
                       <p className="text-slate-400">No certificates uploaded</p>
                     )}
+                  </div>
+
+                  {/* Download Buttons */}
+                  <div className="mt-6 pt-4 border-t">
+                    <p className="text-sm text-slate-500 mb-3">Generate Documents</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => generateOfferLetterPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-offer`]}>
+                        {generatingPdf[`${selectedEmployee.id}-offer`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                        Offer Letter
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => generateBGVPDF(selectedEmployee)} disabled={generatingPdf[`${selectedEmployee.id}-bgv`]}>
+                        {generatingPdf[`${selectedEmployee.id}-bgv`] ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                        BGV Report
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => generatePolicyAgreement(selectedEmployee)}>
+                        <FileText className="w-4 h-4 mr-1" />
+                        Policy Agreement
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
