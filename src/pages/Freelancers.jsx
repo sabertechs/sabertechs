@@ -93,14 +93,37 @@ export default function Freelancers() {
     role: "employee"
   });
 
-  // Fetch only contractual employees
-  const { data: allEmployees = [] } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date'),
+  // Build server-side query
+  const buildQuery = useCallback(() => {
+    const query = { employment_type: 'contractual' };
+    
+    if (search) {
+      query.$or = [
+        { full_name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (statusFilter !== "all") query.status = statusFilter;
+    if (bgvFilter !== "all") query.bg_verification_status = bgvFilter;
+    if (departmentFilter !== "all") query.department = departmentFilter;
+    if (designationFilter !== "all") query.designation = designationFilter;
+    if (joiningDateFrom) query.date_of_joining = { $gte: joiningDateFrom };
+    if (joiningDateTo) {
+      query.date_of_joining = { ...query.date_of_joining, $lte: joiningDateTo };
+    }
+    
+    return query;
+  }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
+
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery({
+    queryKey: ['freelancers', currentPage, sortField, sortOrder, buildQuery()],
+    queryFn: async () => {
+      const sortStr = sortOrder === 'desc' ? `-${sortField}` : sortField;
+      return await base44.entities.Employee.filter(buildQuery(), sortStr, employeesPerPage * 3);
+    },
     staleTime: 5 * 60 * 1000,
   });
-
-  const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'contractual'), [allEmployees]);
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
@@ -691,18 +714,19 @@ export default function Freelancers() {
     
     setDownloading(true);
     
-    for (const empId of selectedEmployees) {
-      const emp = employees.find(e => e.id === empId);
-      if (emp) {
-        generateOfferLetterHTML(emp, true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        generateBGVHTML(emp, true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        generatePolicyAgreement(emp);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+    const selectedEmps = await base44.entities.Employee.filter({ 
+      id: { $in: selectedEmployees } 
+    });
+    
+    for (const emp of selectedEmps) {
+      generateOfferLetterHTML(emp, true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      generateBGVHTML(emp, true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      generatePolicyAgreement(emp);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     toast.success(`Downloaded documents for ${selectedEmployees.length} freelancer(s)`);
@@ -717,58 +741,29 @@ export default function Freelancers() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedEmployees.length === filteredEmployees.length) {
+    if (selectedEmployees.length === paginatedEmployees.length) {
       setSelectedEmployees([]);
     } else {
-      setSelectedEmployees(filteredEmployees.map(e => e.id));
+      setSelectedEmployees(paginatedEmployees.map(e => e.id));
     }
   };
 
-  const filteredEmployees = useMemo(() => {
-    const searchLower = search.toLowerCase();
-    return employees.filter(emp => {
-      const matchesSearch = emp.full_name?.toLowerCase().includes(searchLower) ||
-                                 emp.email?.toLowerCase().includes(searchLower) ||
-                                 emp.phone?.includes(search);
-      const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
-      const matchesBgv = bgvFilter === "all" || emp.bg_verification_status === bgvFilter;
-      const matchesDept = departmentFilter === "all" || emp.department === departmentFilter;
-      const matchesDesignation = designationFilter === "all" || emp.designation === designationFilter;
-      
-      let matchesJoiningDate = true;
-      if (joiningDateFrom && emp.date_of_joining) {
-        matchesJoiningDate = matchesJoiningDate && emp.date_of_joining >= joiningDateFrom;
-      }
-      if (joiningDateTo && emp.date_of_joining) {
-        matchesJoiningDate = matchesJoiningDate && emp.date_of_joining <= joiningDateTo;
-      }
-      
-      return matchesSearch && matchesStatus && matchesBgv && matchesDept && matchesDesignation && matchesJoiningDate;
-    }).sort((a, b) => {
-      let aVal = a[sortField] || '';
-      let bVal = b[sortField] || '';
-      
-      if (sortField === 'salary') {
-        aVal = parseFloat(aVal) || 0;
-        bVal = parseFloat(bVal) || 0;
-      }
-      
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-  }, [employees, search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo, sortField, sortOrder]);
+  const paginatedEmployees = useMemo(() => {
+    const start = (currentPage - 1) * employeesPerPage;
+    const end = start + employeesPerPage;
+    return employees.slice(start, end);
+  }, [employees, currentPage, employeesPerPage]);
 
-  const departments = useMemo(() => [...new Set(employees.map(e => e.department).filter(Boolean))], [employees]);
-  const designations = useMemo(() => [...new Set(employees.map(e => e.designation).filter(Boolean))], [employees]);
+  const totalPages = Math.ceil(employees.length / employeesPerPage);
+  
+  const { data: allEmployeesForFilters = [] } = useQuery({
+    queryKey: ['employees-filters'],
+    queryFn: () => base44.entities.Employee.list(),
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
-  const paginatedEmployees = filteredEmployees.slice(
-    (currentPage - 1) * employeesPerPage,
-    currentPage * employeesPerPage
-  );
+  const departments = useMemo(() => [...new Set(allEmployeesForFilters.filter(e => e.employment_type === 'contractual').map(e => e.department).filter(Boolean))], [allEmployeesForFilters]);
+  const designations = useMemo(() => [...new Set(allEmployeesForFilters.filter(e => e.employment_type === 'contractual').map(e => e.designation).filter(Boolean))], [allEmployeesForFilters]);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -796,7 +791,7 @@ export default function Freelancers() {
     setBulkStatus("");
   };
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     const headers = [
       "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
       "Address", "Locality", "City", "State", "Pincode",
@@ -804,9 +799,14 @@ export default function Freelancers() {
       "Date of Joining", "Role", "Status", "BGV Status"
     ];
     
-    const dataToExport = selectedEmployees.length > 0 
-      ? filteredEmployees.filter(emp => selectedEmployees.includes(emp.id))
-      : filteredEmployees;
+    let dataToExport;
+    if (selectedEmployees.length > 0) {
+      dataToExport = await base44.entities.Employee.filter({ 
+        id: { $in: selectedEmployees } 
+      });
+    } else {
+      dataToExport = await base44.entities.Employee.filter(buildQuery());
+    }
     
     const rows = dataToExport.map(emp => [
       emp.full_name || '',
@@ -1182,7 +1182,7 @@ export default function Freelancers() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100">
               <p className="text-sm text-slate-500">
-                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, filteredEmployees.length)} of {filteredEmployees.length} freelancers
+                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, employees.length)} of {employees.length}+ freelancers
               </p>
               <div className="flex items-center gap-2">
                 <Button

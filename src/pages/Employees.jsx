@@ -876,10 +876,10 @@ export default function Employees() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedEmployees.length === filteredEmployees.length) {
+    if (selectedEmployees.length === paginatedEmployees.length) {
       setSelectedEmployees([]);
     } else {
-      setSelectedEmployees(filteredEmployees.map(e => e.id));
+      setSelectedEmployees(paginatedEmployees.map(e => e.id));
     }
   };
 
@@ -958,7 +958,7 @@ export default function Employees() {
     setBulkStatus("");
   };
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     const headers = [
       "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
       "Address", "Locality", "City", "State", "Pincode",
@@ -966,9 +966,14 @@ export default function Employees() {
       "Date of Joining", "Salary", "Role", "Status", "BGV Status"
     ];
     
-    const dataToExport = selectedEmployees.length > 0 
-      ? filteredEmployees.filter(emp => selectedEmployees.includes(emp.id))
-      : filteredEmployees;
+    let dataToExport;
+    if (selectedEmployees.length > 0) {
+      dataToExport = await base44.entities.Employee.filter({ 
+        id: { $in: selectedEmployees } 
+      });
+    } else {
+      dataToExport = await base44.entities.Employee.filter(buildQuery());
+    }
     
     const rows = dataToExport.map(emp => [
       emp.full_name || '',
@@ -1358,7 +1363,7 @@ export default function Employees() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100">
               <p className="text-sm text-slate-500">
-                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, filteredEmployees.length)} of {filteredEmployees.length} employees
+                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, employees.length)} of {employees.length}+ employees
               </p>
               <div className="flex items-center gap-2">
                 <Button
