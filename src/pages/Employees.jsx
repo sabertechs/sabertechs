@@ -1338,15 +1338,19 @@ export default function Employees() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}>
-                                                        <Eye className="w-4 h-4 mr-2" /> View Details
-                                                      </DropdownMenuItem>
-                                                      <DropdownMenuItem onClick={() => handleEdit(emp)}>
-                                                        <Edit className="w-4 h-4 mr-2" /> Edit
-                                                      </DropdownMenuItem>
-                                                      <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
-                                                        <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
-                                                      </DropdownMenuItem>
-                                                      <DropdownMenuSeparator />
+                            <Eye className="w-4 h-4 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(emp)}>
+                            <Edit className="w-4 h-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => sendInvite(emp)} disabled={sendingInvite === emp.id}>
+                            {sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                            Resend Invite
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
+                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                                                       <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
                           </DropdownMenuItem>
