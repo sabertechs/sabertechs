@@ -277,6 +277,7 @@ export default function Settings() {
     setSaving(true);
     try {
       await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
+      setShowSuccessDialog(true);
       toast.success('Email configuration saved successfully!');
     } catch (error) {
       console.error('Save error:', error);
@@ -733,6 +734,34 @@ export default function Settings() {
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               <Save className="w-4 h-4 mr-1" /> Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Config Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="w-6 h-6" />
+              Email Configuration Saved
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-slate-600">
+              Your email configuration has been saved successfully. The app will now use these settings to send emails.
+            </p>
+            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+              <p className="text-sm text-slate-500">SMTP Server</p>
+              <p className="font-medium">{emailConfig.smtp_host}:{emailConfig.smtp_port}</p>
+              <p className="text-sm text-slate-500 mt-2">From Email</p>
+              <p className="font-medium">{emailConfig.smtp_user}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowSuccessDialog(false)} className="bg-indigo-600 hover:bg-indigo-700">
+              Got it
             </Button>
           </DialogFooter>
         </DialogContent>
