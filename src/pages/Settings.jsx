@@ -95,8 +95,7 @@ export default function Settings() {
   const designations = getSetting('designations', []);
   const expenseTypes = getSetting('expense_types', DEFAULT_EXPENSE_TYPES);
 
-  // Initialize email config from saved settings
-  const savedEmailConfig = getSetting('email_config', {
+  const [emailConfig, setEmailConfig] = useState({
     smtp_host: "smtp.gmail.com",
     smtp_port: "587",
     smtp_user: "",
@@ -105,12 +104,13 @@ export default function Settings() {
     from_email: ""
   });
 
-  const [emailConfig, setEmailConfig] = useState(savedEmailConfig);
-
-  // Update email config when appSettings changes
+  // Load email config when appSettings changes
   useEffect(() => {
-    setEmailConfig(savedEmailConfig);
-  }, [JSON.stringify(savedEmailConfig)]);
+    const savedConfig = getSetting('email_config', null);
+    if (savedConfig && Object.keys(savedConfig).length > 0) {
+      setEmailConfig(savedConfig);
+    }
+  }, [appSettings.length]);
 
   // Save setting mutation
   const saveSettingMutation = useMutation({
