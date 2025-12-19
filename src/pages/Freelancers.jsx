@@ -801,11 +801,9 @@ export default function Freelancers() {
     
     let dataToExport;
     if (selectedEmployees.length > 0) {
-      dataToExport = await base44.entities.Employee.filter({ 
-        id: { $in: selectedEmployees } 
-      });
+      dataToExport = employees.filter(emp => selectedEmployees.includes(emp.id));
     } else {
-      dataToExport = await base44.entities.Employee.filter(buildQuery());
+      dataToExport = employees;
     }
     
     const rows = dataToExport.map(emp => [
@@ -1053,7 +1051,7 @@ export default function Freelancers() {
                 <tr>
                   <th className="text-left px-4 py-4">
                     <Checkbox 
-                      checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                      checked={selectedEmployees.length === paginatedEmployees.length && paginatedEmployees.length > 0}
                       onCheckedChange={toggleSelectAll}
                     />
                   </th>
