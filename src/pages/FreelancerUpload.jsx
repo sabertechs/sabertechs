@@ -27,7 +27,7 @@ export default function FreelancerUpload() {
       father_name: "William Smith",
       email: "jane.smith@example.com",
       phone: "9876543210",
-      date_of_birth: "1992-03-20",
+      date_of_birth: "20/03/1992",
       gender: "female",
       address: "456 Park Avenue",
       locality: "Central",
@@ -38,7 +38,7 @@ export default function FreelancerUpload() {
       pan_number: "XYZAB5678C",
       department: "design",
       designation: "Graphic Designer",
-      date_of_joining: "2024-06-01",
+      date_of_joining: "01/06/2024",
       status: "active"
     }
   ];
@@ -101,6 +101,16 @@ export default function FreelancerUpload() {
     return rows;
   };
 
+  const parseDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return null;
+  };
+
   const validateRow = (row, lineNumber) => {
     const errors = [];
     
@@ -123,6 +133,14 @@ export default function FreelancerUpload() {
     
     if (row.status && !['pending', 'active', 'inactive'].includes(row.status.toLowerCase())) {
       errors.push("Invalid status value");
+    }
+
+    if (row.date_of_birth && !parseDateDDMMYYYY(row.date_of_birth)) {
+      errors.push("Date of birth must be in DD/MM/YYYY format");
+    }
+
+    if (row.date_of_joining && !parseDateDDMMYYYY(row.date_of_joining)) {
+      errors.push("Date of joining must be in DD/MM/YYYY format");
     }
 
     return errors;
@@ -212,7 +230,7 @@ export default function FreelancerUpload() {
               father_name: data.father_name?.trim() || '',
               email: data.email?.trim().toLowerCase(),
               phone: data.phone?.trim(),
-              date_of_birth: data.date_of_birth || null,
+              date_of_birth: parseDateDDMMYYYY(data.date_of_birth),
               gender: data.gender?.toLowerCase() || null,
               address: data.address?.trim() || '',
               locality: data.locality?.trim() || '',
@@ -223,7 +241,7 @@ export default function FreelancerUpload() {
               pan_number: data.pan_number?.toUpperCase() || '',
               department: data.department?.toLowerCase() || '',
               designation: data.designation?.trim() || '',
-              date_of_joining: data.date_of_joining || null,
+              date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               employment_type: 'contractual',
               role: 'employee',
               status: data.status?.toLowerCase() || 'pending',
@@ -324,10 +342,10 @@ export default function FreelancerUpload() {
               </ul>
               <h4 className="font-medium text-sm mt-3 mb-2">Optional Fields:</h4>
               <ul className="text-xs text-slate-600 space-y-1">
-                <li>• father_name, date_of_birth, gender</li>
+                <li>• father_name, date_of_birth (DD/MM/YYYY), gender</li>
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
-                <li>• department, designation, date_of_joining</li>
+                <li>• department, designation, date_of_joining (DD/MM/YYYY)</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
             </div>
