@@ -16,7 +16,8 @@ import {
   Save,
   X,
   Loader2,
-  Mail
+  Mail,
+  CheckCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ export default function Settings() {
   const [dialogType, setDialogType] = useState("");
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   // Fetch settings
   const { data: appSettings = [] } = useQuery({
     queryKey: ['appSettings'],
