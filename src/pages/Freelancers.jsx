@@ -77,8 +77,6 @@ export default function Freelancers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
-  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  const [deletingAll, setDeletingAll] = useState(false);
   const employeesPerPage = 40;
   const [formData, setFormData] = useState({
     full_name: "",
@@ -874,14 +872,6 @@ export default function Freelancers() {
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Export All
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setShowDeleteAllDialog(true)}
-            className="border-red-600 text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete All
-          </Button>
           <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Freelancer
@@ -1027,6 +1017,24 @@ export default function Freelancers() {
                 >
                   {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                   Download Docs
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={async () => {
+                    if (confirm(`Delete ${selectedEmployees.length} selected freelancer(s)?`)) {
+                      for (const empId of selectedEmployees) {
+                        await base44.entities.Employee.delete(empId);
+                      }
+                      queryClient.invalidateQueries(['freelancers']);
+                      setSelectedEmployees([]);
+                      toast.success('Selected freelancers deleted');
+                    }
+                  }}
+                  className="border-red-300 text-red-700 hover:bg-red-100"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete Selected
                 </Button>
                 <Button 
                   size="sm" 
@@ -1564,40 +1572,6 @@ export default function Freelancers() {
         onClose={() => { setShowWhatsAppDialog(false); setWhatsAppEmployee(null); }}
         employee={whatsAppEmployee}
       />
-
-      {/* Delete All Dialog */}
-      <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Delete All Freelancers</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-slate-600">
-              Are you sure you want to delete <strong>all {employees.length} freelancers</strong>? This action cannot be undone.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteAllDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={async () => {
-                setDeletingAll(true);
-                for (const emp of employees) {
-                  await base44.entities.Employee.delete(emp.id);
-                }
-                queryClient.invalidateQueries(['freelancers']);
-                setDeletingAll(false);
-                setShowDeleteAllDialog(false);
-                toast.success('All freelancers deleted');
-              }}
-              disabled={deletingAll}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deletingAll ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-              Delete All
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
