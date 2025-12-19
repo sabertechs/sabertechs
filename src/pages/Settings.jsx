@@ -277,8 +277,9 @@ export default function Settings() {
     setSaving(true);
     try {
       await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
-      toast.success('Email configuration saved');
+      toast.success('Email configuration saved successfully!');
     } catch (error) {
+      console.error('Save error:', error);
       toast.error('Failed to save configuration');
     } finally {
       setSaving(false);
