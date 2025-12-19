@@ -1002,11 +1002,9 @@ export default function Employees() {
     
     let dataToExport;
     if (selectedEmployees.length > 0) {
-      dataToExport = await base44.entities.Employee.filter({ 
-        id: { $in: selectedEmployees } 
-      });
+      dataToExport = employees.filter(emp => selectedEmployees.includes(emp.id));
     } else {
-      dataToExport = await base44.entities.Employee.filter(buildQuery());
+      dataToExport = filteredEmployees;
     }
     
     const rows = dataToExport.map(emp => [
