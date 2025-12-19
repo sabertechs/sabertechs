@@ -68,15 +68,6 @@ export default function Settings() {
   const [dialogType, setDialogType] = useState("");
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
-  const [emailConfig, setEmailConfig] = useState({
-    smtp_host: "smtp.gmail.com",
-    smtp_port: "587",
-    smtp_user: "",
-    smtp_password: "",
-    from_name: "SaberTechs HR",
-    from_email: ""
-  });
-
   // Fetch settings
   const { data: appSettings = [] } = useQuery({
     queryKey: ['appSettings'],
@@ -104,13 +95,22 @@ export default function Settings() {
   const designations = getSetting('designations', []);
   const expenseTypes = getSetting('expense_types', DEFAULT_EXPENSE_TYPES);
 
-  // Load email config on mount
+  // Initialize email config from saved settings
+  const savedEmailConfig = getSetting('email_config', {
+    smtp_host: "smtp.gmail.com",
+    smtp_port: "587",
+    smtp_user: "",
+    smtp_password: "",
+    from_name: "SaberTechs HR",
+    from_email: ""
+  });
+
+  const [emailConfig, setEmailConfig] = useState(savedEmailConfig);
+
+  // Update email config when appSettings changes
   useEffect(() => {
-    const savedConfig = getSetting('email_config', null);
-    if (savedConfig) {
-      setEmailConfig(savedConfig);
-    }
-  }, [appSettings]);
+    setEmailConfig(savedEmailConfig);
+  }, [JSON.stringify(savedEmailConfig)]);
 
   // Save setting mutation
   const saveSettingMutation = useMutation({
