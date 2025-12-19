@@ -1275,7 +1275,7 @@ export default function Employees() {
                 <tr>
                   <th className="text-left px-4 py-4">
                     <Checkbox 
-                      checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                      checked={selectedEmployees.length === paginatedEmployees.length && paginatedEmployees.length > 0}
                       onCheckedChange={toggleSelectAll}
                     />
                   </th>
