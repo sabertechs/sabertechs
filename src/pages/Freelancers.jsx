@@ -150,7 +150,7 @@ export default function Freelancers() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['freelancers'] });
       setShowAddDialog(false);
       resetForm();
     }
@@ -159,7 +159,7 @@ export default function Freelancers() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['freelancers'] });
       setShowAddDialog(false);
       setSelectedEmployee(null);
       resetForm();
@@ -168,7 +168,7 @@ export default function Freelancers() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Employee.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['freelancers'] })
   });
 
   const resetForm = () => {
@@ -785,7 +785,7 @@ export default function Freelancers() {
       await base44.entities.Employee.update(empId, { status: bulkStatus });
     }
     
-    queryClient.invalidateQueries(['employees']);
+    queryClient.invalidateQueries(['freelancers']);
     setSelectedEmployees([]);
     setShowBulkActionDialog(false);
     setBulkStatus("");
@@ -1584,7 +1584,7 @@ export default function Freelancers() {
                 for (const emp of employees) {
                   await base44.entities.Employee.delete(emp.id);
                 }
-                queryClient.invalidateQueries(['employees']);
+                queryClient.invalidateQueries(['freelancers']);
                 setDeletingAll(false);
                 setShowDeleteAllDialog(false);
                 toast.success('All freelancers deleted');
