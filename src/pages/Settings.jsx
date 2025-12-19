@@ -276,14 +276,22 @@ export default function Settings() {
   };
 
   const handleSaveEmailConfig = async () => {
+    // Validate required fields
+    if (!emailConfig.smtp_user || !emailConfig.smtp_password) {
+      toast.error('Email address and app password are required');
+      return;
+    }
+
     setSaving(true);
     try {
+      console.log('Saving email config:', emailConfig);
       await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
+      console.log('Email config saved successfully');
       setShowSuccessDialog(true);
       toast.success('Email configuration saved successfully!');
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save configuration');
+      toast.error('Failed to save configuration: ' + error.message);
     } finally {
       setSaving(false);
     }
