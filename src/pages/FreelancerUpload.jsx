@@ -111,6 +111,16 @@ export default function FreelancerUpload() {
     return null;
   };
 
+  const parseDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return null;
+  };
+
   const validateRow = (row, lineNumber) => {
     const errors = [];
     

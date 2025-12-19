@@ -28,7 +28,7 @@ export default function EmployeeUpload() {
       father_name: "Robert Doe",
       email: "john.doe@example.com",
       phone: "9876543210",
-      date_of_birth: "1990-05-15",
+      date_of_birth: "15/05/1990",
       gender: "male",
       address: "123 Main Street",
       locality: "Downtown",
@@ -39,7 +39,7 @@ export default function EmployeeUpload() {
       pan_number: "ABCDE1234F",
       department: "engineering",
       designation: "Software Engineer",
-      date_of_joining: "2024-01-15",
+      date_of_joining: "15/01/2024",
       salary: "50000",
       role: "employee",
       status: "active"
@@ -104,6 +104,16 @@ export default function EmployeeUpload() {
     return rows;
   };
 
+  const parseDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return null;
+  };
+
   const validateRow = (row, lineNumber) => {
     const errors = [];
     
@@ -130,6 +140,14 @@ export default function EmployeeUpload() {
     
     if (row.role && !['employee', 'department_head', 'hr'].includes(row.role.toLowerCase())) {
       errors.push("Invalid role value");
+    }
+
+    if (row.date_of_birth && !parseDateDDMMYYYY(row.date_of_birth)) {
+      errors.push("Date of birth must be in DD/MM/YYYY format");
+    }
+
+    if (row.date_of_joining && !parseDateDDMMYYYY(row.date_of_joining)) {
+      errors.push("Date of joining must be in DD/MM/YYYY format");
     }
 
     return errors;
@@ -222,7 +240,7 @@ export default function EmployeeUpload() {
               father_name: data.father_name?.trim() || '',
               email: data.email?.trim().toLowerCase(),
               phone: data.phone?.trim(),
-              date_of_birth: data.date_of_birth || null,
+              date_of_birth: parseDateDDMMYYYY(data.date_of_birth),
               gender: data.gender?.toLowerCase() || null,
               address: data.address?.trim() || '',
               locality: data.locality?.trim() || '',
@@ -233,7 +251,7 @@ export default function EmployeeUpload() {
               pan_number: data.pan_number?.toUpperCase() || '',
               department: data.department?.toLowerCase() || '',
               designation: data.designation?.trim() || '',
-              date_of_joining: data.date_of_joining || null,
+              date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               salary: data.salary ? parseFloat(data.salary) : null,
               role: data.role?.toLowerCase() || 'employee',
               status: data.status?.toLowerCase() || 'pending',
@@ -338,10 +356,10 @@ export default function EmployeeUpload() {
               </ul>
               <h4 className="font-medium text-sm mt-3 mb-2">Optional Fields:</h4>
               <ul className="text-xs text-slate-600 space-y-1">
-                <li>• father_name, date_of_birth, gender</li>
+                <li>• father_name, date_of_birth (DD/MM/YYYY), gender</li>
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
-                <li>• department, designation, date_of_joining, salary</li>
+                <li>• department, designation, date_of_joining (DD/MM/YYYY), salary</li>
                 <li>• role (employee/department_head/hr)</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
