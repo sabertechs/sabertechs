@@ -133,7 +133,9 @@ export default function Registration() {
         }
       } catch (error) {
         console.error("Error checking employee:", error);
-        if (isMounted && !redirecting) setInitialLoading(false);
+        if (isMounted && !redirecting) {
+          setInitialLoading(false);
+        }
       }
     };
     
