@@ -77,17 +77,22 @@ export default function TestEmail() {
     setSending(true);
     const content = getEmailContent(emailType);
     
-    await base44.integrations.Core.SendEmail({
-      to: employeeData.email,
-      subject: content.subject,
-      body: content.body
-    });
-    
-    setSending(false);
-    setSent(true);
-    toast.success("Sample email sent successfully!");
-    
-    setTimeout(() => setSent(false), 3000);
+    try {
+      const response = await base44.functions.invoke('sendTestEmail', {
+        to: employeeData.email,
+        subject: content.subject,
+        body: content.body
+      });
+      
+      setSending(false);
+      setSent(true);
+      toast.success(`Email sent successfully from ${response.data.from}!`);
+      
+      setTimeout(() => setSent(false), 3000);
+    } catch (error) {
+      setSending(false);
+      toast.error('Failed to send email');
+    }
   };
 
   return (
