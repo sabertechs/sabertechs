@@ -211,17 +211,21 @@ export default function Registration() {
     // Check for duplicate email and phone if no basic errors
     if (!newErrors.email && !newErrors.phone) {
       setCheckingDuplicate(true);
-      const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim() });
-      if (existingByEmail.length > 0) {
-        // Redirect to dashboard if employee already exists
-        setCheckingDuplicate(false);
-        navigate(createPageUrl("EmployeeDashboard"));
-        return false;
-      }
-      
-      const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
-      if (existingByPhone.length > 0) {
-        newErrors.phone = "An employee with this phone number already exists";
+      try {
+        const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
+        if (existingByEmail.length > 0) {
+          // Redirect to dashboard if employee already exists
+          setCheckingDuplicate(false);
+          navigate(createPageUrl("EmployeeDashboard"));
+          return false;
+        }
+
+        const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
+        if (existingByPhone.length > 0) {
+          newErrors.phone = "An employee with this phone number already exists";
+        }
+      } catch (error) {
+        console.error("Error checking duplicates:", error);
       }
       setCheckingDuplicate(false);
     }
