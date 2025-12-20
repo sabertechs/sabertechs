@@ -95,9 +95,10 @@ Deno.serve(async (req) => {
         host: config.smtp_host,
         port: parseInt(config.smtp_port),
         secure: false,
+        requireTLS: true,
         auth: {
           user: config.smtp_user,
-          pass: config.smtp_password,
+          pass: config.smtp_password.replace(/\s/g, ''),
         },
       });
 
