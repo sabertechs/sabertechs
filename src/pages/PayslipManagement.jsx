@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Plus, Search, Download, Send, Edit, Trash2, FileText } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Search, Download, Send, Edit, Trash2, FileText, Zap, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { getPayslipEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,11 @@ export default function PayslipManagement() {
   const [monthFilter, setMonthFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [generatingBulk, setGeneratingBulk] = useState(false);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [bulkMonth, setBulkMonth] = useState(new Date().getMonth() + 1);
+  const [bulkYear, setBulkYear] = useState(new Date().getFullYear());
+  const [bulkResults, setBulkResults] = useState(null);
   const [formData, setFormData] = useState({
     employee_email: "",
     month: MONTHS[new Date().getMonth()],
@@ -160,6 +166,28 @@ export default function PayslipManagement() {
     setShowCreateDialog(true);
   };
 
+  const generateBulkPayslips = async () => {
+    setGeneratingBulk(true);
+    try {
+      const response = await base44.functions.invoke('generateMonthlyPayslips', {
+        month: bulkMonth,
+        year: bulkYear
+      });
+
+      if (response.data.success) {
+        setBulkResults(response.data);
+        queryClient.invalidateQueries(['payslips']);
+        toast.success(`Generated ${response.data.summary.generated} payslips`);
+      } else {
+        toast.error('Failed to generate payslips');
+      }
+    } catch (error) {
+      console.error('Bulk generation error:', error);
+      toast.error('Failed to generate payslips');
+    }
+    setGeneratingBulk(false);
+  };
+
   const sendPayslipNotification = async (payslip) => {
     // Send in-app notification
     await base44.entities.Notification.create({
@@ -200,10 +228,16 @@ export default function PayslipManagement() {
           <h2 className="text-2xl font-bold text-slate-800">Payslip Management</h2>
           <p className="text-slate-500">Generate and manage employee payslips</p>
         </div>
-        <Button onClick={() => { resetForm(); setSelectedPayslip(null); setShowCreateDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Generate Payslip
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowBulkDialog(true)} className="bg-green-600 hover:bg-green-700">
+            <Zap className="w-4 h-4 mr-2" />
+            Auto Generate (Month)
+          </Button>
+          <Button onClick={() => { resetForm(); setSelectedPayslip(null); setShowCreateDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Manual Generate
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -286,6 +320,160 @@ export default function PayslipManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Generate Dialog */}
+      <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-green-600" />
+              Auto Generate Monthly Payslips
+            </DialogTitle>
+          </DialogHeader>
+          
+          {!bulkResults ? (
+            <div className="space-y-6">
+              <div className="bg-blue-50 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-semibold mb-2">Auto-generation will:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Generate payslips for all active permanent employees</li>
+                      <li>Calculate salary based on attendance and leaves</li>
+                      <li>Pro-rate salary for working days vs total days</li>
+                      <li><strong>Skip employees with incomplete attendance</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Month</Label>
+                  <Select value={bulkMonth.toString()} onValueChange={(v) => setBulkMonth(parseInt(v))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((month, idx) => (
+                        <SelectItem key={month} value={(idx + 1).toString()}>{month}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Year</Label>
+                  <Input
+                    type="number"
+                    value={bulkYear}
+                    onChange={(e) => setBulkYear(parseInt(e.target.value))}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="pt-6 text-center">
+                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-green-700">{bulkResults.summary.generated}</p>
+                    <p className="text-sm text-green-600">Generated</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardContent className="pt-6 text-center">
+                    <AlertCircle className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-amber-700">{bulkResults.summary.incomplete_attendance}</p>
+                    <p className="text-sm text-amber-600">Incomplete Attendance</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="pt-6 text-center">
+                    <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-red-700">{bulkResults.summary.failed}</p>
+                    <p className="text-sm text-red-600">Failed</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Incomplete Attendance Details */}
+              {bulkResults.details.incomplete_attendance.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-amber-700">Employees with Incomplete Attendance:</h4>
+                  <div className="max-h-48 overflow-y-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-amber-50 sticky top-0">
+                        <tr>
+                          <th className="text-left px-3 py-2 text-amber-700">Employee</th>
+                          <th className="text-right px-3 py-2 text-amber-700">Marked</th>
+                          <th className="text-right px-3 py-2 text-amber-700">Missing</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkResults.details.incomplete_attendance.map((emp, idx) => (
+                          <tr key={idx} className="border-b">
+                            <td className="px-3 py-2">{emp.employee_name}</td>
+                            <td className="text-right px-3 py-2">{emp.marked_days}/{emp.total_days}</td>
+                            <td className="text-right px-3 py-2 text-red-600">{emp.missing_days} days</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Failed Details */}
+              {bulkResults.details.failed.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-red-700">Failed:</h4>
+                  <div className="max-h-32 overflow-y-auto border rounded-lg">
+                    {bulkResults.details.failed.map((emp, idx) => (
+                      <div key={idx} className="px-3 py-2 text-sm border-b">
+                        <span className="font-medium">{emp.employee_name}</span>: {emp.reason}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowBulkDialog(false);
+                setBulkResults(null);
+              }}
+            >
+              Close
+            </Button>
+            {!bulkResults && (
+              <Button 
+                onClick={generateBulkPayslips}
+                disabled={generatingBulk}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {generatingBulk ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Generate Payslips
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create/Edit Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
