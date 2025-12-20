@@ -645,52 +645,62 @@ export default function Registration() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Education Certificates *</Label>
+                  <Label>Education Certificates * (Maximum 2 files)</Label>
                   <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
                     errors.education_certificates ? 'border-red-500' : 'border-slate-200'
                   }`}>
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        multiple
-                        onChange={(e) => {
-                          if (e.target.files.length > 0) {
-                            handleMultipleFileUpload(e.target.files, "education_certificates");
-                          }
-                        }}
-                      />
-                      {uploadingDoc === "education_certificates" ? (
-                        <Loader2 className="w-8 h-8 mx-auto text-indigo-500 animate-spin" />
-                      ) : (
-                        <>
-                          <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-                          <span className="text-slate-500">Click to upload certificates</span>
-                        </>
-                      )}
-                    </label>
+                    {formData.education_certificates.length < 2 ? (
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                          onChange={(e) => {
+                            if (e.target.files.length > 0) {
+                              const remainingSlots = 2 - formData.education_certificates.length;
+                              const filesToUpload = Array.from(e.target.files).slice(0, remainingSlots);
+                              handleMultipleFileUpload(filesToUpload, "education_certificates");
+                            }
+                          }}
+                        />
+                        {uploadingDoc === "education_certificates" ? (
+                          <Loader2 className="w-8 h-8 mx-auto text-indigo-500 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                            <span className="text-slate-500">Click to upload (Max 2 files)</span>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {formData.education_certificates.length}/2 uploaded
+                            </p>
+                          </>
+                        )}
+                      </label>
+                    ) : (
+                      <div className="text-green-600">
+                        <CheckCircle className="w-8 h-8 mx-auto mb-2" />
+                        <span>Maximum files uploaded (2/2)</span>
+                      </div>
+                    )}
                     {formData.education_certificates.length > 0 && (
                       <div className="mt-4 space-y-2">
-                        <div className="flex items-center justify-center gap-2 text-green-600">
-                          <CheckCircle className="w-5 h-5" />
-                          <span>{formData.education_certificates.length} file(s) uploaded</span>
-                        </div>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {formData.education_certificates.map((cert, idx) => (
-                            <Button 
-                              key={idx}
-                              type="button"
-                              size="sm" 
-                              variant="outline" 
-                              className="text-red-600 hover:bg-red-50"
-                              onClick={() => {
-                                const newCerts = formData.education_certificates.filter((_, i) => i !== idx);
-                                handleChange("education_certificates", newCerts);
-                              }}
-                            >
-                              <X className="w-3 h-3 mr-1" /> Remove {idx + 1}
-                            </Button>
+                            <div key={idx} className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg">
+                              <span className="text-sm">Certificate {idx + 1}</span>
+                              <Button 
+                                type="button"
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  const newCerts = formData.education_certificates.filter((_, i) => i !== idx);
+                                  handleChange("education_certificates", newCerts);
+                                }}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       </div>
