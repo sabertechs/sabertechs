@@ -86,24 +86,29 @@ Deno.serve(async (req) => {
 
     if (emailConfigSetting?.setting_value) {
       // Use custom SMTP configuration
-      const config = emailConfigSetting.setting_value;
+      const configArray = emailConfigSetting.setting_value;
+      const config = Array.isArray(configArray) ? configArray[0] : configArray;
+      
+      console.log('Using SMTP config:', { host: config.smtp_host, port: config.smtp_port, user: config.smtp_user });
       
       const transporter = nodemailer.createTransport({
         host: config.smtp_host,
         port: parseInt(config.smtp_port),
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
           user: config.smtp_user,
           pass: config.smtp_password,
         },
       });
 
-      await transporter.sendMail({
+      const result = await transporter.sendMail({
         from: `"${config.from_name}" <${config.from_email}>`,
         to: employee_email,
         subject: 'Welcome to SaberTechs - Complete Your Registration',
         html: emailBody,
       });
+      
+      console.log('Email sent successfully:', result.messageId);
     } else {
       // Fallback to Base44's built-in email service
       await base44.asServiceRole.integrations.Core.SendEmail({
