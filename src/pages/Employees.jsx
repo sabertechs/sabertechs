@@ -55,6 +55,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SendWhatsAppDialog from "@/components/whatsapp/SendWhatsAppDialog";
+import SalaryComponentsForm from "@/components/salary/SalaryComponentsForm";
+import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -1729,12 +1731,15 @@ export default function Employees() {
 
               {/* Tabs */}
               <Tabs defaultValue="personal" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="personal" className="flex items-center gap-1">
                     <User className="w-4 h-4" /> Personal
                   </TabsTrigger>
                   <TabsTrigger value="employment" className="flex items-center gap-1">
                     <Briefcase className="w-4 h-4" /> Employment
+                  </TabsTrigger>
+                  <TabsTrigger value="salary" className="flex items-center gap-1">
+                    <CreditCard className="w-4 h-4" /> Salary
                   </TabsTrigger>
                   <TabsTrigger value="documents" className="flex items-center gap-1">
                     <FileText className="w-4 h-4" /> Documents
@@ -1779,6 +1784,21 @@ export default function Employees() {
                           : '-'}
                       </p>
                     </div>
+                  </div>
+                </TabsContent>
+
+                {/* Salary Tab */}
+                <TabsContent value="salary" className="mt-4">
+                  <div className="space-y-6">
+                    <SalaryComponentsForm 
+                      employee={selectedEmployee}
+                      onSave={async (salaryData) => {
+                        await base44.entities.Employee.update(selectedEmployee.id, salaryData);
+                        queryClient.invalidateQueries(['employees']);
+                        toast.success('Salary structure updated');
+                      }}
+                    />
+                    <SalaryBreakdown employee={selectedEmployee} />
                   </div>
                 </TabsContent>
 
