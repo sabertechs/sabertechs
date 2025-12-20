@@ -203,15 +203,21 @@ export default function Employees() {
   const handleSubmit = async () => {
     // Check for duplicate email and phone
     if (!selectedEmployee) {
-      const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
-      if (existingByEmail.length > 0) {
-        toast.error('An employee with this email already exists');
-        return;
-      }
-      
-      const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
-      if (existingByPhone.length > 0) {
-        toast.error('An employee with this phone number already exists');
+      try {
+        const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
+        if (existingByEmail.length > 0) {
+          toast.error('An employee with this email already exists');
+          return;
+        }
+        
+        const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
+        if (existingByPhone.length > 0) {
+          toast.error('An employee with this phone number already exists');
+          return;
+        }
+      } catch (error) {
+        console.error('Duplicate check error:', error);
+        toast.error('Failed to validate employee data');
         return;
       }
       
@@ -274,20 +280,27 @@ export default function Employees() {
     setSendingInvite(true);
     try {
       // Check for duplicates
-      const existingByEmail = await base44.entities.Employee.filter({ email: inviteData.email.trim().toLowerCase() });
-      if (existingByEmail.length > 0) {
-        toast.error('An employee with this email already exists');
-        setSendingInvite(false);
-        return;
-      }
-      
-      if (inviteData.phone) {
-        const existingByPhone = await base44.entities.Employee.filter({ phone: inviteData.phone.trim() });
-        if (existingByPhone.length > 0) {
-          toast.error('An employee with this phone number already exists');
+      try {
+        const existingByEmail = await base44.entities.Employee.filter({ email: inviteData.email.trim().toLowerCase() });
+        if (existingByEmail.length > 0) {
+          toast.error('An employee with this email already exists');
           setSendingInvite(false);
           return;
         }
+        
+        if (inviteData.phone) {
+          const existingByPhone = await base44.entities.Employee.filter({ phone: inviteData.phone.trim() });
+          if (existingByPhone.length > 0) {
+            toast.error('An employee with this phone number already exists');
+            setSendingInvite(false);
+            return;
+          }
+        }
+      } catch (dupError) {
+        console.error('Duplicate check error:', dupError);
+        toast.error('Failed to validate employee data');
+        setSendingInvite(false);
+        return;
       }
       
       // Generate employee ID
