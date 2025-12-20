@@ -109,7 +109,9 @@ export default function Settings() {
   // Load email config when appSettings changes
   useEffect(() => {
     const savedConfig = getSetting('email_config', null);
-    if (savedConfig && Object.keys(savedConfig).length > 0) {
+    if (savedConfig && Array.isArray(savedConfig) && savedConfig.length > 0) {
+      setEmailConfig(savedConfig[0]);
+    } else if (savedConfig && typeof savedConfig === 'object') {
       setEmailConfig(savedConfig);
     }
   }, [appSettings.length]);
@@ -284,7 +286,7 @@ export default function Settings() {
 
     setSaving(true);
     try {
-      const result = await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
+      const result = await saveSettingMutation.mutateAsync({ key: 'email_config', value: [emailConfig] });
       console.log('Save result:', result);
       toast.success('Email configuration saved!');
       setShowSuccessDialog(true);
