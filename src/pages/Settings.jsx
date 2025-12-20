@@ -284,14 +284,13 @@ export default function Settings() {
 
     setSaving(true);
     try {
-      console.log('Saving email config:', emailConfig);
-      await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
-      console.log('Email config saved successfully');
+      const result = await saveSettingMutation.mutateAsync({ key: 'email_config', value: emailConfig });
+      console.log('Save result:', result);
+      toast.success('Email configuration saved!');
       setShowSuccessDialog(true);
-      toast.success('Email configuration saved successfully!');
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save configuration: ' + error.message);
+      toast.error('Failed to save: ' + error.message);
     } finally {
       setSaving(false);
     }
