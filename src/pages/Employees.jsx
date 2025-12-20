@@ -200,11 +200,34 @@ export default function Employees() {
     setShowAddDialog(true);
   };
 
-  const handleSubmit = () => {
-    if (selectedEmployee) {
-      updateMutation.mutate({ id: selectedEmployee.id, data: formData });
+  const handleSubmit = async () => {
+    // Check for duplicate email and phone
+    if (!selectedEmployee) {
+      const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
+      if (existingByEmail.length > 0) {
+        toast.error('An employee with this email already exists');
+        return;
+      }
+      
+      const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
+      if (existingByPhone.length > 0) {
+        toast.error('An employee with this phone number already exists');
+        return;
+      }
+      
+      // Generate employee ID - find highest existing ID and increment
+      const maxId = employees.reduce((max, emp) => {
+        if (emp.employee_id && emp.employee_id.startsWith('66')) {
+          const num = parseInt(emp.employee_id);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 66000);
+      
+      const newEmployeeId = String(maxId + 1);
+      createMutation.mutate({ ...formData, employee_id: newEmployeeId, bg_verification_status: "pending" });
     } else {
-      createMutation.mutate({ ...formData, bg_verification_status: "pending" });
+      updateMutation.mutate({ id: selectedEmployee.id, data: formData });
     }
   };
 
@@ -250,9 +273,38 @@ export default function Employees() {
 
     setSendingInvite(true);
     try {
+      // Check for duplicates
+      const existingByEmail = await base44.entities.Employee.filter({ email: inviteData.email.trim().toLowerCase() });
+      if (existingByEmail.length > 0) {
+        toast.error('An employee with this email already exists');
+        setSendingInvite(false);
+        return;
+      }
+      
+      if (inviteData.phone) {
+        const existingByPhone = await base44.entities.Employee.filter({ phone: inviteData.phone.trim() });
+        if (existingByPhone.length > 0) {
+          toast.error('An employee with this phone number already exists');
+          setSendingInvite(false);
+          return;
+        }
+      }
+      
+      // Generate employee ID
+      const maxId = employees.reduce((max, emp) => {
+        if (emp.employee_id && emp.employee_id.startsWith('66')) {
+          const num = parseInt(emp.employee_id);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 66000);
+      
+      const newEmployeeId = String(maxId + 1);
+      
       // Create employee record with pending status
       await base44.entities.Employee.create({
         ...inviteData,
+        employee_id: newEmployeeId,
         employment_type: "permanent",
         status: "pending",
         role: "employee",

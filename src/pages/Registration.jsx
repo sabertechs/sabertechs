@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle, CreditCard } from "lucide-react";
+import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -305,10 +305,22 @@ export default function Registration() {
       const allEmployees = await base44.entities.Employee.list();
       const existingEmployee = allEmployees.find(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
       
+      // Generate employee ID - find highest existing ID and increment
+      const maxId = allEmployees.reduce((max, emp) => {
+        if (emp.employee_id && emp.employee_id.startsWith('66')) {
+          const num = parseInt(emp.employee_id);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 66000);
+      
+      const newEmployeeId = String(maxId + 1);
+      
       if (existingEmployee) {
         // Update existing record with completed information
         await base44.entities.Employee.update(existingEmployee.id, {
           ...formData,
+          employee_id: existingEmployee.employee_id || newEmployeeId,
           email: formData.email.toLowerCase().trim(),
           pan_number: formData.pan_number.toUpperCase(),
           aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
@@ -320,6 +332,7 @@ export default function Registration() {
         // Create new contractual employee record (public registration)
         await base44.entities.Employee.create({
           ...formData,
+          employee_id: newEmployeeId,
           email: formData.email.toLowerCase().trim(),
           pan_number: formData.pan_number.toUpperCase(),
           aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
@@ -541,9 +554,20 @@ export default function Registration() {
                       errors.aadhaar_document ? 'border-red-500' : 'border-slate-200'
                     }`}>
                       {formData.aadhaar_document ? (
-                        <div className="flex items-center justify-center gap-2 text-green-600">
-                          <CheckCircle className="w-5 h-5" />
-                          <span>Uploaded</span>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Uploaded</span>
+                          </div>
+                          <Button 
+                            type="button"
+                            size="sm" 
+                            variant="outline" 
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => handleChange("aadhaar_document", "")}
+                          >
+                            <X className="w-4 h-4 mr-1" /> Remove
+                          </Button>
                         </div>
                       ) : (
                         <label className="cursor-pointer">
@@ -577,9 +601,20 @@ export default function Registration() {
                       errors.pan_document ? 'border-red-500' : 'border-slate-200'
                     }`}>
                       {formData.pan_document ? (
-                        <div className="flex items-center justify-center gap-2 text-green-600">
-                          <CheckCircle className="w-5 h-5" />
-                          <span>Uploaded</span>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Uploaded</span>
+                          </div>
+                          <Button 
+                            type="button"
+                            size="sm" 
+                            variant="outline" 
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => handleChange("pan_document", "")}
+                          >
+                            <X className="w-4 h-4 mr-1" /> Remove
+                          </Button>
                         </div>
                       ) : (
                         <label className="cursor-pointer">
@@ -635,9 +670,28 @@ export default function Registration() {
                       )}
                     </label>
                     {formData.education_certificates.length > 0 && (
-                      <div className="mt-4 flex items-center justify-center gap-2 text-green-600">
-                        <CheckCircle className="w-5 h-5" />
-                        <span>{formData.education_certificates.length} file(s) uploaded</span>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-center gap-2 text-green-600">
+                          <CheckCircle className="w-5 h-5" />
+                          <span>{formData.education_certificates.length} file(s) uploaded</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {formData.education_certificates.map((cert, idx) => (
+                            <Button 
+                              key={idx}
+                              type="button"
+                              size="sm" 
+                              variant="outline" 
+                              className="text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                const newCerts = formData.education_certificates.filter((_, i) => i !== idx);
+                                handleChange("education_certificates", newCerts);
+                              }}
+                            >
+                              <X className="w-3 h-3 mr-1" /> Remove {idx + 1}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -657,6 +711,15 @@ export default function Registration() {
                       <div className="flex flex-col items-center gap-2">
                         <img src={formData.profile_photo} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
                         <span className="text-green-600">Uploaded</span>
+                        <Button 
+                          type="button"
+                          size="sm" 
+                          variant="outline" 
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleChange("profile_photo", "")}
+                        >
+                          <X className="w-4 h-4 mr-1" /> Remove
+                        </Button>
                       </div>
                     ) : (
                       <label className="cursor-pointer">
