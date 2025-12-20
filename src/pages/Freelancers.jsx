@@ -202,11 +202,40 @@ export default function Freelancers() {
     setShowAddDialog(true);
   };
 
-  const handleSubmit = () => {
-    if (selectedEmployee) {
-      updateMutation.mutate({ id: selectedEmployee.id, data: formData });
+  const handleSubmit = async () => {
+    // Check for duplicate email and phone
+    if (!selectedEmployee) {
+      try {
+        const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
+        if (existingByEmail.length > 0) {
+          toast.error('A freelancer with this email already exists');
+          return;
+        }
+        
+        const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
+        if (existingByPhone.length > 0) {
+          toast.error('A freelancer with this phone number already exists');
+          return;
+        }
+      } catch (error) {
+        console.error('Duplicate check error:', error);
+        toast.error('Failed to validate freelancer data');
+        return;
+      }
+      
+      // Generate employee ID - find highest existing ID and increment
+      const maxId = employees.reduce((max, emp) => {
+        if (emp.employee_id && emp.employee_id.startsWith('66')) {
+          const num = parseInt(emp.employee_id);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 66000);
+      
+      const newEmployeeId = String(maxId + 1);
+      createMutation.mutate({ ...formData, employee_id: newEmployeeId, employment_type: "contractual", bg_verification_status: "pending" });
     } else {
-      createMutation.mutate({ ...formData, employment_type: "contractual", bg_verification_status: "pending" });
+      updateMutation.mutate({ id: selectedEmployee.id, data: formData });
     }
   };
 
