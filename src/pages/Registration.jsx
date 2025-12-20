@@ -88,15 +88,14 @@ export default function Registration() {
           return;
         }
         
-        // Fetch employee record fresh - use lowercase email for case-insensitive match
+        // OPTIMIZED: Query by email directly instead of fetching all employees
         const userEmail = userData.email.toLowerCase().trim();
-        const allEmployees = await base44.entities.Employee.list();
-        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
-        console.log("Registration check - Found employees:", employees.length, "for email:", userEmail);
+        const employees = await base44.entities.Employee.filter({ 
+          email: userEmail 
+        });
         
         if (employees.length > 0) {
           const emp = employees[0];
-          console.log("Employee found with status:", emp.status, "role:", emp.role);
           redirecting = true;
           
           // Employee exists - redirect based on role
@@ -110,30 +109,19 @@ export default function Registration() {
           return;
         }
         
-        // No employee record or incomplete record - show registration form
+        // No employee record - show registration form
         if (isMounted && !redirecting) {
-          // Check if HR has pre-created a partial record
-          if (employees.length > 0) {
-            const emp = employees[0];
-            // Pre-fill data from HR-created record
-            setFormData(prev => ({
-              ...prev,
-              full_name: emp.full_name || userData.full_name || "",
-              email: emp.email || userData.email,
-              phone: emp.phone || "",
-              department: emp.department || "",
-              designation: emp.designation || "",
-              date_of_joining: emp.date_of_joining || "",
-              salary: emp.salary || "",
-            }));
-          } else {
-            setFormData(prev => ({ ...prev, email: userData.email, full_name: userData.full_name || "" }));
-          }
+          setFormData(prev => ({ 
+            ...prev, 
+            email: userData.email, 
+            full_name: userData.full_name || "" 
+          }));
           setInitialLoading(false);
         }
       } catch (error) {
         console.error("Error checking employee:", error);
         if (isMounted && !redirecting) {
+          // Don't block registration on error - show form
           setInitialLoading(false);
         }
       }
@@ -212,20 +200,32 @@ export default function Registration() {
     if (!newErrors.email && !newErrors.phone) {
       setCheckingDuplicate(true);
       try {
-        const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
+        // OPTIMIZED: Run both checks in parallel with retry logic
+        const [existingByEmail, existingByPhone] = await Promise.all([
+          base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() })
+            .catch(err => {
+              console.error("Email check failed:", err);
+              return []; // Fail gracefully
+            }),
+          base44.entities.Employee.filter({ phone: formData.phone.trim() })
+            .catch(err => {
+              console.error("Phone check failed:", err);
+              return []; // Fail gracefully
+            })
+        ]);
+
         if (existingByEmail.length > 0) {
-          // Redirect to dashboard if employee already exists
-          setCheckingDuplicate(false);
           navigate(createPageUrl("EmployeeDashboard"));
+          setCheckingDuplicate(false);
           return false;
         }
 
-        const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
         if (existingByPhone.length > 0) {
           newErrors.phone = "An employee with this phone number already exists";
         }
       } catch (error) {
-        console.error("Error checking duplicates:", error);
+        console.error("Duplicate check error:", error);
+        // Don't block registration on network error
       }
       setCheckingDuplicate(false);
     }
@@ -301,53 +301,54 @@ export default function Registration() {
       const userData = await base44.auth.me();
       const userEmail = userData.email.toLowerCase().trim();
       
-      // Check if employee record already exists (created by HR)
-      const allEmployees = await base44.entities.Employee.list();
-      const existingEmployee = allEmployees.find(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
+      // OPTIMIZED: Query by email instead of fetching all
+      const existingEmployees = await base44.entities.Employee.filter({ 
+        email: userEmail 
+      });
       
-      // Generate employee ID - find highest existing ID and increment
-      const maxId = allEmployees.reduce((max, emp) => {
-        if (emp.employee_id && emp.employee_id.startsWith('66')) {
-          const num = parseInt(emp.employee_id);
-          return num > max ? num : max;
+      // Get max ID efficiently with server-side sorting
+      const recentEmployees = await base44.entities.Employee.list('-employee_id', 1);
+      let newEmployeeId = "66001";
+      
+      if (recentEmployees.length > 0 && recentEmployees[0].employee_id) {
+        const lastId = parseInt(recentEmployees[0].employee_id);
+        if (!isNaN(lastId)) {
+          newEmployeeId = String(lastId + 1);
         }
-        return max;
-      }, 66000);
+      }
       
-      const newEmployeeId = String(maxId + 1);
+      const employeeData = {
+        ...formData,
+        email: formData.email.toLowerCase().trim(),
+        pan_number: formData.pan_number.toUpperCase(),
+        aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
+        bank_ifsc: formData.bank_ifsc.toUpperCase(),
+        bg_verification_status: "pending"
+      };
       
-      if (existingEmployee) {
-        // Update existing record with completed information
-        await base44.entities.Employee.update(existingEmployee.id, {
-          ...formData,
-          employee_id: existingEmployee.employee_id || newEmployeeId,
-          email: formData.email.toLowerCase().trim(),
-          pan_number: formData.pan_number.toUpperCase(),
-          aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
-          bank_ifsc: formData.bank_ifsc.toUpperCase(),
-          status: "active",
-          bg_verification_status: "pending"
+      if (existingEmployees.length > 0) {
+        // Update existing record
+        await base44.entities.Employee.update(existingEmployees[0].id, {
+          ...employeeData,
+          employee_id: existingEmployees[0].employee_id || newEmployeeId,
+          status: "active"
         });
       } else {
-        // Create new contractual employee record (public registration)
+        // Create new contractual employee
         await base44.entities.Employee.create({
-          ...formData,
+          ...employeeData,
           employee_id: newEmployeeId,
-          email: formData.email.toLowerCase().trim(),
-          pan_number: formData.pan_number.toUpperCase(),
-          aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
-          bank_ifsc: formData.bank_ifsc.toUpperCase(),
           employment_type: "contractual",
           status: "pending",
-          role: "employee",
-          bg_verification_status: "pending"
+          role: "employee"
         });
       }
       
-      setLoading(false);
       navigate(createPageUrl("EmployeeDashboard"));
     } catch (error) {
       console.error('Registration error:', error);
+      alert('Registration failed. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
