@@ -7,10 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Save, Video } from "lucide-react";
 
 export default function LMSConfiguration() {
   const queryClient = useQueryClient();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [config, setConfig] = useState({
     video_url: "",
     title: "Freelancer Training",
@@ -71,8 +82,8 @@ export default function LMSConfiguration() {
     }
   });
 
-  const handleSave = async () => {
-    console.log('Save clicked, config:', config);
+  const validateAndShowConfirm = () => {
+    console.log('Validate clicked, config:', config);
     
     if (!config.video_url) {
       toast.error('Video URL is required');
@@ -96,7 +107,13 @@ export default function LMSConfiguration() {
       }
     }
     
-    console.log('Validation passed, saving...');
+    console.log('Validation passed, showing confirmation');
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmSave = async () => {
+    console.log('Confirmed, saving...');
+    setShowConfirmDialog(false);
     try {
       await saveMutation.mutateAsync(config);
     } catch (error) {
@@ -271,7 +288,7 @@ export default function LMSConfiguration() {
           onClick={(e) => {
             e.preventDefault();
             console.log('Button clicked!');
-            handleSave();
+            validateAndShowConfirm();
           }} 
           disabled={saveMutation.isPending} 
           className="bg-green-600 hover:bg-green-700"
@@ -280,6 +297,23 @@ export default function LMSConfiguration() {
           {saveMutation.isPending ? 'Saving...' : 'Save LMS Configuration'}
         </Button>
       </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Save</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to save this LMS configuration? This will update the training video and test questions for all freelancers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSave} className="bg-green-600 hover:bg-green-700">
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
