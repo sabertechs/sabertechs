@@ -12,10 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EditProfileSection from "@/components/employee/EditProfileSection";
+import VideoPlayer from "@/components/lms/VideoPlayer";
+import TestInterface from "@/components/lms/TestInterface";
 
 export default function FreelancerDashboard() {
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
+  const [videoCompleted, setVideoCompleted] = useState(false);
+  const [showTest, setShowTest] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +38,28 @@ export default function FreelancerDashboard() {
     enabled: !!user?.email,
   });
 
+  const { data: lmsSettings = [] } = useQuery({
+    queryKey: ['lmsSettings'],
+    queryFn: () => base44.entities.AppSettings.filter({ setting_key: 'lms_config' }),
+  });
+
+  const { data: testResults = [] } = useQuery({
+    queryKey: ['testResults', user?.email],
+    queryFn: () => base44.entities.TestResult.filter({ employee_email: user?.email }, '-created_date', 5),
+    enabled: !!user?.email,
+  });
+
+  const lmsConfig = lmsSettings[0]?.setting_value || {};
   const pendingExpenses = expenses.filter(e => e.status === 'pending').length;
+
+  const handleVideoComplete = () => {
+    setVideoCompleted(true);
+  };
+
+  const handleTestComplete = (result) => {
+    setTestResult(result);
+    setShowTest(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -163,16 +189,44 @@ export default function FreelancerDashboard() {
               Learning Resources
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <BookOpen className="w-16 h-16 mx-auto text-purple-300 mb-4" />
-              <p className="text-slate-500 mb-4">
-                Training videos and resources will appear here when shared by your manager
-              </p>
-              <Badge className="bg-purple-100 text-purple-700">
-                Coming Soon
-              </Badge>
-            </div>
+          <CardContent className="space-y-4">
+            {lmsConfig.video_url ? (
+              <>
+                {!showTest ? (
+                  <>
+                    <VideoPlayer 
+                      videoUrl={lmsConfig.video_url} 
+                      onComplete={handleVideoComplete}
+                    />
+                    {videoCompleted && lmsConfig.questions?.length > 0 && (
+                      <div className="text-center">
+                        <Button 
+                          onClick={() => setShowTest(true)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Take Test
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <TestInterface 
+                    test={lmsConfig}
+                    onComplete={handleTestComplete}
+                  />
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <BookOpen className="w-16 h-16 mx-auto text-purple-300 mb-4" />
+                <p className="text-slate-500 mb-4">
+                  Training videos and resources will appear here when shared by your manager
+                </p>
+                <Badge className="bg-purple-100 text-purple-700">
+                  Coming Soon
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -227,6 +281,50 @@ export default function FreelancerDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Test History */}
+      {testResults.length > 0 && (
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Award className="w-5 h-5 text-purple-600" />
+              My Test Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b border-slate-100">
+                    <th className="pb-3 text-sm font-medium text-slate-500">Test</th>
+                    <th className="pb-3 text-sm font-medium text-slate-500">Score</th>
+                    <th className="pb-3 text-sm font-medium text-slate-500">Percentage</th>
+                    <th className="pb-3 text-sm font-medium text-slate-500">Time</th>
+                    <th className="pb-3 text-sm font-medium text-slate-500">Result</th>
+                    <th className="pb-3 text-sm font-medium text-slate-500">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {testResults.map((result) => (
+                    <tr key={result.id} className="border-b border-slate-50">
+                      <td className="py-4">{result.test_title}</td>
+                      <td className="py-4 font-semibold">{result.score}/{result.total_marks}</td>
+                      <td className="py-4">{result.percentage}%</td>
+                      <td className="py-4">{Math.floor(result.time_taken_seconds / 60)}:{(result.time_taken_seconds % 60).toString().padStart(2, '0')}</td>
+                      <td className="py-4">
+                        <Badge className={result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                          {result.passed ? 'Passed' : 'Failed'}
+                        </Badge>
+                      </td>
+                      <td className="py-4 text-slate-500">{format(new Date(result.created_date), 'MMM d, yyyy')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Profile */}
       <EditProfileSection employee={employee} onUpdate={setEmployee} />
