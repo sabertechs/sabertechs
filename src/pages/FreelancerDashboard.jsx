@@ -188,7 +188,6 @@ export default function FreelancerDashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Recent Expenses */}
       <Card className="border-0 shadow-sm">
