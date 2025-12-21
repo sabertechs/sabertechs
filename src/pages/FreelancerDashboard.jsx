@@ -49,7 +49,9 @@ export default function FreelancerDashboard() {
     enabled: !!user?.email,
   });
 
-  const lmsConfig = lmsSettings[0]?.setting_value || {};
+  const lmsConfig = Array.isArray(lmsSettings[0]?.setting_value) 
+    ? lmsSettings[0].setting_value[0] 
+    : lmsSettings[0]?.setting_value || {};
   const pendingExpenses = expenses.filter(e => e.status === 'pending').length;
 
   const handleVideoComplete = () => {
