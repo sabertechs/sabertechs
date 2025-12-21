@@ -17,8 +17,10 @@ import {
   X,
   Loader2,
   Mail,
-  CheckCircle
+  CheckCircle,
+  BookOpen
 } from "lucide-react";
+import LMSConfiguration from "@/components/settings/LMSConfiguration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -354,6 +356,7 @@ export default function Settings() {
           <TabsTrigger value="expenses">Expense Types</TabsTrigger>
           <TabsTrigger value="leaves">Leave Types</TabsTrigger>
           <TabsTrigger value="holidays">Holidays</TabsTrigger>
+          <TabsTrigger value="lms">LMS</TabsTrigger>
           <TabsTrigger value="email">Email Config</TabsTrigger>
         </TabsList>
 
@@ -433,6 +436,20 @@ export default function Settings() {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="lms" className="mt-6">
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="w-5 h-5 text-indigo-600" />
+                Learning Management System
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LMSConfiguration />
             </CardContent>
           </Card>
         </TabsContent>
