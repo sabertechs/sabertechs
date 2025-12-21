@@ -73,33 +73,6 @@ export default function VideoPlayer({ videoUrl, onComplete }) {
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
   }, [completed, onComplete, youtubeId]);
 
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (playing) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setPlaying(!playing);
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !muted;
-    setMuted(!muted);
-  };
-
-  const toggleFullscreen = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.requestFullscreen) {
-      video.requestFullscreen();
-    }
-  };
-
   if (youtubeId) {
     return (
       <Card className="border-0 shadow-lg overflow-hidden">
@@ -117,31 +90,6 @@ export default function VideoPlayer({ videoUrl, onComplete }) {
       </Card>
     );
   }
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (playing) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setPlaying(!playing);
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-  };
-
-  const toggleFullscreen = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.requestFullscreen) {
-      video.requestFullscreen();
-    }
-  };
 
   return (
     <Card className="border-0 shadow-lg overflow-hidden">
