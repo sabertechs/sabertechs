@@ -27,25 +27,41 @@ export default function LMSConfiguration() {
 
   useEffect(() => {
     if (settings.length > 0 && settings[0].setting_value) {
-      setConfig(settings[0].setting_value);
+      // Extract first element if it's an array
+      const value = Array.isArray(settings[0].setting_value) 
+        ? settings[0].setting_value[0] 
+        : settings[0].setting_value;
+      
+      if (value) {
+        setConfig(value);
+      }
     }
   }, [settings]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      console.log('Mutation function called with data:', data);
+      console.log('Existing settings:', settings);
+      
+      // Wrap data in array as AppSettings expects setting_value to be an array
+      const wrappedData = [data];
+      
       if (settings.length > 0) {
+        console.log('Updating existing setting:', settings[0].id);
         return base44.entities.AppSettings.update(settings[0].id, {
-          setting_value: data
+          setting_value: wrappedData
         });
       } else {
+        console.log('Creating new setting');
         return base44.entities.AppSettings.create({
           setting_key: 'lms_config',
-          setting_value: data,
+          setting_value: wrappedData,
           description: 'LMS video and test configuration'
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Save successful:', result);
       queryClient.invalidateQueries(['lmsSettings']);
       toast.success('LMS configuration saved successfully');
     },
