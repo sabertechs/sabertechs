@@ -55,7 +55,9 @@ export default function LMSConfiguration() {
     }
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    console.log('Save clicked, config:', config);
+    
     if (!config.video_url) {
       toast.error('Video URL is required');
       return;
@@ -78,7 +80,12 @@ export default function LMSConfiguration() {
       }
     }
     
-    saveMutation.mutate(config);
+    console.log('Validation passed, saving...');
+    try {
+      await saveMutation.mutateAsync(config);
+    } catch (error) {
+      console.error('Save failed:', error);
+    }
   };
 
   const addQuestion = () => {
