@@ -266,7 +266,16 @@ export default function LMSConfiguration() {
       </div>
 
       <div className="flex justify-end pt-4 border-t">
-        <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            console.log('Button clicked!');
+            handleSave();
+          }} 
+          disabled={saveMutation.isPending} 
+          className="bg-green-600 hover:bg-green-700"
+        >
           <Save className="w-4 h-4 mr-2" />
           {saveMutation.isPending ? 'Saving...' : 'Save LMS Configuration'}
         </Button>
