@@ -60,6 +60,20 @@ export default function LMSConfiguration() {
       toast.error('At least one question is required');
       return;
     }
+    
+    // Validate questions
+    for (let i = 0; i < config.questions.length; i++) {
+      const q = config.questions[i];
+      if (!q.question || !q.question.trim()) {
+        toast.error(`Question ${i + 1} text is required`);
+        return;
+      }
+      if (q.options.some(opt => !opt || !opt.trim())) {
+        toast.error(`All options for Question ${i + 1} must be filled`);
+        return;
+      }
+    }
+    
     saveMutation.mutate(config);
   };
 
@@ -113,13 +127,13 @@ export default function LMSConfiguration() {
           <div className="relative">
             <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="https://example.com/video.mp4"
+              placeholder="https://youtube.com/watch?v=... or direct video URL"
               value={config.video_url}
               onChange={(e) => setConfig({ ...config, video_url: e.target.value })}
               className="pl-10"
             />
           </div>
-          <p className="text-xs text-slate-500">Direct video URL (mp4, webm)</p>
+          <p className="text-xs text-slate-500">YouTube link or direct video URL (mp4, webm)</p>
         </div>
 
         <div className="space-y-2">
