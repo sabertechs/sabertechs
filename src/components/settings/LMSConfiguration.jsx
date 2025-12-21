@@ -48,6 +48,10 @@ export default function LMSConfiguration() {
     onSuccess: () => {
       queryClient.invalidateQueries(['lmsSettings']);
       toast.success('LMS configuration saved successfully');
+    },
+    onError: (error) => {
+      console.error('Save error:', error);
+      toast.error('Failed to save: ' + (error.message || 'Unknown error'));
     }
   });
 
