@@ -140,51 +140,8 @@ export default function FreelancerDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Profile Information */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <User className="w-5 h-5 text-purple-600" />
-              My Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-              <Mail className="w-5 h-5 text-slate-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-slate-500">Email</p>
-                <p className="font-medium">{employee?.email}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-              <Phone className="w-5 h-5 text-slate-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-slate-500">Phone</p>
-                <p className="font-medium">{employee?.phone || '-'}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-              <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-slate-500">Location</p>
-                <p className="font-medium">{employee?.city || '-'}, {employee?.state || '-'}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-              <Calendar className="w-5 h-5 text-slate-400 mt-0.5" />
-              <div>
-                <p className="text-sm text-slate-500">Joined On</p>
-                <p className="font-medium">
-                  {employee?.date_of_joining ? format(new Date(employee.date_of_joining), 'MMM d, yyyy') : '-'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Learning Resources */}
-        <Card className="border-0 shadow-sm">
+      {/* Learning Resources */}
+      <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Video className="w-5 h-5 text-purple-600" />
