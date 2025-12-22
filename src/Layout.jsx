@@ -145,6 +145,7 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
       if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
       items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else if (userRole === 'department_head') {
@@ -161,11 +162,13 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
       if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
       items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else {
       // Employee role - different menu for contractual vs permanent
       if (employeeData?.employment_type === 'contractual') {
-        // Freelancers only see expenses and policies
+        // Freelancers only see projects, expenses and policies
+        items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
         items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
         items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
       } else {
