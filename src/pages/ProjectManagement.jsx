@@ -108,11 +108,6 @@ export default function ProjectManagement() {
   };
 
   const handleSubmit = async () => {
-    if (formData.description.split(' ').length < 150) {
-      toast.error('Description must be at least 150 words');
-      return;
-    }
-
     const data = {
       ...formData,
       payout: parseFloat(formData.payout),
@@ -317,16 +312,13 @@ export default function ProjectManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label>Description (min 150 words) *</Label>
+              <Label>Description *</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Detailed project description..."
                 rows={6}
               />
-              <p className="text-xs text-slate-500">
-                {formData.description.split(' ').filter(w => w).length} / 150 words
-              </p>
             </div>
           </div>
 
