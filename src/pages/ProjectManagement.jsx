@@ -26,7 +26,9 @@ export default function ProjectManagement() {
     start_date: '',
     end_date: '',
     application_start_date: '',
+    application_start_time: '09:00',
     application_end_date: '',
+    application_end_time: '23:59',
     status: 'draft',
     priority: 'medium',
     payout: '',
@@ -76,7 +78,9 @@ export default function ProjectManagement() {
       start_date: '',
       end_date: '',
       application_start_date: '',
+      application_start_time: '09:00',
       application_end_date: '',
+      application_end_time: '23:59',
       status: 'draft',
       priority: 'medium',
       payout: '',
@@ -95,12 +99,19 @@ export default function ProjectManagement() {
 
   const openEditDialog = (project) => {
     setEditingProject(project);
+    
+    // Parse date-time fields
+    const appStartDate = project.application_start_date ? new Date(project.application_start_date) : null;
+    const appEndDate = project.application_end_date ? new Date(project.application_end_date) : null;
+    
     setFormData({
       name: project.name,
       start_date: project.start_date,
       end_date: project.end_date,
-      application_start_date: project.application_start_date,
-      application_end_date: project.application_end_date,
+      application_start_date: appStartDate ? appStartDate.toISOString().split('T')[0] : '',
+      application_start_time: appStartDate ? appStartDate.toTimeString().slice(0, 5) : '09:00',
+      application_end_date: appEndDate ? appEndDate.toISOString().split('T')[0] : '',
+      application_end_time: appEndDate ? appEndDate.toTimeString().slice(0, 5) : '23:59',
       status: project.status,
       priority: project.priority || 'medium',
       payout: project.payout,
@@ -119,26 +130,44 @@ export default function ProjectManagement() {
       return;
     }
 
+    // Combine date and time for application dates
+    const appStartDateTime = formData.application_start_date && formData.application_start_time
+      ? new Date(`${formData.application_start_date}T${formData.application_start_time}:00`).toISOString()
+      : null;
+    
+    const appEndDateTime = formData.application_end_date && formData.application_end_time
+      ? new Date(`${formData.application_end_date}T${formData.application_end_time}:00`).toISOString()
+      : null;
+
     // Validation: Application dates should be before or equal to project start date
-    if (formData.application_start_date && formData.start_date && formData.application_start_date > formData.start_date) {
+    if (appStartDateTime && formData.start_date && new Date(appStartDateTime) > new Date(formData.start_date)) {
       toast.error('Application start date cannot be after project start date');
       return;
     }
 
-    if (formData.application_end_date && formData.start_date && formData.application_end_date > formData.start_date) {
+    if (appEndDateTime && formData.start_date && new Date(appEndDateTime) > new Date(formData.start_date)) {
       toast.error('Application end date cannot be after project start date');
       return;
     }
 
-    // Validation: Application end date should be after or equal to application start date
-    if (formData.application_start_date && formData.application_end_date && formData.application_end_date < formData.application_start_date) {
-      toast.error('Application end date cannot be earlier than application start date');
+    // Validation: Application end date should be after application start date
+    if (appStartDateTime && appEndDateTime && new Date(appEndDateTime) <= new Date(appStartDateTime)) {
+      toast.error('Application end date/time must be after application start date/time');
       return;
     }
 
     const data = {
-      ...formData,
+      name: formData.name,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      application_start_date: appStartDateTime,
+      application_end_date: appEndDateTime,
+      status: formData.status,
+      priority: formData.priority,
       payout: parseFloat(formData.payout),
+      location: formData.location,
+      description: formData.description,
+      supervisor_name: formData.supervisor_name,
       total_slots: formData.total_slots ? parseInt(formData.total_slots) : undefined
     };
 
@@ -368,22 +397,43 @@ export default function ProjectManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Application Start Date *</Label>
-                <Input
-                  type="date"
-                  value={formData.application_start_date}
-                  onChange={(e) => setFormData({ ...formData, application_start_date: e.target.value })}
-                />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Application Start Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.application_start_date}
+                    onChange={(e) => setFormData({ ...formData, application_start_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Application Start Time *</Label>
+                  <Input
+                    type="time"
+                    value={formData.application_start_time}
+                    onChange={(e) => setFormData({ ...formData, application_start_time: e.target.value })}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Application End Date *</Label>
-                <Input
-                  type="date"
-                  value={formData.application_end_date}
-                  onChange={(e) => setFormData({ ...formData, application_end_date: e.target.value })}
-                />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Application End Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.application_end_date}
+                    onChange={(e) => setFormData({ ...formData, application_end_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Application End Time *</Label>
+                  <Input
+                    type="time"
+                    value={formData.application_end_time}
+                    onChange={(e) => setFormData({ ...formData, application_end_time: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 

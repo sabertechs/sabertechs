@@ -137,7 +137,7 @@ export default function FreelancerProjects() {
                   <div className="bg-slate-50 rounded-lg p-3 mb-4 text-xs">
                     <p className="text-slate-500 font-medium mb-1">Application Period</p>
                     <p className="text-slate-700">
-                      {format(new Date(project.application_start_date), 'MMM d')} - {format(new Date(project.application_end_date), 'MMM d, yyyy')}
+                      {format(new Date(project.application_start_date), 'MMM d, h:mm a')} - {format(new Date(project.application_end_date), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
 

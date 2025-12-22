@@ -108,7 +108,7 @@ export default function ProjectDetails() {
             <div>
               <p className="text-slate-500">Applications</p>
               <p className="font-medium">
-                {format(new Date(project.application_start_date), 'MM/dd/yyyy')} - {format(new Date(project.application_end_date), 'MM/dd/yyyy')}
+                {format(new Date(project.application_start_date), 'MM/dd/yyyy h:mm a')} - {format(new Date(project.application_end_date), 'MM/dd/yyyy h:mm a')}
               </p>
             </div>
           </div>
