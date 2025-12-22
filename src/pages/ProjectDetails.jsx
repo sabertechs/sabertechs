@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, ListTodo, DollarSign } from "lucide-react";
+import { Users, CheckCircle, ListTodo, DollarSign, ArrowLeft } from "lucide-react";
 import ProjectApplicationsTab from "@/components/projects/ProjectApplicationsTab";
 import ProjectTasksTab from "@/components/projects/ProjectTasksTab";
 import ProjectGroupsTab from "@/components/projects/ProjectGroupsTab";
 import ProjectResponsesTab from "@/components/projects/ProjectResponsesTab";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function ProjectDetails() {
   const queryClient = useQueryClient();
@@ -61,6 +63,14 @@ export default function ProjectDetails() {
 
   return (
     <div className="space-y-6">
+      {/* Back Button */}
+      <Link to={createPageUrl("ProjectManagement")}>
+        <Button variant="outline" className="mb-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Projects
+        </Button>
+      </Link>
+
       {/* Project Header */}
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">
