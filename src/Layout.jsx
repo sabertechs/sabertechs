@@ -24,7 +24,8 @@ import {
   Newspaper,
   BookOpen,
   Package,
-  Gamepad2
+  Gamepad2,
+  Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
