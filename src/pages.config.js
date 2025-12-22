@@ -1,79 +1,87 @@
-import Registration from './pages/Registration';
-import EmployeeDashboard from './pages/EmployeeDashboard';
-import HRDashboard from './pages/HRDashboard';
-import Employees from './pages/Employees';
-import MyAttendance from './pages/MyAttendance';
-import MyPayslips from './pages/MyPayslips';
-import MyExpenses from './pages/MyExpenses';
-import ExpenseApproval from './pages/ExpenseApproval';
-import OfferLetterManagement from './pages/OfferLetterManagement';
-import BackgroundVerification from './pages/BackgroundVerification';
-import AttendanceManagement from './pages/AttendanceManagement';
-import PayslipManagement from './pages/PayslipManagement';
-import Notifications from './pages/Notifications';
-import DeptHeadDashboard from './pages/DeptHeadDashboard';
-import TeamView from './pages/TeamView';
-import EmployeeUpload from './pages/EmployeeUpload';
+import APIModule from './pages/APIModule';
 import AccessControl from './pages/AccessControl';
-import AuthRedirect from './pages/AuthRedirect';
-import Settings from './pages/Settings';
-import NotificationCenter from './pages/NotificationCenter';
-import CompanyFeed from './pages/CompanyFeed';
-import TestEmail from './pages/TestEmail';
-import PolicyManagement from './pages/PolicyManagement';
-import CompanyPolicies from './pages/CompanyPolicies';
 import AssetDashboard from './pages/AssetDashboard';
 import AssetList from './pages/AssetList';
-import AssetRequests from './pages/AssetRequests';
 import AssetMaintenance from './pages/AssetMaintenance';
-import MyAssets from './pages/MyAssets';
 import AssetReports from './pages/AssetReports';
-import OfficeOpsArena from './pages/OfficeOpsArena';
-import APIModule from './pages/APIModule';
-import Freelancers from './pages/Freelancers';
+import AssetRequests from './pages/AssetRequests';
+import AttendanceManagement from './pages/AttendanceManagement';
+import AuthRedirect from './pages/AuthRedirect';
+import BackgroundVerification from './pages/BackgroundVerification';
+import CompanyFeed from './pages/CompanyFeed';
+import CompanyPolicies from './pages/CompanyPolicies';
+import DeptHeadDashboard from './pages/DeptHeadDashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeeUpload from './pages/EmployeeUpload';
+import Employees from './pages/Employees';
+import ExpenseApproval from './pages/ExpenseApproval';
 import FreelancerDashboard from './pages/FreelancerDashboard';
-import PushNotificationTest from './pages/PushNotificationTest';
 import FreelancerUpload from './pages/FreelancerUpload';
+import Freelancers from './pages/Freelancers';
+import HRDashboard from './pages/HRDashboard';
+import Home from './pages/Home';
+import MyAssets from './pages/MyAssets';
+import MyAttendance from './pages/MyAttendance';
+import MyExpenses from './pages/MyExpenses';
+import MyPayslips from './pages/MyPayslips';
+import NotificationCenter from './pages/NotificationCenter';
+import Notifications from './pages/Notifications';
+import OfferLetterManagement from './pages/OfferLetterManagement';
+import OfficeOpsArena from './pages/OfficeOpsArena';
+import PayslipManagement from './pages/PayslipManagement';
+import PolicyManagement from './pages/PolicyManagement';
+import PushNotificationTest from './pages/PushNotificationTest';
+import Registration from './pages/Registration';
+import Settings from './pages/Settings';
+import TeamView from './pages/TeamView';
+import TestEmail from './pages/TestEmail';
+import FreelancerProjects from './pages/FreelancerProjects';
+import ProjectManagement from './pages/ProjectManagement';
+import ProjectDetails from './pages/ProjectDetails';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Registration": Registration,
-    "EmployeeDashboard": EmployeeDashboard,
-    "HRDashboard": HRDashboard,
-    "Employees": Employees,
-    "MyAttendance": MyAttendance,
-    "MyPayslips": MyPayslips,
-    "MyExpenses": MyExpenses,
-    "ExpenseApproval": ExpenseApproval,
-    "OfferLetterManagement": OfferLetterManagement,
-    "BackgroundVerification": BackgroundVerification,
-    "AttendanceManagement": AttendanceManagement,
-    "PayslipManagement": PayslipManagement,
-    "Notifications": Notifications,
-    "DeptHeadDashboard": DeptHeadDashboard,
-    "TeamView": TeamView,
-    "EmployeeUpload": EmployeeUpload,
+    "APIModule": APIModule,
     "AccessControl": AccessControl,
-    "AuthRedirect": AuthRedirect,
-    "Settings": Settings,
-    "NotificationCenter": NotificationCenter,
-    "CompanyFeed": CompanyFeed,
-    "TestEmail": TestEmail,
-    "PolicyManagement": PolicyManagement,
-    "CompanyPolicies": CompanyPolicies,
     "AssetDashboard": AssetDashboard,
     "AssetList": AssetList,
-    "AssetRequests": AssetRequests,
     "AssetMaintenance": AssetMaintenance,
-    "MyAssets": MyAssets,
     "AssetReports": AssetReports,
-    "OfficeOpsArena": OfficeOpsArena,
-    "APIModule": APIModule,
-    "Freelancers": Freelancers,
+    "AssetRequests": AssetRequests,
+    "AttendanceManagement": AttendanceManagement,
+    "AuthRedirect": AuthRedirect,
+    "BackgroundVerification": BackgroundVerification,
+    "CompanyFeed": CompanyFeed,
+    "CompanyPolicies": CompanyPolicies,
+    "DeptHeadDashboard": DeptHeadDashboard,
+    "EmployeeDashboard": EmployeeDashboard,
+    "EmployeeUpload": EmployeeUpload,
+    "Employees": Employees,
+    "ExpenseApproval": ExpenseApproval,
     "FreelancerDashboard": FreelancerDashboard,
-    "PushNotificationTest": PushNotificationTest,
     "FreelancerUpload": FreelancerUpload,
+    "Freelancers": Freelancers,
+    "HRDashboard": HRDashboard,
+    "Home": Home,
+    "MyAssets": MyAssets,
+    "MyAttendance": MyAttendance,
+    "MyExpenses": MyExpenses,
+    "MyPayslips": MyPayslips,
+    "NotificationCenter": NotificationCenter,
+    "Notifications": Notifications,
+    "OfferLetterManagement": OfferLetterManagement,
+    "OfficeOpsArena": OfficeOpsArena,
+    "PayslipManagement": PayslipManagement,
+    "PolicyManagement": PolicyManagement,
+    "PushNotificationTest": PushNotificationTest,
+    "Registration": Registration,
+    "Settings": Settings,
+    "TeamView": TeamView,
+    "TestEmail": TestEmail,
+    "FreelancerProjects": FreelancerProjects,
+    "ProjectManagement": ProjectManagement,
+    "ProjectDetails": ProjectDetails,
 }
 
 export const pagesConfig = {
