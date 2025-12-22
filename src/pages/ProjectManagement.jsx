@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Eye, Trash2 } from "lucide-react";
+import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -19,6 +18,9 @@ export default function ProjectManagement() {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   const [formData, setFormData] = useState({
     name: '',
     start_date: '',
@@ -30,7 +32,8 @@ export default function ProjectManagement() {
     payout: '',
     location: '',
     description: '',
-    total_slots: ''
+    total_slots: '',
+    supervisor_name: ''
   });
 
   const { data: projects = [] } = useQuery({
@@ -79,7 +82,8 @@ export default function ProjectManagement() {
       payout: '',
       location: '',
       description: '',
-      total_slots: ''
+      total_slots: '',
+      supervisor_name: ''
     });
   };
 
@@ -102,12 +106,36 @@ export default function ProjectManagement() {
       payout: project.payout,
       location: project.location,
       description: project.description,
-      total_slots: project.total_slots || ''
+      total_slots: project.total_slots || '',
+      supervisor_name: project.supervisor_name || ''
     });
     setShowDialog(true);
   };
 
   const handleSubmit = async () => {
+    // Validation: End date should be greater than or equal to start date
+    if (formData.start_date && formData.end_date && formData.end_date < formData.start_date) {
+      toast.error('Project end date cannot be earlier than start date');
+      return;
+    }
+
+    // Validation: Application dates should be before or equal to project start date
+    if (formData.application_start_date && formData.start_date && formData.application_start_date > formData.start_date) {
+      toast.error('Application start date cannot be after project start date');
+      return;
+    }
+
+    if (formData.application_end_date && formData.start_date && formData.application_end_date > formData.start_date) {
+      toast.error('Application end date cannot be after project start date');
+      return;
+    }
+
+    // Validation: Application end date should be after or equal to application start date
+    if (formData.application_start_date && formData.application_end_date && formData.application_end_date < formData.application_start_date) {
+      toast.error('Application end date cannot be earlier than application start date');
+      return;
+    }
+
     const data = {
       ...formData,
       payout: parseFloat(formData.payout),
@@ -121,79 +149,187 @@ export default function ProjectManagement() {
     }
   };
 
+  // Filter and paginate projects
+  const filteredProjects = projects.filter(project => 
+    project.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.supervisor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.location?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProjects = filteredProjects.slice(startIndex, startIndex + itemsPerPage);
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      open: 'bg-green-500 text-white',
+      completed: 'bg-blue-500 text-white',
+      in_progress: 'bg-purple-500 text-white',
+      draft: 'bg-gray-400 text-white',
+      cancelled: 'bg-red-400 text-white'
+    };
+    return styles[status] || 'bg-gray-400 text-white';
+  };
+
+  const getPriorityBadge = (priority) => {
+    const styles = {
+      high: 'bg-red-100 text-red-700 border border-red-300',
+      medium: 'bg-yellow-100 text-yellow-700 border border-yellow-300',
+      low: 'bg-green-100 text-green-700 border border-green-300'
+    };
+    return styles[priority] || 'bg-gray-100 text-gray-700 border border-gray-300';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Project Management</h2>
-          <p className="text-slate-500">Create and manage projects for freelancers</p>
+        <h2 className="text-2xl font-bold text-slate-800">Projects</h2>
+        <div className="flex gap-3 items-center">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-10 w-64"
+            />
+          </div>
+          <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Project
+          </Button>
         </div>
-        <Button onClick={openAddDialog} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Create Project
-        </Button>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {projects.map((project) => (
-          <Card key={project.id} className="border-0 shadow-sm">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{project.name}</CardTitle>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => openEditDialog(project)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(project.id)}>
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Badge className={
-                  project.status === 'open' ? 'bg-green-100 text-green-700' :
-                  project.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                  project.status === 'completed' ? 'bg-slate-100 text-slate-700' :
-                  'bg-amber-100 text-amber-700'
-                }>
-                  {project.status}
-                </Badge>
-                {project.priority === 'high' && (
-                  <Badge className="bg-red-100 text-red-700">High Priority</Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Location:</span>
-                <span className="font-medium">{project.location}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Payout:</span>
-                <span className="font-medium">₹{project.payout?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Duration:</span>
-                <span className="font-medium">
-                  {format(new Date(project.start_date), 'MMM d')} - {format(new Date(project.end_date), 'MMM d')}
-                </span>
-              </div>
-              {project.total_slots && (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Slots:</span>
-                  <span className="font-medium">{project.filled_slots || 0}/{project.total_slots}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+      {/* Projects Table */}
+      <div className="bg-white rounded-lg border border-slate-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">ID</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">NAME</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">STATUS</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">SUPERVISOR</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">PRIORITY</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">PAYOUT</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">CREATED AT</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedProjects.map((project, index) => (
+                <tr key={project.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                    #PRJ-{project.id?.slice(-2) || index}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-800 max-w-xs">
+                    <div className="font-medium">{project.name}</div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <Badge className={`${getStatusBadge(project.status)} capitalize`}>
+                      {project.status?.replace('_', ' ')}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-700">
+                    {project.supervisor_name || 'N/A'}
+                  </td>
+                  <td className="px-4 py-4">
+                    <Badge className={`${getPriorityBadge(project.priority)} capitalize`}>
+                      {project.priority}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-4 text-sm font-medium text-slate-800">
+                    {project.payout ? `₹${project.payout.toLocaleString()}` : 'N/A'}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-600">
+                    {format(new Date(project.created_date), 'dd MMM yyyy')}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex gap-1">
+                      <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
+                        <Button size="sm" className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600">
+                          <FileText className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
+                        <Button size="sm" className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        className="h-8 w-8 p-0 bg-slate-900 hover:bg-slate-800"
+                        onClick={() => openEditDialog(project)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this project?')) {
+                            deleteMutation.mutate(project.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+            <div className="text-sm text-slate-600">
+              Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredProjects.length)} of {filteredProjects.length} projects
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className={currentPage === page ? "bg-slate-900" : ""}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {paginatedProjects.length === 0 && (
+          <div className="text-center py-12 text-slate-500">
+            No projects found
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Dialog */}
@@ -309,6 +445,15 @@ export default function ProjectManagement() {
                   placeholder="Delhi NCR - Gurugram"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Supervisor Name</Label>
+              <Input
+                value={formData.supervisor_name}
+                onChange={(e) => setFormData({ ...formData, supervisor_name: e.target.value })}
+                placeholder="e.g., Jaskaran Singh"
+              />
             </div>
 
             <div className="space-y-2">

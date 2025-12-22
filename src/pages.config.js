@@ -16,6 +16,7 @@ import EmployeeUpload from './pages/EmployeeUpload';
 import Employees from './pages/Employees';
 import ExpenseApproval from './pages/ExpenseApproval';
 import FreelancerDashboard from './pages/FreelancerDashboard';
+import FreelancerProjects from './pages/FreelancerProjects';
 import FreelancerUpload from './pages/FreelancerUpload';
 import Freelancers from './pages/Freelancers';
 import HRDashboard from './pages/HRDashboard';
@@ -30,14 +31,13 @@ import OfferLetterManagement from './pages/OfferLetterManagement';
 import OfficeOpsArena from './pages/OfficeOpsArena';
 import PayslipManagement from './pages/PayslipManagement';
 import PolicyManagement from './pages/PolicyManagement';
+import ProjectDetails from './pages/ProjectDetails';
+import ProjectManagement from './pages/ProjectManagement';
 import PushNotificationTest from './pages/PushNotificationTest';
 import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import FreelancerProjects from './pages/FreelancerProjects';
-import ProjectManagement from './pages/ProjectManagement';
-import ProjectDetails from './pages/ProjectDetails';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +60,7 @@ export const PAGES = {
     "Employees": Employees,
     "ExpenseApproval": ExpenseApproval,
     "FreelancerDashboard": FreelancerDashboard,
+    "FreelancerProjects": FreelancerProjects,
     "FreelancerUpload": FreelancerUpload,
     "Freelancers": Freelancers,
     "HRDashboard": HRDashboard,
@@ -74,14 +75,13 @@ export const PAGES = {
     "OfficeOpsArena": OfficeOpsArena,
     "PayslipManagement": PayslipManagement,
     "PolicyManagement": PolicyManagement,
+    "ProjectDetails": ProjectDetails,
+    "ProjectManagement": ProjectManagement,
     "PushNotificationTest": PushNotificationTest,
     "Registration": Registration,
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "FreelancerProjects": FreelancerProjects,
-    "ProjectManagement": ProjectManagement,
-    "ProjectDetails": ProjectDetails,
 }
 
 export const pagesConfig = {
