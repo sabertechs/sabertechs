@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -21,6 +21,7 @@ export default function ProjectManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '',
     start_date: '',
@@ -94,6 +95,7 @@ export default function ProjectManagement() {
   const openAddDialog = () => {
     resetForm();
     setEditingProject(null);
+    setErrors({});
     setShowDialog(true);
   };
 
@@ -124,10 +126,22 @@ export default function ProjectManagement() {
   };
 
   const handleSubmit = async () => {
-    // Validation: End date should be greater than or equal to start date
+    const newErrors = {};
+
+    // Required field validations
+    if (!formData.name?.trim()) newErrors.name = 'Project name is required';
+    if (!formData.start_date) newErrors.start_date = 'Start date is required';
+    if (!formData.end_date) newErrors.end_date = 'End date is required';
+    if (!formData.application_start_date) newErrors.application_start_date = 'Application start date is required';
+    if (!formData.application_end_date) newErrors.application_end_date = 'Application end date is required';
+    if (!formData.payout) newErrors.payout = 'Payout is required';
+    else if (isNaN(formData.payout) || parseFloat(formData.payout) <= 0) newErrors.payout = 'Payout must be a positive number';
+    if (!formData.location?.trim()) newErrors.location = 'Location is required';
+    if (!formData.description?.trim()) newErrors.description = 'Description is required';
+
+    // Date validations
     if (formData.start_date && formData.end_date && formData.end_date < formData.start_date) {
-      toast.error('Project end date cannot be earlier than start date');
-      return;
+      newErrors.end_date = 'End date cannot be earlier than start date';
     }
 
     // Combine date and time for application dates
@@ -139,22 +153,28 @@ export default function ProjectManagement() {
       ? new Date(`${formData.application_end_date}T${formData.application_end_time}:00`).toISOString()
       : null;
 
-    // Validation: Application dates should be before or equal to project start date
+    // Application date validations
     if (appStartDateTime && formData.start_date && new Date(appStartDateTime) > new Date(formData.start_date)) {
-      toast.error('Application start date cannot be after project start date');
-      return;
+      newErrors.application_start_date = 'Application start cannot be after project start date';
     }
 
     if (appEndDateTime && formData.start_date && new Date(appEndDateTime) > new Date(formData.start_date)) {
-      toast.error('Application end date cannot be after project start date');
+      newErrors.application_end_date = 'Application end cannot be after project start date';
+    }
+
+    if (appStartDateTime && appEndDateTime && new Date(appEndDateTime) <= new Date(appStartDateTime)) {
+      newErrors.application_end_date = 'Application end must be after application start';
+    }
+
+    // If there are errors, show them and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please fix the errors in the form');
       return;
     }
 
-    // Validation: Application end date should be after application start date
-    if (appStartDateTime && appEndDateTime && new Date(appEndDateTime) <= new Date(appStartDateTime)) {
-      toast.error('Application end date/time must be after application start date/time');
-      return;
-    }
+    // Clear errors if validation passes
+    setErrors({});
 
     const data = {
       name: formData.name,
@@ -373,9 +393,18 @@ export default function ProjectManagement() {
               <Label>Project Name *</Label>
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name) setErrors({ ...errors, name: null });
+                }}
                 placeholder="e.g., Mock Day 4-Sept'25 Delhi NCR"
+                className={errors.name ? 'border-red-500' : ''}
               />
+              {errors.name && (
+                <p className="text-red-500 text-xs flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.name}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -384,16 +413,34 @@ export default function ProjectManagement() {
                 <Input
                   type="date"
                   value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, start_date: e.target.value });
+                    if (errors.start_date) setErrors({ ...errors, start_date: null });
+                  }}
+                  className={errors.start_date ? 'border-red-500' : ''}
                 />
+                {errors.start_date && (
+                  <p className="text-red-500 text-xs flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.start_date}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>End Date *</Label>
                 <Input
                   type="date"
                   value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, end_date: e.target.value });
+                    if (errors.end_date) setErrors({ ...errors, end_date: null });
+                  }}
+                  className={errors.end_date ? 'border-red-500' : ''}
                 />
+                {errors.end_date && (
+                  <p className="text-red-500 text-xs flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.end_date}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -404,8 +451,17 @@ export default function ProjectManagement() {
                   <Input
                     type="date"
                     value={formData.application_start_date}
-                    onChange={(e) => setFormData({ ...formData, application_start_date: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, application_start_date: e.target.value });
+                      if (errors.application_start_date) setErrors({ ...errors, application_start_date: null });
+                    }}
+                    className={errors.application_start_date ? 'border-red-500' : ''}
                   />
+                  {errors.application_start_date && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.application_start_date}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Application Start Time *</Label>
@@ -423,8 +479,17 @@ export default function ProjectManagement() {
                   <Input
                     type="date"
                     value={formData.application_end_date}
-                    onChange={(e) => setFormData({ ...formData, application_end_date: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, application_end_date: e.target.value });
+                      if (errors.application_end_date) setErrors({ ...errors, application_end_date: null });
+                    }}
+                    className={errors.application_end_date ? 'border-red-500' : ''}
                   />
+                  {errors.application_end_date && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.application_end_date}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Application End Time *</Label>
@@ -483,17 +548,35 @@ export default function ProjectManagement() {
                 <Input
                   type="number"
                   value={formData.payout}
-                  onChange={(e) => setFormData({ ...formData, payout: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, payout: e.target.value });
+                    if (errors.payout) setErrors({ ...errors, payout: null });
+                  }}
                   placeholder="1000"
+                  className={errors.payout ? 'border-red-500' : ''}
                 />
+                {errors.payout && (
+                  <p className="text-red-500 text-xs flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.payout}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Location *</Label>
                 <Input
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, location: e.target.value });
+                    if (errors.location) setErrors({ ...errors, location: null });
+                  }}
                   placeholder="Delhi NCR - Gurugram"
+                  className={errors.location ? 'border-red-500' : ''}
                 />
+                {errors.location && (
+                  <p className="text-red-500 text-xs flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.location}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -510,10 +593,19 @@ export default function ProjectManagement() {
               <Label>Description *</Label>
               <Textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, description: e.target.value });
+                  if (errors.description) setErrors({ ...errors, description: null });
+                }}
                 placeholder="Detailed project description..."
                 rows={6}
+                className={errors.description ? 'border-red-500' : ''}
               />
+              {errors.description && (
+                <p className="text-red-500 text-xs flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.description}
+                </p>
+              )}
             </div>
           </div>
 
