@@ -70,8 +70,8 @@ const DEFAULT_ACCESS_BY_ROLE = {
     'attendance', 'payslips', 'expenses', 'policies', 'company_feed', 'games'
   ],
   freelancer: [
-    // Freelancer-specific access - minimal access
-    'payslips', 'company_feed'
+    // Freelancer-specific access
+    'projects', 'payslips', 'company_feed'
   ],
 };
 
