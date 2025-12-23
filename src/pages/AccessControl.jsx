@@ -51,14 +51,14 @@ const DEFAULT_ACCESS_BY_ROLE = {
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters', 
     'bg_verification', 'api_verification', 'attendance', 'payslips', 
     'expenses', 'assets', 'settings', 'company_feed', 'policies', 
-    'notifications', 'games'
+    'notifications', 'games', 'projects'
   ],
   manager: [
     // Team management + operations (NO assets/settings)
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters',
     'bg_verification', 'api_verification', 'attendance', 'payslips',
     'expenses', 'team_view', 'company_feed', 'policies', 
-    'notifications', 'games'
+    'notifications', 'games', 'projects'
   ],
   department_head: [
     // Department-level only (filtered by department in backend/UI)
@@ -68,6 +68,10 @@ const DEFAULT_ACCESS_BY_ROLE = {
   employee: [
     // Self-service only
     'attendance', 'payslips', 'expenses', 'policies', 'company_feed', 'games'
+  ],
+  freelancer: [
+    // Freelancer-specific access
+    'expenses', 'policies', 'company_feed'
   ],
 };
 
@@ -152,6 +156,7 @@ export default function AccessControl() {
     manager: 'bg-purple-100 text-purple-700',
     department_head: 'bg-amber-100 text-amber-700',
     employee: 'bg-green-100 text-green-700',
+    freelancer: 'bg-pink-100 text-pink-700',
   };
 
   return (
@@ -175,6 +180,7 @@ export default function AccessControl() {
                 <li>• <strong>Manager:</strong> Team management (no assets/settings)</li>
                 <li>• <strong>Dept Head:</strong> Department-level access only</li>
                 <li>• <strong>Employee:</strong> Self-service only</li>
+                <li>• <strong>Freelancer:</strong> Project-based limited access</li>
               </ul>
             </div>
             <div>
@@ -190,8 +196,8 @@ export default function AccessControl() {
       </Card>
 
       {/* Role Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {['hr', 'manager', 'department_head', 'employee'].map(role => (
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {['hr', 'manager', 'department_head', 'employee', 'freelancer'].map(role => (
           <Card key={role} className="border-0 shadow-sm">
             <CardContent className="pt-6">
               <p className="text-2xl font-bold text-slate-800">
@@ -226,6 +232,7 @@ export default function AccessControl() {
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="department_head">Department Head</SelectItem>
                 <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="freelancer">Freelancer</SelectItem>
               </SelectContent>
             </Select>
           </div>
