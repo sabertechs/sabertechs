@@ -334,17 +334,17 @@ export default function Registration() {
           status: "active"
         });
       } else {
-        // Create new contractual employee
+        // Create new freelancer
         await base44.entities.Employee.create({
           ...employeeData,
           employee_id: newEmployeeId,
           employment_type: "contractual",
           status: "pending",
-          role: "employee"
+          role: "freelancer"
         });
       }
-      
-      navigate(createPageUrl("EmployeeDashboard"));
+
+      navigate(createPageUrl("FreelancerDashboard"));
     } catch (error) {
       console.error('Registration error:', error);
       alert('Registration failed. Please try again.');
@@ -379,8 +379,8 @@ export default function Registration() {
             <Building2 className="w-10 h-10 text-indigo-600" />
             <h1 className="text-3xl font-bold text-slate-800">HRMS</h1>
           </div>
-          <h2 className="text-2xl font-semibold text-slate-700">Contractual Employee Registration</h2>
-                          <p className="text-slate-500 mt-2">Complete your profile to get started</p>
+          <h2 className="text-2xl font-semibold text-slate-700">Freelancer Registration</h2>
+          <p className="text-slate-500 mt-2">Complete your profile to get started</p>
         </div>
 
         {/* Progress Steps */}
