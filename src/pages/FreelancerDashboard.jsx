@@ -34,7 +34,10 @@ export default function FreelancerDashboard() {
 
   const { data: openProjects = [] } = useQuery({
     queryKey: ['openProjects'],
-    queryFn: () => base44.entities.Project.filter({ status: 'open' }, '-created_date', 10),
+    queryFn: async () => {
+      const projects = await base44.entities.Project.filter({ status: 'open' });
+      return projects.slice(0, 10);
+    },
   });
 
   const { data: myApplications = [] } = useQuery({
