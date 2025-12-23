@@ -279,6 +279,7 @@ export default function AccessControl() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="freelancer">Freelancer</SelectItem>
                           <SelectItem value="department_head">Department Head</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="hr">HR</SelectItem>

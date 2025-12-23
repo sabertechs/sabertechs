@@ -74,7 +74,7 @@ export default function Layout({ children, currentPageName }) {
               window.location.replace(createPageUrl("HRDashboard"));
             } else if (emp.role === 'department_head') {
               window.location.replace(createPageUrl("DeptHeadDashboard"));
-            } else if (emp.employment_type === 'contractual') {
+            } else if (emp.role === 'freelancer') {
               window.location.replace(createPageUrl("FreelancerDashboard"));
             } else {
               window.location.replace(createPageUrl("EmployeeDashboard"));
@@ -118,12 +118,12 @@ export default function Layout({ children, currentPageName }) {
     const sectionAccess = employeeData?.section_access || [];
     const hasAccess = (sectionId) => sectionAccess.length === 0 || sectionAccess.includes(sectionId);
 
-    // Dashboard based on role and employment type
+    // Dashboard based on role
     if (userRole === 'hr' || userRole === 'manager') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
     } else if (userRole === 'department_head') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" });
-    } else if (employeeData?.employment_type === 'contractual') {
+    } else if (userRole === 'freelancer') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "FreelancerDashboard" });
     } else {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
@@ -165,14 +165,14 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
       items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+    } else if (userRole === 'freelancer') {
+      // Freelancers only see projects, expenses and policies
+      items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
+      items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
     } else {
-      // Employee role - different menu for contractual vs permanent
-      if (employeeData?.employment_type === 'contractual') {
-        // Freelancers only see projects, expenses and policies
-        items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
-        items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
-        items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
-      } else {
+      // Regular employees
+      if (true) {
         // Permanent employees - show pages based on section_access or defaults
         if (sectionAccess.includes('attendance') || sectionAccess.length === 0) {
           items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
