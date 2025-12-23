@@ -6,7 +6,7 @@ import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { 
   User, Mail, Phone, MapPin, Calendar, Video, PlayCircle,
-  FileText, Download, Clock, Award, BookOpen, Briefcase
+  FileText, Download, Clock, Award, BookOpen, Briefcase, IndianRupee, Users
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,9 +32,14 @@ export default function FreelancerDashboard() {
     fetchData();
   }, []);
 
-  const { data: expenses = [] } = useQuery({
-    queryKey: ['myExpenses', user?.email],
-    queryFn: () => base44.entities.Expense.filter({ employee_email: user?.email }, '-created_date', 10),
+  const { data: openProjects = [] } = useQuery({
+    queryKey: ['openProjects'],
+    queryFn: () => base44.entities.Project.filter({ status: 'open' }, '-created_date', 10),
+  });
+
+  const { data: myApplications = [] } = useQuery({
+    queryKey: ['myApplications', user?.email],
+    queryFn: () => base44.entities.ProjectApplication.filter({ freelancer_email: user?.email }),
     enabled: !!user?.email,
   });
 
@@ -52,7 +57,10 @@ export default function FreelancerDashboard() {
   const lmsConfig = Array.isArray(lmsSettings[0]?.setting_value) 
     ? lmsSettings[0].setting_value[0] 
     : lmsSettings[0]?.setting_value || {};
-  const pendingExpenses = expenses.filter(e => e.status === 'pending').length;
+  
+  const hasApplied = (projectId) => {
+    return myApplications.some(app => app.project_id === projectId);
+  };
 
   const handleVideoComplete = () => {
     setVideoCompleted(true);
@@ -113,11 +121,11 @@ export default function FreelancerDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-amber-100 rounded-xl">
-                <Clock className="w-5 h-5 text-amber-600" />
+                <Briefcase className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800">{pendingExpenses}</p>
-                <p className="text-sm text-slate-500">Pending Expenses</p>
+                <p className="text-2xl font-bold text-slate-800">{openProjects.length}</p>
+                <p className="text-sm text-slate-500">Open Projects</p>
               </div>
             </div>
           </CardContent>
@@ -189,52 +197,65 @@ export default function FreelancerDashboard() {
         </CardContent>
       </Card>
 
-      {/* Recent Expenses */}
+      {/* Open Projects */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Recent Expense Submissions</CardTitle>
-          <Link to={createPageUrl("MyExpenses")}>
+          <CardTitle className="text-lg font-semibold">Open Projects</CardTitle>
+          <Link to={createPageUrl("FreelancerProjects")}>
             <Button variant="outline" size="sm">
               View All
             </Button>
           </Link>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
+          {openProjects.length === 0 ? (
             <div className="text-center py-8 text-slate-500">
-              <FileText className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-              <p>No expenses submitted yet</p>
+              <Briefcase className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+              <p>No open projects at the moment</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b border-slate-100">
-                    <th className="pb-3 text-sm font-medium text-slate-500">Type</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Amount</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Date</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.slice(0, 5).map((expense) => (
-                    <tr key={expense.id} className="border-b border-slate-50">
-                      <td className="py-4 capitalize">{expense.expense_type?.replace('_', ' ')}</td>
-                      <td className="py-4 font-semibold">₹{expense.amount?.toLocaleString()}</td>
-                      <td className="py-4 text-slate-500">{format(new Date(expense.date), 'MMM d, yyyy')}</td>
-                      <td className="py-4">
-                        <Badge className={
-                          expense.status === 'approved' ? 'bg-green-100 text-green-700' :
-                          expense.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }>
-                          {expense.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {openProjects.slice(0, 3).map((project) => {
+                const applied = hasApplied(project.id);
+                return (
+                  <div key={project.id} className="p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-slate-800">{project.name}</h4>
+                      {applied && (
+                        <Badge className="bg-green-100 text-green-700">Applied</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 mb-3 line-clamp-2">{project.description}</p>
+                    <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {project.location}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <IndianRupee className="w-4 h-4" />
+                        ₹{project.payout?.toLocaleString()}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {format(new Date(project.start_date), 'MMM d')}
+                      </div>
+                      {project.total_slots && (
+                        <div className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          {project.filled_slots || 0}/{project.total_slots}
+                        </div>
+                      )}
+                    </div>
+                    {!applied && (
+                      <Link to={createPageUrl("FreelancerProjects")}>
+                        <Button size="sm" className="w-full mt-3 bg-indigo-600 hover:bg-indigo-700">
+                          Apply Now
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
