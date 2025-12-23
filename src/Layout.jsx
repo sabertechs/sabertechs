@@ -166,10 +166,9 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
       items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else if (userRole === 'freelancer') {
-      // Freelancers only see projects, expenses and policies
-      items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
-      items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
-      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+      // Freelancers only see payslips and company feed
+      items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+      items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     } else {
       // Regular employees
       if (true) {
