@@ -331,6 +331,8 @@ export default function Registration() {
         await base44.entities.Employee.update(existingEmployees[0].id, {
           ...employeeData,
           employee_id: existingEmployees[0].employee_id || newEmployeeId,
+          employment_type: "contractual",
+          role: "freelancer",
           status: "active"
         });
       } else {
