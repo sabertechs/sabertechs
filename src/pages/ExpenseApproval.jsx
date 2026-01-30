@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Search, Filter, CheckCircle, XCircle, Eye, Receipt, ExternalLink } from "lucide-react";
+import { Search, Filter, CheckCircle, XCircle, Eye, Receipt, ExternalLink, Brain, AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
 import { getExpenseStatusEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,9 @@ export default function ExpenseApproval() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  const [insights, setInsights] = useState(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -114,11 +117,25 @@ export default function ExpenseApproval() {
     return matchesSearch && matchesStatus;
   });
 
+  const loadInsights = async () => {
+    setLoadingInsights(true);
+    try {
+      const result = await base44.functions.invoke('generateExpenseInsights', {
+        timeframe: 'all'
+      });
+      setInsights(result.data);
+    } catch (err) {
+      console.error('Insights error:', err);
+    }
+    setLoadingInsights(false);
+  };
+
   const stats = {
     pending: expenses.filter(e => e.status === 'pending').length,
     approved: expenses.filter(e => e.status === 'approved').length,
     rejected: expenses.filter(e => e.status === 'rejected').length,
-    totalPending: expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0)
+    totalPending: expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0),
+    highRisk: expenses.filter(e => (e.fraud_score || 0) > 60).length
   };
 
   const statusColors = {
@@ -129,9 +146,15 @@ export default function ExpenseApproval() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Expense Approvals</h2>
-        <p className="text-slate-500">Review and approve employee expense claims</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Expense Approvals</h2>
+          <p className="text-slate-500">Review and approve employee expense claims</p>
+        </div>
+        <Button onClick={() => { setShowInsights(true); loadInsights(); }} variant="outline">
+          <TrendingUp className="w-4 h-4 mr-2" />
+          AI Insights
+        </Button>
       </div>
 
       {/* Stats */}
@@ -158,6 +181,15 @@ export default function ExpenseApproval() {
           <CardContent className="pt-6">
             <p className="text-3xl font-bold text-indigo-700">₹{stats.totalPending.toLocaleString()}</p>
             <p className="text-sm text-indigo-600">Pending Amount</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-orange-700" />
+              <p className="text-3xl font-bold text-orange-700">{stats.highRisk}</p>
+            </div>
+            <p className="text-sm text-orange-600">High Risk (AI)</p>
           </CardContent>
         </Card>
       </div>
@@ -214,7 +246,20 @@ export default function ExpenseApproval() {
                         <p className="text-sm text-slate-500 capitalize">{expense.department}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 capitalize text-slate-600">{expense.expense_type?.replace('_', ' ')}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize text-slate-600">{expense.expense_type?.replace('_', ' ')}</span>
+                        {expense.ai_category && (
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 text-xs">
+                            <Brain className="w-3 h-3 mr-1" />
+                            {expense.ai_confidence}%
+                          </Badge>
+                        )}
+                        {(expense.fraud_score > 60 || expense.duplicate_check?.is_duplicate) && (
+                          <AlertTriangle className="w-4 h-4 text-orange-600" />
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-slate-600">{format(new Date(expense.date), 'MMM d, yyyy')}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800">₹{expense.amount?.toLocaleString()}</td>
                     <td className="px-6 py-4">
@@ -258,6 +303,93 @@ export default function ExpenseApproval() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Insights Dialog */}
+      <Dialog open={showInsights} onOpenChange={setShowInsights}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              Company-Wide Expense Insights
+            </DialogTitle>
+          </DialogHeader>
+          {loadingInsights ? (
+            <div className="flex items-center justify-center py-12">
+              <Brain className="w-8 h-8 animate-pulse text-indigo-600" />
+            </div>
+          ) : insights ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="border-0 bg-indigo-50">
+                  <CardContent className="pt-4">
+                    <p className="text-2xl font-bold text-indigo-700">₹{insights.statistics.total_amount.toLocaleString()}</p>
+                    <p className="text-sm text-indigo-600">Total Expenses</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 bg-orange-50">
+                  <CardContent className="pt-4">
+                    <p className="text-2xl font-bold text-orange-700">{insights.statistics.high_risk_count}</p>
+                    <p className="text-sm text-orange-600">High Risk</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 bg-red-50">
+                  <CardContent className="pt-4">
+                    <p className="text-2xl font-bold text-red-700">{insights.statistics.duplicate_count}</p>
+                    <p className="text-sm text-red-600">Duplicates</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-3">AI Insights</h3>
+                <div className="space-y-2">
+                  {insights.insights.key_insights.map((insight, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
+                      <Brain className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-slate-700">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="border-0 bg-slate-50">
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-slate-500">Budget Status</p>
+                    <p className="text-lg font-semibold text-slate-800 capitalize mt-1">
+                      {insights.insights.budget_status.replace('_', ' ')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 bg-slate-50">
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-slate-500">Risk Level</p>
+                    <Badge className={`mt-1 ${
+                      insights.insights.risk_level === 'low' ? 'bg-green-100 text-green-700' :
+                      insights.insights.risk_level === 'medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {insights.insights.risk_level}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-3">Recommendations</h3>
+                <div className="space-y-2">
+                  {insights.insights.recommendations.map((rec, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-slate-700">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>

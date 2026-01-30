@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Plus, Receipt, Upload, Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Plus, Receipt, Upload, Loader2, CheckCircle, XCircle, Clock, Sparkles, AlertTriangle, TrendingUp, Brain } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,11 @@ export default function MyExpenses() {
   const [employee, setEmployee] = useState(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [showInsights, setShowInsights] = useState(false);
+  const [insights, setInsights] = useState(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
   const [formData, setFormData] = useState({
     expense_type: "",
     amount: "",
@@ -49,11 +55,34 @@ export default function MyExpenses() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Expense.create(data),
+    mutationFn: async (data) => {
+      const expense = await base44.entities.Expense.create(data);
+      
+      // Run AI analysis in background
+      try {
+        await base44.functions.invoke('analyzeExpense', {
+          expenseId: expense.id,
+          description: data.description,
+          amount: data.amount,
+          date: data.date,
+          receiptUrl: data.receipt_url,
+          employeeEmail: data.employee_email
+        });
+      } catch (err) {
+        console.error('AI analysis failed:', err);
+      }
+      
+      return expense;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['expenses']);
       setShowAddDialog(false);
       resetForm();
+      setAiAnalysis(null);
+      toast({
+        title: "Success",
+        description: "Expense submitted and being analyzed by AI"
+      });
     }
   });
 
@@ -72,6 +101,58 @@ export default function MyExpenses() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setFormData(prev => ({ ...prev, receipt_url: file_url }));
     setUploading(false);
+  };
+
+  const handleAIAnalyze = async () => {
+    if (!formData.description && !formData.receipt_url) {
+      toast({
+        title: "Info",
+        description: "Add a description or receipt for better AI analysis",
+        variant: "default"
+      });
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const result = await base44.functions.invoke('analyzeExpense', {
+        expenseId: null,
+        description: formData.description,
+        amount: formData.amount,
+        date: formData.date,
+        receiptUrl: formData.receipt_url,
+        employeeEmail: user.email
+      });
+      
+      setAiAnalysis(result.data.analysis);
+      
+      // Auto-suggest category if confidence is high
+      if (result.data.analysis.confidence > 70 && !formData.expense_type) {
+        setFormData(prev => ({ ...prev, expense_type: result.data.analysis.suggested_category }));
+      }
+    } catch (err) {
+      console.error('AI analysis error:', err);
+      toast({
+        title: "Error",
+        description: "AI analysis failed. You can still submit the expense.",
+        variant: "destructive"
+      });
+    }
+    setAnalyzing(false);
+  };
+
+  const loadInsights = async () => {
+    setLoadingInsights(true);
+    try {
+      const result = await base44.functions.invoke('generateExpenseInsights', {
+        employeeEmail: user.email,
+        timeframe: 'all'
+      });
+      setInsights(result.data);
+    } catch (err) {
+      console.error('Insights error:', err);
+    }
+    setLoadingInsights(false);
   };
 
   const handleSubmit = () => {
@@ -111,10 +192,16 @@ export default function MyExpenses() {
           <h2 className="text-2xl font-bold text-slate-800">My Expenses</h2>
           <p className="text-slate-500">Submit and track your expense claims</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Submit Expense
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => { setShowInsights(true); loadInsights(); }} variant="outline">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            AI Insights
+          </Button>
+          <Button onClick={() => { resetForm(); setShowAddDialog(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Submit Expense
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -197,15 +284,38 @@ export default function MyExpenses() {
                 const StatusIcon = statusIcons[expense.status];
                 return (
                   <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
                       <div className={`p-3 rounded-xl ${statusColors[expense.status]}`}>
                         <StatusIcon className="w-5 h-5" />
                       </div>
-                      <div>
-                        <p className="font-medium text-slate-800 capitalize">{expense.expense_type?.replace('_', ' ')}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-800 capitalize">{expense.expense_type?.replace('_', ' ')}</p>
+                          {expense.ai_category && expense.ai_category !== expense.expense_type && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                              <Brain className="w-3 h-3 mr-1" />
+                              AI: {expense.ai_category}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-500">{format(new Date(expense.date), 'MMM d, yyyy')}</p>
                         {expense.description && (
                           <p className="text-sm text-slate-400 mt-1">{expense.description}</p>
+                        )}
+                        {(expense.fraud_score > 60 || expense.duplicate_check?.is_duplicate) && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {expense.fraud_score > 60 && (
+                              <Badge className="bg-orange-100 text-orange-700 text-xs">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                Risk: {expense.fraud_score}%
+                              </Badge>
+                            )}
+                            {expense.duplicate_check?.is_duplicate && (
+                              <Badge className="bg-red-100 text-red-700 text-xs">
+                                Possible Duplicate
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -226,11 +336,106 @@ export default function MyExpenses() {
         </CardContent>
       </Card>
 
+      {/* AI Insights Dialog */}
+      <Dialog open={showInsights} onOpenChange={setShowInsights}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              AI-Powered Expense Insights
+            </DialogTitle>
+          </DialogHeader>
+          {loadingInsights ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            </div>
+          ) : insights ? (
+            <div className="space-y-6">
+              {/* Statistics */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="border-0 bg-indigo-50">
+                  <CardContent className="pt-4">
+                    <p className="text-2xl font-bold text-indigo-700">₹{insights.statistics.total_amount.toLocaleString()}</p>
+                    <p className="text-sm text-indigo-600">Total Expenses</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 bg-green-50">
+                  <CardContent className="pt-4">
+                    <p className="text-2xl font-bold text-green-700">₹{insights.statistics.average_amount.toFixed(0)}</p>
+                    <p className="text-sm text-green-600">Average Amount</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Key Insights */}
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-3">Key Insights</h3>
+                <div className="space-y-2">
+                  {insights.insights.key_insights.map((insight, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
+                      <Brain className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-slate-700">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Budget Status */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm text-slate-500">Budget Status</p>
+                  <p className="font-semibold text-slate-800 capitalize">{insights.insights.budget_status.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Risk Level</p>
+                  <Badge className={
+                    insights.insights.risk_level === 'low' ? 'bg-green-100 text-green-700' :
+                    insights.insights.risk_level === 'medium' ? 'bg-amber-100 text-amber-700' :
+                    'bg-red-100 text-red-700'
+                  }>
+                    {insights.insights.risk_level}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <h3 className="font-semibold text-slate-800 mb-3">Recommendations</h3>
+                <div className="space-y-2">
+                  {insights.insights.recommendations.map((rec, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-slate-700">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Savings Potential */}
+              {insights.insights.savings_potential && (
+                <Card className="border-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                  <CardContent className="pt-4">
+                    <p className="text-sm opacity-90">Potential Savings</p>
+                    <p className="text-2xl font-bold mt-1">{insights.insights.savings_potential}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       {/* Add Expense Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submit Expense</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Submit Expense
+              <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                <Sparkles className="w-3 h-3 mr-1" />
+                AI-Powered
+              </Badge>
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -278,6 +483,71 @@ export default function MyExpenses() {
                 rows={3}
               />
             </div>
+
+            {/* AI Analysis Section */}
+            {(formData.description || formData.receipt_url || formData.amount) && (
+              <div className="border-t pt-4">
+                <Button 
+                  type="button"
+                  onClick={handleAIAnalyze} 
+                  disabled={analyzing}
+                  variant="outline"
+                  className="w-full border-purple-200 hover:bg-purple-50"
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-4 h-4 mr-2" />
+                      Analyze with AI
+                    </>
+                  )}
+                </Button>
+
+                {aiAnalysis && (
+                  <div className="mt-4 p-4 bg-purple-50 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-purple-900">AI Analysis</p>
+                      <Badge className="bg-purple-200 text-purple-900">
+                        {aiAnalysis.confidence}% confidence
+                      </Badge>
+                    </div>
+                    
+                    {aiAnalysis.suggested_category && (
+                      <div>
+                        <p className="text-xs text-purple-700">Suggested Category</p>
+                        <p className="text-sm font-medium text-purple-900 capitalize">{aiAnalysis.suggested_category}</p>
+                      </div>
+                    )}
+
+                    {aiAnalysis.fraud_score > 30 && (
+                      <div className="p-3 bg-orange-100 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="w-4 h-4 text-orange-700" />
+                          <p className="text-sm font-medium text-orange-900">Risk Score: {aiAnalysis.fraud_score}%</p>
+                        </div>
+                        {aiAnalysis.fraud_indicators?.length > 0 && (
+                          <ul className="text-xs text-orange-800 space-y-1">
+                            {aiAnalysis.fraud_indicators.map((ind, idx) => (
+                              <li key={idx}>• {ind}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {aiAnalysis.is_likely_duplicate && (
+                      <div className="p-3 bg-red-100 rounded-lg">
+                        <p className="text-sm font-medium text-red-900">⚠️ Possible duplicate detected</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Receipt</Label>
