@@ -106,6 +106,7 @@ export default function Employees() {
     contract_end_date: "",
     date_of_joining: "",
     salary: "",
+    reporting_to: "",
     status: "active",
     role: "employee"
   });
@@ -177,6 +178,7 @@ export default function Employees() {
       contract_end_date: "",
       date_of_joining: "",
       salary: "",
+      reporting_to: "",
       status: "active",
       role: "employee"
     });
@@ -196,6 +198,7 @@ export default function Employees() {
       contract_end_date: employee.contract_end_date || "",
       date_of_joining: employee.date_of_joining || "",
       salary: employee.salary || "",
+      reporting_to: employee.reporting_to || "",
       status: employee.status || "active",
       role: employee.role || "employee"
     });
@@ -1603,6 +1606,25 @@ export default function Employees() {
                 value={formData.date_of_joining}
                 onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Reporting Manager</Label>
+              <Select value={formData.reporting_to} onValueChange={(v) => setFormData({ ...formData, reporting_to: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {employees.filter(emp => 
+                    (emp.role === 'hr' || emp.role === 'manager' || emp.role === 'department_head') &&
+                    emp.id !== selectedEmployee?.id
+                  ).map(manager => (
+                    <SelectItem key={manager.id} value={manager.email}>
+                      {manager.full_name} ({manager.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Salary</Label>
