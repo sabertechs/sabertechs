@@ -74,6 +74,7 @@ export default function Employees() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showBulkActionDialog, setShowBulkActionDialog] = useState(false);
   const [bulkStatus, setBulkStatus] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [downloading, setDownloading] = useState(false);
@@ -148,6 +149,8 @@ export default function Employees() {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
       resetForm();
+      setValidationErrors({});
+      toast.success('Employee added successfully');
     }
   });
 
@@ -158,6 +161,8 @@ export default function Employees() {
       setShowAddDialog(false);
       setSelectedEmployee(null);
       resetForm();
+      setValidationErrors({});
+      toast.success('Employee updated successfully');
     }
   });
 
@@ -205,18 +210,47 @@ export default function Employees() {
     setShowAddDialog(true);
   };
 
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.full_name?.trim()) {
+      errors.full_name = "Full name is required";
+    }
+    
+    if (!formData.email?.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Invalid email format";
+    }
+    
+    if (!formData.phone?.trim()) {
+      errors.phone = "Phone number is required";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
+    // Validate form first
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly');
+      return;
+    }
+
     // Check for duplicate email and phone
     if (!selectedEmployee) {
       try {
         const existingByEmail = await base44.entities.Employee.filter({ email: formData.email.trim().toLowerCase() });
         if (existingByEmail.length > 0) {
+          setValidationErrors(prev => ({ ...prev, email: 'An employee with this email already exists' }));
           toast.error('An employee with this email already exists');
           return;
         }
         
         const existingByPhone = await base44.entities.Employee.filter({ phone: formData.phone.trim() });
         if (existingByPhone.length > 0) {
+          setValidationErrors(prev => ({ ...prev, phone: 'An employee with this phone number already exists' }));
           toast.error('An employee with this phone number already exists');
           return;
         }
@@ -1535,8 +1569,17 @@ export default function Employees() {
               <Label>Full Name *</Label>
               <Input
                 value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, full_name: e.target.value });
+                  if (validationErrors.full_name) {
+                    setValidationErrors(prev => ({ ...prev, full_name: undefined }));
+                  }
+                }}
+                className={validationErrors.full_name ? "border-red-500" : ""}
               />
+              {validationErrors.full_name && (
+                <p className="text-red-500 text-xs">{validationErrors.full_name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Father's Name</Label>
@@ -1550,15 +1593,33 @@ export default function Employees() {
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (validationErrors.email) {
+                    setValidationErrors(prev => ({ ...prev, email: undefined }));
+                  }
+                }}
+                className={validationErrors.email ? "border-red-500" : ""}
               />
+              {validationErrors.email && (
+                <p className="text-red-500 text-xs">{validationErrors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Phone *</Label>
               <Input
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  if (validationErrors.phone) {
+                    setValidationErrors(prev => ({ ...prev, phone: undefined }));
+                  }
+                }}
+                className={validationErrors.phone ? "border-red-500" : ""}
               />
+              {validationErrors.phone && (
+                <p className="text-red-500 text-xs">{validationErrors.phone}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Department</Label>
