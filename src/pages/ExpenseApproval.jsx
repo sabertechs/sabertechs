@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -21,6 +21,7 @@ import {
 export default function ExpenseApproval() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [selectedExpense, setSelectedExpense] = useState(null);
@@ -34,14 +35,41 @@ export default function ExpenseApproval() {
     const fetchUser = async () => {
       const userData = await base44.auth.me();
       setUser(userData);
+      const emps = await base44.entities.Employee.filter({ email: userData.email });
+      if (emps.length > 0) setEmployee(emps[0]);
     };
     fetchUser();
   }, []);
 
-  const { data: expenses = [] } = useQuery({
+  const { data: allExpenses = [] } = useQuery({
     queryKey: ['expenses'],
     queryFn: () => base44.entities.Expense.list('-created_date'),
   });
+
+  const { data: allEmployees = [] } = useQuery({
+    queryKey: ['allEmployees'],
+    queryFn: () => base44.entities.Employee.list(),
+  });
+
+  // Filter expenses based on reporting relationship
+  const expenses = useMemo(() => {
+    if (!user || !employee) return allExpenses;
+
+    // HR and admin see all expenses
+    if (employee.role === 'hr' || user.role === 'admin') {
+      return allExpenses;
+    }
+
+    // Managers and department heads see expenses from their reportees
+    if (employee.role === 'manager' || employee.role === 'department_head') {
+      return allExpenses.filter(expense => {
+        const reportee = allEmployees.find(emp => emp.email === expense.employee_email);
+        return reportee?.reporting_to === user.email;
+      });
+    }
+
+    return [];
+  }, [allExpenses, allEmployees, user, employee]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
