@@ -119,7 +119,13 @@ export default function Employees() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'permanent'), [allEmployees]);
 
+  const { data: invites = [] } = useQuery({
+    queryKey: ['employeeInvites'],
+    queryFn: () => base44.entities.EmployeeInvite.list('-invite_sent_date'),
+    staleTime: 2 * 60 * 1000,
+  });
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
