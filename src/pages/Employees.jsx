@@ -101,15 +101,31 @@ export default function Employees() {
     father_name: "",
     email: "",
     phone: "",
+    date_of_birth: "",
+    gender: "",
+    address: "",
+    locality: "",
+    city: "",
+    state: "",
+    pincode: "",
+    aadhaar_number: "",
+    pan_number: "",
     department: "",
     designation: "",
     employment_type: "permanent",
     contract_end_date: "",
     date_of_joining: "",
     salary: "",
+    salary_components: {},
+    deductions: {},
     reporting_to: "",
     status: "active",
-    role: "employee"
+    role: "employee",
+    bank_name: "",
+    bank_account_number: "",
+    bank_ifsc: "",
+    bank_branch: "",
+    account_holder_name: ""
   });
 
   // Fetch only permanent employees
@@ -183,15 +199,31 @@ export default function Employees() {
       father_name: "",
       email: "",
       phone: "",
+      date_of_birth: "",
+      gender: "",
+      address: "",
+      locality: "",
+      city: "",
+      state: "",
+      pincode: "",
+      aadhaar_number: "",
+      pan_number: "",
       department: "",
       designation: "",
       employment_type: "permanent",
       contract_end_date: "",
       date_of_joining: "",
       salary: "",
+      salary_components: {},
+      deductions: {},
       reporting_to: "",
       status: "active",
-      role: "employee"
+      role: "employee",
+      bank_name: "",
+      bank_account_number: "",
+      bank_ifsc: "",
+      bank_branch: "",
+      account_holder_name: ""
     });
   };
 
@@ -203,15 +235,31 @@ export default function Employees() {
       father_name: employee.father_name || "",
       email: employee.email || "",
       phone: employee.phone || "",
+      date_of_birth: employee.date_of_birth || "",
+      gender: employee.gender || "",
+      address: employee.address || "",
+      locality: employee.locality || "",
+      city: employee.city || "",
+      state: employee.state || "",
+      pincode: employee.pincode || "",
+      aadhaar_number: employee.aadhaar_number || "",
+      pan_number: employee.pan_number || "",
       department: employee.department || "",
       designation: employee.designation || "",
       employment_type: employee.employment_type || "permanent",
       contract_end_date: employee.contract_end_date || "",
       date_of_joining: employee.date_of_joining || "",
       salary: employee.salary || "",
+      salary_components: employee.salary_components || {},
+      deductions: employee.deductions || {},
       reporting_to: employee.reporting_to || "",
       status: employee.status || "active",
-      role: employee.role || "employee"
+      role: employee.role || "employee",
+      bank_name: employee.bank_name || "",
+      bank_account_number: employee.bank_account_number || "",
+      bank_ifsc: employee.bank_ifsc || "",
+      bank_branch: employee.bank_branch || "",
+      account_holder_name: employee.account_holder_name || ""
     });
     setShowAddDialog(true);
   };
@@ -1781,6 +1829,127 @@ export default function Employees() {
                   <SelectItem value="hr">HR</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Personal Details */}
+            <div className="col-span-2">
+              <h3 className="font-semibold text-slate-700 mb-3 mt-4">Personal Details</h3>
+            </div>
+            <div className="space-y-2">
+              <Label>Date of Birth</Label>
+              <Input
+                type="date"
+                value={formData.date_of_birth}
+                onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Gender</Label>
+              <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Aadhaar Number</Label>
+              <Input
+                value={formData.aadhaar_number}
+                onChange={(e) => setFormData({ ...formData, aadhaar_number: e.target.value })}
+                placeholder="XXXX XXXX XXXX"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>PAN Number</Label>
+              <Input
+                value={formData.pan_number}
+                onChange={(e) => setFormData({ ...formData, pan_number: e.target.value.toUpperCase() })}
+                placeholder="ABCDE1234F"
+              />
+            </div>
+            <div className="col-span-2 space-y-2">
+              <Label>Address</Label>
+              <Input
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Street address"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Locality</Label>
+              <Input
+                value={formData.locality}
+                onChange={(e) => setFormData({ ...formData, locality: e.target.value })}
+                placeholder="Area/Locality"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Input
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>State</Label>
+              <Input
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Pincode</Label>
+              <Input
+                value={formData.pincode}
+                onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                placeholder="110001"
+              />
+            </div>
+            
+            {/* Banking Details */}
+            <div className="col-span-2">
+              <h3 className="font-semibold text-slate-700 mb-3 mt-4">Banking Details</h3>
+            </div>
+            <div className="space-y-2">
+              <Label>Account Holder Name</Label>
+              <Input
+                value={formData.account_holder_name}
+                onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Bank Name</Label>
+              <Input
+                value={formData.bank_name}
+                onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Account Number</Label>
+              <Input
+                value={formData.bank_account_number}
+                onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>IFSC Code</Label>
+              <Input
+                value={formData.bank_ifsc}
+                onChange={(e) => setFormData({ ...formData, bank_ifsc: e.target.value.toUpperCase() })}
+                placeholder="SBIN0001234"
+              />
+            </div>
+            <div className="col-span-2 space-y-2">
+              <Label>Branch</Label>
+              <Input
+                value={formData.bank_branch}
+                onChange={(e) => setFormData({ ...formData, bank_branch: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>
