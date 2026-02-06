@@ -24,6 +24,7 @@ export default function ProjectManagement() {
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '',
+    work_mode: 'center_based',
     start_date: '',
     end_date: '',
     application_start_date: '',
@@ -76,6 +77,7 @@ export default function ProjectManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
+      work_mode: 'center_based',
       start_date: '',
       end_date: '',
       application_start_date: '',
@@ -108,6 +110,7 @@ export default function ProjectManagement() {
     
     setFormData({
       name: project.name,
+      work_mode: project.work_mode || 'center_based',
       start_date: project.start_date,
       end_date: project.end_date,
       application_start_date: appStartDate ? appStartDate.toISOString().split('T')[0] : '',
@@ -178,6 +181,7 @@ export default function ProjectManagement() {
 
     const data = {
       name: formData.name,
+      work_mode: formData.work_mode,
       start_date: formData.start_date,
       end_date: formData.end_date,
       application_start_date: appStartDateTime,
@@ -262,6 +266,7 @@ export default function ProjectManagement() {
               <tr>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">ID</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">NAME</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">WORK MODE</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">STATUS</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">SUPERVISOR</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">PRIORITY</th>
@@ -278,6 +283,11 @@ export default function ProjectManagement() {
                   </td>
                   <td className="px-4 py-4 text-sm text-slate-800 max-w-xs">
                     <div className="font-medium">{project.name}</div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <Badge className={project.work_mode === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
+                      {project.work_mode === 'online' ? 'Online' : 'Center Based'}
+                    </Badge>
                   </td>
                   <td className="px-4 py-4">
                     <Badge className={`${getStatusBadge(project.status)} capitalize`}>
@@ -389,23 +399,36 @@ export default function ProjectManagement() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Project Name *</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: null });
-                }}
-                placeholder="e.g., Mock Day 4-Sept'25 Delhi NCR"
-                className={errors.name ? 'border-red-500' : ''}
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> {errors.name}
-                </p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label>Project Name *</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (errors.name) setErrors({ ...errors, name: null });
+              }}
+              placeholder="e.g., Mock Day 4-Sept'25 Delhi NCR"
+              className={errors.name ? 'border-red-500' : ''}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-xs flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Work Mode *</Label>
+            <Select value={formData.work_mode} onValueChange={(v) => setFormData({ ...formData, work_mode: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select work mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="center_based">Center Based</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
