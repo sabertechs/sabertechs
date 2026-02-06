@@ -119,7 +119,7 @@ export default function Employees() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'permanent'), [allEmployees]);
+
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
@@ -318,6 +318,8 @@ export default function Employees() {
 
     setSendingInvite(true);
     try {
+      const user = await base44.auth.me();
+      
       // Check for duplicates
       try {
         const existingByEmail = await base44.entities.Employee.filter({ email: inviteData.email.trim().toLowerCase() });
@@ -363,8 +365,16 @@ export default function Employees() {
         bg_verification_status: "pending"
       });
 
+      // Track the invitation
+      await base44.entities.EmployeeInvite.create({
+        ...inviteData,
+        invited_by: user.email,
+        invite_status: "sent",
+        invite_sent_date: new Date().toISOString()
+      });
+
       // Send invitation email
-      await base44.functions.invoke('sendEmployeeInvite', {
+      const emailResult = await base44.functions.invoke('sendEmployeeInvite', {
         employee_name: inviteData.full_name,
         employee_email: inviteData.email
       });
@@ -380,9 +390,9 @@ export default function Employees() {
         date_of_joining: "",
         salary: ""
       });
-      toast.success('Invitation sent successfully');
+      toast.success(`Invitation email sent to ${inviteData.email}`);
     } catch (error) {
-      toast.error('Failed to send invitation');
+      toast.error('Failed to send invitation: ' + error.message);
       console.error(error);
     } finally {
       setSendingInvite(false);
@@ -1171,17 +1181,62 @@ export default function Employees() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Employees</h2>
-          <p className="text-slate-500">Manage your organization's employees</p>
+          <p className="text-slate-500">
+            Manage your organization's employees
+            {invites.filter(inv => inv.invite_status === 'sent').length > 0 && (
+              <span className="ml-2 text-indigo-600 font-medium">
+                • {invites.filter(inv => inv.invite_status === 'sent').length} pending invite(s)
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline"
-            onClick={() => setShowInviteDialog(true)}
-            className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Invite Employee
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Invitations
+                {invites.filter(inv => inv.invite_status === 'sent').length > 0 && (
+                  <Badge className="ml-2 bg-indigo-600 text-white">
+                    {invites.filter(inv => inv.invite_status === 'sent').length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <div className="p-2">
+                <h4 className="font-semibold text-sm mb-2">Sent Invitations</h4>
+                {invites.filter(inv => inv.invite_status === 'sent').length === 0 ? (
+                  <p className="text-slate-500 text-sm text-center py-4">No pending invitations</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto space-y-2">
+                    {invites.filter(inv => inv.invite_status === 'sent').map((invite) => (
+                      <div key={invite.id} className="p-3 bg-slate-50 rounded-lg">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{invite.full_name}</p>
+                            <p className="text-xs text-slate-500 truncate">{invite.email}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Sent {format(new Date(invite.invite_sent_date), 'MMM d, yyyy')}
+                            </p>
+                          </div>
+                          <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowInviteDialog(true)} className="cursor-pointer">
+                <Mail className="w-4 h-4 mr-2" />
+                Send New Invite
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button 
             variant="outline"
             onClick={exportToCSV}
