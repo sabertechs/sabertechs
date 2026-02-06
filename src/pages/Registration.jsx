@@ -46,6 +46,7 @@ export default function Registration() {
     phone: "",
     date_of_birth: "",
     gender: "",
+    work_type: "both",
     // Current Address
     address: "",
     locality: "",
@@ -190,6 +191,7 @@ export default function Registration() {
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
     if (!formData.date_of_birth) newErrors.date_of_birth = "Date of birth is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.work_type) newErrors.work_type = "Work type is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.locality.trim()) newErrors.locality = "Locality is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
@@ -441,6 +443,25 @@ export default function Registration() {
                     {errors.gender && (
                       <p className="text-red-500 text-xs flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" /> {errors.gender}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Work Type *</Label>
+                    <Select value={formData.work_type} onValueChange={(v) => handleChange("work_type", v)}>
+                      <SelectTrigger className={errors.work_type ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select work type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="center_based">Center Based</SelectItem>
+                        <SelectItem value="both">Both</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.work_type && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.work_type}
                       </p>
                     )}
                   </div>
