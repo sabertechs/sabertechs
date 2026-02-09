@@ -329,14 +329,26 @@ export default function Registration() {
       };
       
       if (existingEmployees.length > 0) {
-        // Update existing record
-        await base44.entities.Employee.update(existingEmployees[0].id, {
+        // Update existing record - keep their original employment_type and role
+        const existing = existingEmployees[0];
+        await base44.entities.Employee.update(existing.id, {
           ...employeeData,
-          employee_id: existingEmployees[0].employee_id || newEmployeeId,
-          employment_type: "contractual",
-          role: "freelancer",
+          employee_id: existing.employee_id || newEmployeeId,
+          employment_type: existing.employment_type || "contractual",
+          role: existing.role || "freelancer",
           status: "active"
         });
+        
+        // Redirect based on their role
+        if (existing.role === 'hr' || existing.role === 'manager') {
+          navigate(createPageUrl("HRDashboard"));
+        } else if (existing.role === 'department_head') {
+          navigate(createPageUrl("DeptHeadDashboard"));
+        } else if (existing.role === 'freelancer') {
+          navigate(createPageUrl("FreelancerDashboard"));
+        } else {
+          navigate(createPageUrl("EmployeeDashboard"));
+        }
       } else {
         // Create new freelancer
         await base44.entities.Employee.create({
@@ -346,9 +358,8 @@ export default function Registration() {
           status: "pending",
           role: "freelancer"
         });
+        navigate(createPageUrl("FreelancerDashboard"));
       }
-
-      navigate(createPageUrl("FreelancerDashboard"));
     } catch (error) {
       console.error('Registration error:', error);
       alert('Registration failed. Please try again.');
@@ -383,7 +394,7 @@ export default function Registration() {
             <Building2 className="w-10 h-10 text-indigo-600" />
             <h1 className="text-3xl font-bold text-slate-800">HRMS</h1>
           </div>
-          <h2 className="text-2xl font-semibold text-slate-700">Freelancer Registration</h2>
+          <h2 className="text-2xl font-semibold text-slate-700">Complete Registration</h2>
           <p className="text-slate-500 mt-2">Complete your profile to get started</p>
         </div>
 
