@@ -49,10 +49,12 @@ export default function Layout({ children, currentPageName }) {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          // Not logged in - redirect to login
-          if (currentPageName !== "Registration" && currentPageName !== "Login") {
-            base44.auth.redirectToLogin(window.location.href);
+          // Allow Registration page without authentication
+          if (currentPageName === "Registration") {
+            setLoading(false);
+            return;
           }
+          // For other pages, show error or redirect
           setLoading(false);
           return;
         }
