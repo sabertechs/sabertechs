@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
     const settings = await base44.asServiceRole.entities.AppSettings.list();
     const emailConfigSetting = settings.find(s => s.setting_key === 'email_config');
     
-    // Get app URL for registration link - use proper Base44 app URL
-    const appId = Deno.env.get('BASE44_APP_ID');
-    const registrationUrl = `https://${appId}.base44.app/Registration`;
+    // Get app URL from request origin
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://app.base44.app';
+    const registrationUrl = `${origin}/Registration`;
 
     const emailBody = `
 <!DOCTYPE html>
