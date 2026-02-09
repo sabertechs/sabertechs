@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     
     // Get app URL for registration link - use proper Base44 app URL
     const appId = Deno.env.get('BASE44_APP_ID');
-    const registrationUrl = `https://${appId}.base44.app/#/Registration`;
+    const registrationUrl = `https://${appId}.base44.app/Registration`;
 
     const emailBody = `
 <!DOCTYPE html>
