@@ -104,8 +104,12 @@ export default function Registration() {
           const docStatus = emp.document_review_status || {};
           const hasRejectedDocs = Object.values(docStatus).some(status => status === 'rejected');
           
-          if (emp.status === 'active' && !hasRejectedDocs) {
-            // Fully active employee - redirect to dashboard
+          // Check if employee has missing required documents
+          const hasMissingDocs = !emp.aadhaar_document || !emp.pan_document || 
+                                !emp.profile_photo || !emp.education_certificates?.length;
+          
+          if (emp.status === 'active' && !hasRejectedDocs && !hasMissingDocs) {
+            // Fully active employee with all documents - redirect to dashboard
             redirecting = true;
             if (emp.role === 'hr' || emp.role === 'manager') {
               window.location.replace(createPageUrl("HRDashboard"));
@@ -119,9 +123,39 @@ export default function Registration() {
             return;
           }
           
-          // Employee exists but has rejected docs - allow resubmission
+          // Employee exists but needs to complete profile
+          setExistingEmployee(emp);
+          
+          // Pre-fill form with existing data
+          setFormData(prev => ({
+            ...prev,
+            full_name: emp.full_name || userData.full_name || "",
+            father_name: emp.father_name || "",
+            email: emp.email || userData.email,
+            phone: emp.phone || "",
+            date_of_birth: emp.date_of_birth || "",
+            gender: emp.gender || "",
+            work_type: emp.work_type || "both",
+            address: emp.address || "",
+            locality: emp.locality || "",
+            city: emp.city || "",
+            state: emp.state || "",
+            pincode: emp.pincode || "",
+            aadhaar_number: emp.aadhaar_number || "",
+            pan_number: emp.pan_number || "",
+            aadhaar_document: emp.aadhaar_document || "",
+            pan_document: emp.pan_document || "",
+            education_certificates: emp.education_certificates || [],
+            profile_photo: emp.profile_photo || "",
+            bank_name: emp.bank_name || "",
+            bank_account_number: emp.bank_account_number || "",
+            bank_ifsc: emp.bank_ifsc || "",
+            bank_branch: emp.bank_branch || "",
+            account_holder_name: emp.account_holder_name || ""
+          }));
+          
+          // Set rejected docs if any
           if (hasRejectedDocs) {
-            setExistingEmployee(emp);
             const rejections = {};
             Object.entries(docStatus).forEach(([key, status]) => {
               if (status === 'rejected') {
