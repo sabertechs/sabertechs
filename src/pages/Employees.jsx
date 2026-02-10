@@ -170,24 +170,34 @@ export default function Employees() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
-    onSuccess: () => {
+    onSuccess: (newEmployee) => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
       resetForm();
       setValidationErrors({});
-      toast.success('Employee added successfully');
+      toast.success(`✅ Employee "${newEmployee.full_name}" added successfully with ID: ${newEmployee.employee_id}`, {
+        duration: 4000
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to add employee: ${error.message}`);
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updatedEmployee) => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
       setSelectedEmployee(null);
       resetForm();
       setValidationErrors({});
-      toast.success('Employee updated successfully');
+      toast.success(`✅ Employee "${updatedEmployee.full_name}" updated successfully`, {
+        duration: 4000
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update employee: ${error.message}`);
     }
   });
 
@@ -1724,6 +1734,23 @@ export default function Employees() {
           <DialogHeader>
             <DialogTitle>{selectedEmployee ? 'Edit Employee' : 'Add New Employee'}</DialogTitle>
           </DialogHeader>
+          
+          {Object.keys(validationErrors).length > 0 && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-800 mb-2">⚠️ Please fix the following errors:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
+                    {Object.entries(validationErrors).map(([field, error]) => (
+                      <li key={field}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label>Full Name *</Label>
@@ -2004,9 +2031,20 @@ export default function Employees() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-700">
-              {selectedEmployee ? 'Update' : 'Create'}
+            <Button variant="outline" onClick={() => { setShowAddDialog(false); setValidationErrors({}); }}>Cancel</Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              {createMutation.isPending || updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {selectedEmployee ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                selectedEmployee ? 'Update Employee' : 'Create Employee'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2154,12 +2192,25 @@ export default function Employees() {
                 {/* Salary Tab */}
                 <TabsContent value="salary" className="mt-4">
                   <div className="space-y-6">
+                    <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-blue-700">
+                        💡 <strong>Tip:</strong> Update salary components below and click "Save Salary Structure" to apply changes.
+                      </p>
+                    </div>
                     <SalaryComponentsForm 
                       employee={selectedEmployee}
                       onSave={async (salaryData) => {
-                        await base44.entities.Employee.update(selectedEmployee.id, salaryData);
-                        queryClient.invalidateQueries(['employees']);
-                        toast.success('Salary structure updated');
+                        try {
+                          await base44.entities.Employee.update(selectedEmployee.id, salaryData);
+                          queryClient.invalidateQueries(['employees']);
+                          toast.success(`✅ Salary structure updated for ${selectedEmployee.full_name}`, {
+                            duration: 4000
+                          });
+                          // Update selectedEmployee to reflect changes
+                          setSelectedEmployee(prev => ({ ...prev, ...salaryData }));
+                        } catch (error) {
+                          toast.error('Failed to update salary structure');
+                        }
                       }}
                     />
                     <SalaryBreakdown employee={selectedEmployee} />
