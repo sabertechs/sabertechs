@@ -337,6 +337,21 @@ export default function Employees() {
       }, 66000);
       
       const newEmployeeId = String(maxId + 1);
+      
+      // Check and mark any pending invites as completed
+      const pendingInvites = await base44.entities.EmployeeInvite.filter({ 
+        email: formData.email.trim().toLowerCase(), 
+        invite_status: 'sent' 
+      });
+      
+      if (pendingInvites.length > 0) {
+        await Promise.all(
+          pendingInvites.map(invite => 
+            base44.entities.EmployeeInvite.update(invite.id, { invite_status: 'completed' })
+          )
+        );
+      }
+      
       createMutation.mutate({ ...formData, employee_id: newEmployeeId, bg_verification_status: "pending" });
     } else {
       updateMutation.mutate({ id: selectedEmployee.id, data: formData });
