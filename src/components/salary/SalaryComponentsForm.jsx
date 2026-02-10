@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Calculator, IndianRupee } from "lucide-react";
+import { Calculator, IndianRupee, Check, Loader2 } from "lucide-react";
 
 export default function SalaryComponentsForm({ employee, onSave }) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [components, setComponents] = useState({
     basic: 0,
     hra: 0,
@@ -60,12 +62,22 @@ export default function SalaryComponentsForm({ employee, onSave }) {
 
   const grossSalary = Object.values(components).reduce((sum, val) => sum + val, 0);
 
-  const handleSave = () => {
-    onSave({
-      salary: grossSalary,
-      salary_components: components,
-      deductions: deductions
-    });
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await onSave({
+        salary: grossSalary,
+        salary_components: components,
+        deductions: deductions
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Save error:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -230,8 +242,24 @@ export default function SalaryComponentsForm({ employee, onSave }) {
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-          <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700">
-            Save Salary Structure
+          <Button 
+            onClick={handleSave} 
+            disabled={saving || saved}
+            className={saved ? "bg-green-600 hover:bg-green-700" : "bg-indigo-600 hover:bg-indigo-700"}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : saved ? (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Saved Successfully
+              </>
+            ) : (
+              'Save Salary Structure'
+            )}
           </Button>
         </div>
       </CardContent>
