@@ -39,6 +39,8 @@ export default function Registration() {
   const [uploadingDoc, setUploadingDoc] = useState(null);
   const [errors, setErrors] = useState({});
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [existingEmployee, setExistingEmployee] = useState(null);
+  const [rejectedDocs, setRejectedDocs] = useState({});
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -97,17 +99,37 @@ export default function Registration() {
         
         if (employees.length > 0) {
           const emp = employees[0];
-          redirecting = true;
           
-          // Employee exists - redirect based on role
-          if (emp.role === 'hr' || emp.role === 'manager') {
-            window.location.replace(createPageUrl("HRDashboard"));
-          } else if (emp.role === 'department_head') {
-            window.location.replace(createPageUrl("DeptHeadDashboard"));
-          } else {
-            window.location.replace(createPageUrl("EmployeeDashboard"));
+          // Check if employee has rejected documents
+          const docStatus = emp.document_review_status || {};
+          const hasRejectedDocs = Object.values(docStatus).some(status => status === 'rejected');
+          
+          if (emp.status === 'active' && !hasRejectedDocs) {
+            // Fully active employee - redirect to dashboard
+            redirecting = true;
+            if (emp.role === 'hr' || emp.role === 'manager') {
+              window.location.replace(createPageUrl("HRDashboard"));
+            } else if (emp.role === 'department_head') {
+              window.location.replace(createPageUrl("DeptHeadDashboard"));
+            } else if (emp.role === 'freelancer') {
+              window.location.replace(createPageUrl("FreelancerDashboard"));
+            } else {
+              window.location.replace(createPageUrl("EmployeeDashboard"));
+            }
+            return;
           }
-          return;
+          
+          // Employee exists but has rejected docs - allow resubmission
+          if (hasRejectedDocs) {
+            setExistingEmployee(emp);
+            const rejections = {};
+            Object.entries(docStatus).forEach(([key, status]) => {
+              if (status === 'rejected') {
+                rejections[key] = emp.document_rejection_reasons?.[key] || 'Please resubmit this document';
+              }
+            });
+            setRejectedDocs(rejections);
+          }
         }
         
         // No employee record - show registration form
@@ -331,12 +353,37 @@ export default function Registration() {
       if (existingEmployees.length > 0) {
         // Update existing record - keep their original employment_type and role
         const existing = existingEmployees[0];
+        
+        // Reset document review statuses for resubmitted documents
+        const updatedDocStatus = { ...(existing.document_review_status || {}) };
+        const updatedRejectionReasons = { ...(existing.document_rejection_reasons || {}) };
+        
+        // Check which documents were resubmitted
+        if (formData.aadhaar_document !== existing.aadhaar_document) {
+          updatedDocStatus.aadhaar_document = 'pending';
+          delete updatedRejectionReasons.aadhaar_document;
+        }
+        if (formData.pan_document !== existing.pan_document) {
+          updatedDocStatus.pan_document = 'pending';
+          delete updatedRejectionReasons.pan_document;
+        }
+        if (JSON.stringify(formData.education_certificates) !== JSON.stringify(existing.education_certificates)) {
+          updatedDocStatus.education_certificates = 'pending';
+          delete updatedRejectionReasons.education_certificates;
+        }
+        if (formData.profile_photo !== existing.profile_photo) {
+          updatedDocStatus.profile_photo = 'pending';
+          delete updatedRejectionReasons.profile_photo;
+        }
+        
         await base44.entities.Employee.update(existing.id, {
           ...employeeData,
           employee_id: existing.employee_id || newEmployeeId,
           employment_type: existing.employment_type || "contractual",
           role: existing.role || "freelancer",
-          status: "active"
+          status: "pending",
+          document_review_status: updatedDocStatus,
+          document_rejection_reasons: updatedRejectionReasons
         });
         
         // Redirect based on their role
@@ -549,6 +596,31 @@ export default function Registration() {
                   <p className="text-slate-500">Upload required documents</p>
                 </div>
 
+                {Object.keys(rejectedDocs).length > 0 && (
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-red-800 mb-2">⚠️ Documents Require Resubmission</h4>
+                        <p className="text-sm text-red-700 mb-2">The following documents were rejected. Please upload corrected versions:</p>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+                          {Object.entries(rejectedDocs).map(([key, reason]) => {
+                            const labels = {
+                              aadhaar_document: 'Aadhaar Document',
+                              pan_document: 'PAN Document',
+                              education_certificates: 'Education Certificates',
+                              profile_photo: 'Profile Photo'
+                            };
+                            return (
+                              <li key={key}><strong>{labels[key]}:</strong> {reason}</li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Aadhaar Number * (12 digits)</Label>
@@ -584,9 +656,9 @@ export default function Registration() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Aadhaar Document *</Label>
+                    <Label>Aadhaar Document * {rejectedDocs.aadhaar_document && <span className="text-red-600 text-xs">(Rejected - Resubmit required)</span>}</Label>
                     <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
-                      errors.aadhaar_document ? 'border-red-500' : 'border-slate-200'
+                      errors.aadhaar_document ? 'border-red-500' : rejectedDocs.aadhaar_document ? 'border-red-300 bg-red-50' : 'border-slate-200'
                     }`}>
                       {formData.aadhaar_document ? (
                         <div className="flex flex-col items-center gap-2">
@@ -631,9 +703,9 @@ export default function Registration() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>PAN Document *</Label>
+                    <Label>PAN Document * {rejectedDocs.pan_document && <span className="text-red-600 text-xs">(Rejected - Resubmit required)</span>}</Label>
                     <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
-                      errors.pan_document ? 'border-red-500' : 'border-slate-200'
+                      errors.pan_document ? 'border-red-500' : rejectedDocs.pan_document ? 'border-red-300 bg-red-50' : 'border-slate-200'
                     }`}>
                       {formData.pan_document ? (
                         <div className="flex flex-col items-center gap-2">
@@ -679,9 +751,9 @@ export default function Registration() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Education Certificates * (Maximum 2 files)</Label>
+                  <Label>Education Certificates * (Maximum 2 files) {rejectedDocs.education_certificates && <span className="text-red-600 text-xs">(Rejected - Resubmit required)</span>}</Label>
                   <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
-                    errors.education_certificates ? 'border-red-500' : 'border-slate-200'
+                    errors.education_certificates ? 'border-red-500' : rejectedDocs.education_certificates ? 'border-red-300 bg-red-50' : 'border-slate-200'
                   }`}>
                     {formData.education_certificates.length < 2 ? (
                       <label className="cursor-pointer">
@@ -748,9 +820,9 @@ export default function Registration() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Profile Photo *</Label>
+                  <Label>Profile Photo * {rejectedDocs.profile_photo && <span className="text-red-600 text-xs">(Rejected - Resubmit required)</span>}</Label>
                   <div className={`border-2 border-dashed rounded-xl p-6 text-center hover:border-indigo-400 transition-colors ${
-                    errors.profile_photo ? 'border-red-500' : 'border-slate-200'
+                    errors.profile_photo ? 'border-red-500' : rejectedDocs.profile_photo ? 'border-red-300 bg-red-50' : 'border-slate-200'
                   }`}>
                     {formData.profile_photo ? (
                       <div className="flex flex-col items-center gap-2">
