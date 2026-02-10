@@ -23,7 +23,7 @@ export default function AssetAssignDialog({ asset, open, onClose }) {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.filter({ status: 'active' }),
+    queryFn: () => base44.entities.Employee.filter({ status: 'active', employment_type: 'permanent' }),
   });
 
   const assignMutation = useMutation({
