@@ -57,6 +57,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SendWhatsAppDialog from "@/components/whatsapp/SendWhatsAppDialog";
 import SalaryComponentsForm from "@/components/salary/SalaryComponentsForm";
 import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
+import DocumentReviewDialog from "@/components/employees/DocumentReviewDialog";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -84,6 +85,8 @@ export default function Employees() {
           const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
           const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
           const [deletingAll, setDeletingAll] = useState(false);
+  const [showDocReviewDialog, setShowDocReviewDialog] = useState(false);
+  const [docReviewEmployee, setDocReviewEmployee] = useState(null);
   const employeesPerPage = 40;
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteData, setInviteData] = useState({
@@ -344,23 +347,66 @@ export default function Employees() {
     setSendingInvite(null);
   };
 
-  const rejectDocuments = async (employee, reason) => {
+  const handleApproveDocument = async (docKey) => {
     try {
-      await base44.entities.Employee.update(employee.id, {
-        status: 'pending',
-        bg_verification_status: 'pending'
+      const currentStatus = docReviewEmployee.document_review_status || {};
+      await base44.entities.Employee.update(docReviewEmployee.id, {
+        document_review_status: {
+          ...currentStatus,
+          [docKey]: 'approved'
+        }
+      });
+      queryClient.invalidateQueries(['employees']);
+      toast.success('Document approved');
+    } catch (error) {
+      toast.error('Failed to approve document');
+    }
+  };
+
+  const handleRejectDocument = async (docKey, reason) => {
+    try {
+      const currentStatus = docReviewEmployee.document_review_status || {};
+      const currentReasons = docReviewEmployee.document_rejection_reasons || {};
+      
+      await base44.entities.Employee.update(docReviewEmployee.id, {
+        document_review_status: {
+          ...currentStatus,
+          [docKey]: 'rejected'
+        },
+        document_rejection_reasons: {
+          ...currentReasons,
+          [docKey]: reason
+        },
+        status: 'pending'
       });
 
+      // Get all rejected documents with reasons
+      const rejectedDocs = {
+        ...currentReasons,
+        [docKey]: reason
+      };
+
+      // Filter only rejected documents
+      const rejectedOnly = {};
+      Object.keys(rejectedDocs).forEach(key => {
+        const status = { ...currentStatus, [docKey]: 'rejected' };
+        if (status[key] === 'rejected') {
+          rejectedOnly[key] = rejectedDocs[key];
+        }
+      });
+
+      // Send notification email
       await base44.functions.invoke('sendDocumentRejection', {
-        employee_name: employee.full_name,
-        employee_email: employee.email,
-        rejection_reason: reason
+        employee_name: docReviewEmployee.full_name,
+        employee_email: docReviewEmployee.email,
+        rejected_documents: rejectedOnly
       });
 
       queryClient.invalidateQueries(['employees']);
-      toast.success('Documents rejected and notification sent');
+      toast.success('Document rejected and employee notified');
     } catch (error) {
-      toast.error('Failed to reject documents');
+      console.error('Rejection error:', error);
+      toast.error('Failed to reject document');
     }
   };
 
@@ -1595,6 +1641,11 @@ export default function Employees() {
                           <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
                             <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
                           </DropdownMenuItem>
+                          {(emp.aadhaar_document || emp.pan_document || emp.profile_photo) && (
+                            <DropdownMenuItem onClick={() => { setDocReviewEmployee(emp); setShowDocReviewDialog(true); }}>
+                              <ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Review Documents
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                                                       <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -2376,6 +2427,15 @@ export default function Employees() {
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
+
+                            {/* Document Review Dialog */}
+                            <DocumentReviewDialog
+                              open={showDocReviewDialog}
+                              onClose={() => { setShowDocReviewDialog(false); setDocReviewEmployee(null); }}
+                              employee={docReviewEmployee}
+                              onApprove={handleApproveDocument}
+                              onReject={handleRejectDocument}
+                            />
 
                             {/* Delete All Confirmation Dialog */}
                             <Dialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
