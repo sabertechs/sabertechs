@@ -1,5 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import nodemailer from 'npm:nodemailer@6.9.7';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
   try {
@@ -10,17 +9,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { employee_name, employee_email, rejection_reason } = await req.json();
+    const { employee_email, employee_name, rejected_documents } = await req.json();
 
-    if (!employee_name || !employee_email || !rejection_reason) {
+    if (!employee_email || !employee_name || !rejected_documents) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get app URL for registration link
-    const origin = new URL(req.url).origin;
-    const registrationUrl = `${origin}/#/Registration`;
+    // Create document list for email
+    const docList = Object.entries(rejected_documents)
+      .map(([docType, reason]) => {
+        const docLabels = {
+          aadhaar_document: 'Aadhaar Document',
+          pan_document: 'PAN Document',
+          education_certificates: 'Education Certificates',
+          profile_photo: 'Profile Photo'
+        };
+        return `<li><strong>${docLabels[docType] || docType}:</strong> ${reason}</li>`;
+      })
+      .join('');
 
-    const emailBody = `
+    // Get registration URL
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'https://app.base44.app';
+    const registrationUrl = `${origin}/Registration`;
+
+    const htmlBody = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,113 +40,75 @@ Deno.serve(async (req) => {
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-    .alert-box { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; }
-    .button { display: inline-block; background: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-    .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+    .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .doc-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .doc-list ul { margin: 10px 0; padding-left: 20px; }
+    .doc-list li { margin: 10px 0; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>⚠️ Document Review Required</h1>
+      <h1>🔍 Document Review Update</h1>
     </div>
     <div class="content">
       <p>Dear <strong>${employee_name}</strong>,</p>
       
-      <p>We have reviewed your submitted documents and require clarification or resubmission.</p>
-      
       <div class="alert-box">
-        <h3 style="margin-top: 0; color: #dc2626;">Rejection Reason:</h3>
-        <p style="margin-bottom: 0;"><strong>${rejection_reason}</strong></p>
+        <p><strong>⚠️ Action Required</strong></p>
+        <p>Some of your submitted documents need to be resubmitted. Please review the reasons below and upload correct documents.</p>
       </div>
-      
-      <p><strong>What you need to do:</strong></p>
+
+      <div class="doc-list">
+        <h3>Documents Requiring Resubmission:</h3>
+        <ul>
+          ${docList}
+        </ul>
+      </div>
+
+      <p><strong>Next Steps:</strong></p>
       <ol>
-        <li>Review the rejection reason mentioned above</li>
-        <li>Prepare the correct/clear documents</li>
-        <li>Login to complete your registration again with updated documents</li>
-        <li>Ensure all documents are clear, legible, and accurate</li>
+        <li>Click the button below to access the registration portal</li>
+        <li>Review the rejection reasons carefully</li>
+        <li>Upload the corrected documents</li>
+        <li>Submit for review again</li>
       </ol>
-      
+
       <div style="text-align: center;">
-        <a href="${registrationUrl}" class="button">Update Documents</a>
+        <a href="${registrationUrl}" class="button">📝 Resubmit Documents</a>
       </div>
-      
-      <p><strong>Important Guidelines:</strong></p>
-      <ul>
-        <li>All documents must be clear and readable</li>
-        <li>Aadhaar and PAN details must match your application</li>
-        <li>Upload high-quality scans or photos</li>
-        <li>Ensure all information is visible and not cropped</li>
-      </ul>
-      
-      <p>If you have any questions or need assistance, please contact the HR department immediately.</p>
-      
-      <p>Best regards,<br><strong>HR Team</strong><br>SaberTechs</p>
-    </div>
-    <div class="footer">
-      <p>This is an automated email. Please do not reply to this message.</p>
+
+      <p style="margin-top: 30px;">If you have any questions or need assistance, please contact HR.</p>
+
+      <p style="margin-top: 20px;">Best regards,<br><strong>HR Team</strong></p>
+
+      <div class="footer">
+        <p>This is an automated email. Please do not reply to this message.</p>
+      </div>
     </div>
   </div>
 </body>
-</html>
-    `;
+</html>`;
 
-    // Get email configuration from settings
-    const settings = await base44.asServiceRole.entities.AppSettings.list();
-    const emailConfigSetting = settings.find(s => s.setting_key === 'email_config');
-
-    if (emailConfigSetting?.setting_value) {
-      // Use custom SMTP configuration
-      const config = emailConfigSetting.setting_value;
-      
-      const transporter = nodemailer.createTransport({
-        host: config.smtp_host,
-        port: parseInt(config.smtp_port),
-        secure: false,
-        auth: {
-          user: config.smtp_user,
-          pass: config.smtp_password,
-        },
-      });
-
-      await transporter.sendMail({
-        from: `"${config.from_name}" <${config.from_email}>`,
-        to: employee_email,
-        subject: '⚠️ SaberTechs - Document Review Required',
-        html: emailBody,
-      });
-    } else {
-      // Fallback to Base44's built-in email service
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: employee_email,
-        subject: '⚠️ SaberTechs - Document Review Required',
-        body: emailBody
-      });
-    }
-
-    // Create in-app notification
-    await base44.asServiceRole.entities.Notification.create({
-      recipient_email: employee_email,
-      title: 'Documents Rejected - Action Required',
-      message: `Your submitted documents have been rejected. Reason: ${rejection_reason}. Please resubmit correct documents.`,
-      type: 'alert',
-      is_read: false,
-      link: '#/Registration'
+    await base44.integrations.Core.SendEmail({
+      to: employee_email,
+      subject: '⚠️ Document Resubmission Required - Action Needed',
+      body: htmlBody
     });
 
     return Response.json({ 
       success: true, 
-      message: 'Rejection notification sent successfully' 
+      message: 'Document rejection notification sent successfully' 
     });
-
   } catch (error) {
-    console.error('Send rejection error:', error);
+    console.error('Error sending document rejection:', error);
     return Response.json({ 
-      error: error.message,
-      success: false
+      error: 'Failed to send notification',
+      details: error.message 
     }, { status: 500 });
   }
 });
