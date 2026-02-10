@@ -146,6 +146,29 @@ export default function Employees() {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Auto-cleanup: Mark invites as completed if employee already exists
+  React.useEffect(() => {
+    const cleanupPendingInvites = async () => {
+      if (!invites.length || !employees.length) return;
+      
+      const pendingInvites = invites.filter(inv => inv.invite_status === 'sent');
+      const employeeEmails = employees.map(emp => emp.email.toLowerCase().trim());
+      
+      for (const invite of pendingInvites) {
+        const inviteEmail = invite.email.toLowerCase().trim();
+        if (employeeEmails.includes(inviteEmail)) {
+          await base44.entities.EmployeeInvite.update(invite.id, { invite_status: 'completed' });
+        }
+      }
+      
+      if (pendingInvites.some(inv => employeeEmails.includes(inv.email.toLowerCase().trim()))) {
+        queryClient.invalidateQueries(['employeeInvites']);
+      }
+    };
+    
+    cleanupPendingInvites();
+  }, [invites, employees, queryClient]);
+
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
     queryFn: () => base44.entities.OfferLetter.list(),
