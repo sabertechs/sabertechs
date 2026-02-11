@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Plus, Trash2, Edit, CheckCircle2 } from "lucide-react";
-import { v4 as uuidv4 } from 'crypto';
 
 const TASK_CATEGORIES = [
   { value: "paperwork", label: "Paperwork" },
