@@ -79,6 +79,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import Notifications from './pages/Notifications';
 import OfferLetterManagement from './pages/OfferLetterManagement';
 import OfficeOpsArena from './pages/OfficeOpsArena';
+import OnboardingTemplates from './pages/OnboardingTemplates';
 import PayslipManagement from './pages/PayslipManagement';
 import PolicyManagement from './pages/PolicyManagement';
 import ProjectDetails from './pages/ProjectDetails';
@@ -88,7 +89,6 @@ import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import OnboardingTemplates from './pages/OnboardingTemplates';
 import __Layout from './Layout.jsx';
 
 
@@ -125,6 +125,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "OfferLetterManagement": OfferLetterManagement,
     "OfficeOpsArena": OfficeOpsArena,
+    "OnboardingTemplates": OnboardingTemplates,
     "PayslipManagement": PayslipManagement,
     "PolicyManagement": PolicyManagement,
     "ProjectDetails": ProjectDetails,
@@ -134,7 +135,6 @@ export const PAGES = {
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "OnboardingTemplates": OnboardingTemplates,
 }
 
 export const pagesConfig = {

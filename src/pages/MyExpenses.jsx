@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Plus, Receipt, Upload, Loader2, CheckCircle, XCircle, Clock, Sparkles, AlertTriangle, TrendingUp, Brain } from "lucide-react";
+import { Plus, Receipt, Upload, Loader2, CheckCircle, XCircle, Clock, Sparkles, AlertTriangle, TrendingUp, Brain, Edit2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export default function MyExpenses() {
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
@@ -105,6 +106,23 @@ export default function MyExpenses() {
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return await base44.entities.Expense.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['expenses']);
+      setShowAddDialog(false);
+      setEditingExpense(null);
+      resetForm();
+      setAiAnalysis(null);
+      toast({
+        title: "Success",
+        description: "Expense updated successfully"
+      });
+    }
+  });
+
   const resetForm = () => {
     setFormData({
       expense_type: "",
@@ -174,15 +192,37 @@ export default function MyExpenses() {
     setLoadingInsights(false);
   };
 
-  const handleSubmit = () => {
-    createMutation.mutate({
-      ...formData,
-      amount: parseFloat(formData.amount),
-      employee_email: user.email,
-      employee_name: user.full_name,
-      department: employee?.department || "",
-      status: "pending"
+  const handleEdit = (expense) => {
+    setEditingExpense(expense);
+    setFormData({
+      expense_type: expense.expense_type || "",
+      amount: expense.amount?.toString() || "",
+      date: expense.date || format(new Date(), 'yyyy-MM-dd'),
+      description: expense.description || "",
+      receipt_url: expense.receipt_url || ""
     });
+    setShowAddDialog(true);
+  };
+
+  const handleSubmit = () => {
+    if (editingExpense) {
+      updateMutation.mutate({
+        id: editingExpense.id,
+        data: {
+          ...formData,
+          amount: parseFloat(formData.amount)
+        }
+      });
+    } else {
+      createMutation.mutate({
+        ...formData,
+        amount: parseFloat(formData.amount),
+        employee_email: user.email,
+        employee_name: user.full_name,
+        department: employee?.department || "",
+        status: "pending"
+      });
+    }
   };
 
   const stats = {
@@ -342,9 +382,21 @@ export default function MyExpenses() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-slate-800">₹{expense.amount?.toLocaleString()}</p>
-                      <Badge className={statusColors[expense.status]}>
-                        {expense.status}
-                      </Badge>
+                      <div className="flex items-center gap-2 justify-end mt-1">
+                        <Badge className={statusColors[expense.status]}>
+                          {expense.status}
+                        </Badge>
+                        {expense.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(expense)}
+                            className="h-7 px-2"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
                       {expense.rejection_reason && (
                         <p className="text-xs text-red-500 mt-1">{expense.rejection_reason}</p>
                       )}
@@ -451,7 +503,7 @@ export default function MyExpenses() {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              Submit Expense
+              {editingExpense ? 'Edit Expense' : 'Submit Expense'}
               <Badge variant="outline" className="bg-purple-50 text-purple-700">
                 <Sparkles className="w-3 h-3 mr-1" />
                 AI-Powered
@@ -599,14 +651,14 @@ export default function MyExpenses() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowAddDialog(false); setEditingExpense(null); }}>Cancel</Button>
             <Button 
               onClick={handleSubmit} 
-              disabled={!formData.expense_type || !formData.amount || createMutation.isPending}
+              disabled={!formData.expense_type || !formData.amount || createMutation.isPending || updateMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Submit
+              {(createMutation.isPending || updateMutation.isPending) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {editingExpense ? 'Update' : 'Submit'}
             </Button>
           </DialogFooter>
         </DialogContent>
