@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EditProfileSection from "@/components/employee/EditProfileSection";
 import CompanyFeed from "@/components/feed/CompanyFeed";
+import OnboardingChecklistCard from "@/components/onboarding/OnboardingChecklistCard";
 
 export default function EmployeeDashboard() {
   const [user, setUser] = useState(null);
@@ -47,6 +48,12 @@ export default function EmployeeDashboard() {
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', user?.email],
     queryFn: () => base44.entities.Expense.filter({ employee_email: user?.email }, '-created_date', 5),
+    enabled: !!user?.email,
+  });
+
+  const { data: onboardingChecklists = [] } = useQuery({
+    queryKey: ['onboarding-checklist', user?.email],
+    queryFn: () => base44.entities.OnboardingChecklist.filter({ employee_email: user?.email, status: 'in_progress' }),
     enabled: !!user?.email,
   });
 
@@ -215,6 +222,15 @@ export default function EmployeeDashboard() {
         {/* Company Feed */}
         <CompanyFeed user={user} limit={3} />
       </div>
+
+      {/* Onboarding Checklist */}
+      {onboardingChecklists.length > 0 && (
+        <div className="space-y-4">
+          {onboardingChecklists.map(checklist => (
+            <OnboardingChecklistCard key={checklist.id} checklist={checklist} userEmail={user?.email} />
+          ))}
+        </div>
+      )}
 
       {/* My Profile Section */}
       {employee && (
