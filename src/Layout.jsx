@@ -69,10 +69,20 @@ export default function Layout({ children, currentPageName }) {
         const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
         if (employees.length > 0) {
           const emp = employees[0];
+          
+          // Check if employee status is pending and not HR/manager/department_head
+          if (emp.status === 'pending' && emp.role !== 'hr' && emp.role !== 'manager' && emp.role !== 'department_head') {
+            // Redirect pending employees to registration to complete profile
+            if (currentPageName !== "Registration") {
+              window.location.href = createPageUrl("Registration");
+              return;
+            }
+          }
+          
           setEmployeeData(emp);
           
-          // If on Registration page but employee exists, redirect to appropriate dashboard
-          if (currentPageName === "Registration") {
+          // If on Registration page but employee exists with active status, redirect to appropriate dashboard
+          if (currentPageName === "Registration" && emp.status === 'active') {
             if (emp.role === 'hr' || emp.role === 'manager') {
               window.location.replace(createPageUrl("HRDashboard"));
             } else if (emp.role === 'department_head') {
