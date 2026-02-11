@@ -58,6 +58,7 @@ import SendWhatsAppDialog from "@/components/whatsapp/SendWhatsAppDialog";
 import SalaryComponentsForm from "@/components/salary/SalaryComponentsForm";
 import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
 import DocumentReviewDialog from "@/components/employees/DocumentReviewDialog";
+import AssignChecklistDialog from "@/components/onboarding/AssignChecklistDialog";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -1688,6 +1689,9 @@ export default function Employees() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
                             <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
+                            <AssignChecklistDialog employee={emp} />
                           </DropdownMenuItem>
                           {(emp.aadhaar_document || emp.pan_document || emp.profile_photo) && (
                             <DropdownMenuItem onClick={() => { setDocReviewEmployee(emp); setShowDocReviewDialog(true); }}>
