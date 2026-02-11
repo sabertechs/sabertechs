@@ -113,12 +113,29 @@ export default function Layout({ children, currentPageName }) {
     refetchInterval: 3 * 60 * 1000,
   });
 
+  const { data: moduleSettings } = useQuery({
+    queryKey: ['module-settings'],
+    queryFn: async () => {
+      const results = await base44.entities.AppSettings.filter({ setting_key: 'enabled_modules' });
+      if (results.length > 0) {
+        const modules = {};
+        results[0].setting_value.forEach(mod => {
+          modules[mod.module_id] = mod.enabled;
+        });
+        return modules;
+      }
+      return null;
+    },
+    enabled: !!user?.email,
+  });
+
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
 
   const getNavItems = useCallback(() => {
     const items = [];
     const sectionAccess = employeeData?.section_access || [];
     const hasAccess = (sectionId) => sectionAccess.length === 0 || sectionAccess.includes(sectionId);
+    const isModuleEnabled = (moduleId) => moduleSettings === null || moduleSettings[moduleId] !== false;
 
     // Dashboard based on role
     if (userRole === 'hr' || userRole === 'manager') {
@@ -134,28 +151,29 @@ export default function Layout({ children, currentPageName }) {
     // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
       if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
       if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
       if (hasAccess('api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
       if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-      if (hasAccess('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
+      if (hasAccess('assets') && isModuleEnabled('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
       if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
       if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-      if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-      if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+      if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
-      items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+      if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+      items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     } else if (userRole === 'department_head') {
       if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
@@ -164,12 +182,12 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
       if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-      if (hasAccess('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-      if (hasAccess('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-      items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+      if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+      if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else if (userRole === 'freelancer') {
       // Freelancers have access to projects, payslips and company feed
-      items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
+      if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     } else {
@@ -190,13 +208,13 @@ export default function Layout({ children, currentPageName }) {
         }
         // All permanent employees can access policies, assets, and games
         items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
-        items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
-        items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+        if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
+        if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       }
     }
 
     return items;
-  }, [userRole, employeeData?.section_access, employeeData?.employment_type]);
+  }, [userRole, employeeData?.section_access, employeeData?.employment_type, moduleSettings]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 

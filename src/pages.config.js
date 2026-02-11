@@ -87,6 +87,7 @@ import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
+import ModuleManagement from './pages/ModuleManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -131,6 +132,7 @@ export const PAGES = {
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
+    "ModuleManagement": ModuleManagement,
 }
 
 export const pagesConfig = {
