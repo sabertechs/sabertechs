@@ -55,8 +55,8 @@ export default function Layout({ children, currentPageName }) {
             setLoading(false);
             return;
           }
-          // For other pages, show error or redirect
-          setLoading(false);
+          // For other pages, redirect to login
+          base44.auth.redirectToLogin(window.location.href);
           return;
         }
         
