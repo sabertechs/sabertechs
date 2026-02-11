@@ -54,6 +54,25 @@ export default function MyExpenses() {
     enabled: !!user?.email,
   });
 
+  const { data: expenseTypes = [] } = useQuery({
+    queryKey: ['expense-types'],
+    queryFn: async () => {
+      const settings = await base44.entities.AppSettings.filter({ setting_key: 'expense_types' });
+      if (settings.length > 0 && settings[0].setting_value) {
+        return settings[0].setting_value;
+      }
+      // Default fallback
+      return [
+        { id: 'travel', name: 'Travel' },
+        { id: 'meals', name: 'Meals' },
+        { id: 'accommodation', name: 'Accommodation' },
+        { id: 'supplies', name: 'Supplies' },
+        { id: 'communication', name: 'Communication' },
+        { id: 'other', name: 'Other' }
+      ];
+    }
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const expense = await base44.entities.Expense.create(data);
@@ -445,12 +464,11 @@ export default function MyExpenses() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="travel">Travel</SelectItem>
-                  <SelectItem value="meals">Meals</SelectItem>
-                  <SelectItem value="accommodation">Accommodation</SelectItem>
-                  <SelectItem value="supplies">Supplies</SelectItem>
-                  <SelectItem value="communication">Communication</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {expenseTypes.map(type => (
+                    <SelectItem key={type.id || type} value={type.id || type}>
+                      {type.name || type}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
