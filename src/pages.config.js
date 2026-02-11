@@ -70,6 +70,7 @@ import FreelancerUpload from './pages/FreelancerUpload';
 import Freelancers from './pages/Freelancers';
 import HRDashboard from './pages/HRDashboard';
 import Home from './pages/Home';
+import ModuleManagement from './pages/ModuleManagement';
 import MyAssets from './pages/MyAssets';
 import MyAttendance from './pages/MyAttendance';
 import MyExpenses from './pages/MyExpenses';
@@ -87,7 +88,7 @@ import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import ModuleManagement from './pages/ModuleManagement';
+import OnboardingTemplates from './pages/OnboardingTemplates';
 import __Layout from './Layout.jsx';
 
 
@@ -115,6 +116,7 @@ export const PAGES = {
     "Freelancers": Freelancers,
     "HRDashboard": HRDashboard,
     "Home": Home,
+    "ModuleManagement": ModuleManagement,
     "MyAssets": MyAssets,
     "MyAttendance": MyAttendance,
     "MyExpenses": MyExpenses,
@@ -132,7 +134,7 @@ export const PAGES = {
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "ModuleManagement": ModuleManagement,
+    "OnboardingTemplates": OnboardingTemplates,
 }
 
 export const pagesConfig = {

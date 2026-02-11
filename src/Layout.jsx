@@ -25,7 +25,8 @@ import {
   BookOpen,
   Package,
   Gamepad2,
-  Briefcase
+  Briefcase,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
