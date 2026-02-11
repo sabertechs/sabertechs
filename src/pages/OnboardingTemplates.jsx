@@ -197,7 +197,9 @@ export default function OnboardingTemplates() {
                     <SelectContent>
                       <SelectItem value={null}>All Departments</SelectItem>
                       {departments.map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        <SelectItem key={dept.id || dept} value={dept.id || dept}>
+                          {dept.name || dept}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
