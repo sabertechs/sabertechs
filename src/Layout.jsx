@@ -135,7 +135,7 @@ export default function Layout({ children, currentPageName }) {
     const items = [];
     const sectionAccess = employeeData?.section_access || [];
     const hasAccess = (sectionId) => sectionAccess.length === 0 || sectionAccess.includes(sectionId);
-    const isModuleEnabled = (moduleId) => moduleSettings === null || moduleSettings[moduleId] !== false;
+    const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
 
     // Dashboard based on role
     if (userRole === 'hr' || userRole === 'manager') {
