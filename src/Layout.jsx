@@ -383,7 +383,7 @@ export default function Layout({ children, currentPageName }) {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => base44.auth.logout(window.location.origin)}>
+                <DropdownMenuItem onClick={() => base44.auth.logout()}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
