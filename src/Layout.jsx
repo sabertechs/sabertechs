@@ -16,6 +16,7 @@ import {
   X,
   LogOut,
   ChevronDown,
+  ChevronRight,
   Building2,
   UserPlus,
   Shield,
@@ -44,6 +45,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({ hrAdmin: true });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -161,13 +163,27 @@ export default function Layout({ children, currentPageName }) {
 
     // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
-      if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-      items.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-      if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-      if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-      if (hasAccess('onboarding')) items.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+      // HR Admin Section - grouped employee-related modules
+      const hrAdminItems = [];
+      if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
+      if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+      if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+      
+      if (hrAdminItems.length > 0) {
+        items.push({ 
+          name: "HR Admin", 
+          icon: Users, 
+          isSection: true, 
+          sectionId: "hrAdmin",
+          children: hrAdminItems 
+        });
+      }
+      
+      // Other modules at top level
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
       if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
@@ -183,13 +199,26 @@ export default function Layout({ children, currentPageName }) {
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     } else if (userRole === 'department_head') {
-      if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-      items.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-      if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-      if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-      if (hasAccess('onboarding')) items.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+      // HR Admin Section for dept heads
+      const hrAdminItems = [];
+      if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
+      if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+      if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+      
+      if (hrAdminItems.length > 0) {
+        items.push({ 
+          name: "HR Admin", 
+          icon: Users, 
+          isSection: true, 
+          sectionId: "hrAdmin",
+          children: hrAdminItems 
+        });
+      }
+      
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
       if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
@@ -333,6 +362,57 @@ export default function Layout({ children, currentPageName }) {
           {/* Navigation */}
           <nav className="flex-1 px-2 lg:group-hover:px-4 py-4 space-y-1 overflow-y-auto transition-all duration-300">
             {navItems.map((item) => {
+              if (item.isSection) {
+                const isExpanded = expandedSections[item.sectionId];
+                const hasActiveChild = item.children?.some(child => child.page === currentPageName);
+                
+                return (
+                  <div key={item.sectionId}>
+                    <button
+                      onClick={() => setExpandedSections(prev => ({ ...prev, [item.sectionId]: !prev[item.sectionId] }))}
+                      className={`
+                        w-full flex items-center gap-3 px-3 lg:group-hover:px-4 py-3 rounded-xl transition-all duration-200 text-left
+                        ${hasActiveChild ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}
+                      `}
+                      title={item.name}
+                    >
+                      <item.icon className={`w-5 h-5 flex-shrink-0 ${hasActiveChild ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      <span className="flex-1 font-medium whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">{item.name}</span>
+                      {isExpanded ? 
+                        <ChevronDown className="w-4 h-4 flex-shrink-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" /> : 
+                        <ChevronRight className="w-4 h-4 flex-shrink-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300" />
+                      }
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {item.children?.map((child) => {
+                          const isActive = currentPageName === child.page;
+                          return (
+                            <Link
+                              key={child.page}
+                              to={createPageUrl(child.page)}
+                              onClick={() => setSidebarOpen(false)}
+                              className={`
+                                flex items-center gap-3 px-3 lg:group-hover:px-4 py-2 rounded-lg transition-all duration-200
+                                ${isActive 
+                                  ? 'bg-indigo-600 text-white shadow-md' 
+                                  : 'text-slate-600 hover:bg-slate-100'
+                                }
+                              `}
+                              title={child.name}
+                            >
+                              <child.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                              <span className="font-medium text-sm whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">{child.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              
               const isActive = currentPageName === item.page;
               return (
                 <Link
