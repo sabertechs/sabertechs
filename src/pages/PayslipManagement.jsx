@@ -188,6 +188,53 @@ export default function PayslipManagement() {
     setGeneratingBulk(false);
   };
 
+  const downloadPayrollData = () => {
+    if (filteredPayslips.length === 0) {
+      toast.error('No payslips to download');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Employee ID', 'Employee Name', 'Email', 'Month', 'Year', 'Basic Salary', 'HRA', 'DA', 'Other Allowances', 'Gross Salary', 'PF Deduction', 'Tax Deduction', 'Other Deductions', 'Total Deductions', 'Net Salary', 'Payment Status'];
+    
+    const rows = filteredPayslips.map(p => [
+      p.employee_id || '',
+      p.employee_name || '',
+      p.employee_email || '',
+      p.month || '',
+      p.year || '',
+      p.basic_salary || 0,
+      p.hra || 0,
+      p.da || 0,
+      p.other_allowances || 0,
+      p.gross_salary || 0,
+      p.pf_deduction || 0,
+      p.tax_deduction || 0,
+      p.other_deductions || 0,
+      ((p.pf_deduction || 0) + (p.tax_deduction || 0) + (p.other_deductions || 0)),
+      p.net_salary || 0,
+      p.payment_status || 'pending'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `payroll_${monthFilter !== 'all' ? monthFilter : 'all'}_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Payroll data downloaded');
+  };
+
   const sendPayslipNotification = async (payslip) => {
     // Send in-app notification
     await base44.entities.Notification.create({
@@ -229,6 +276,10 @@ export default function PayslipManagement() {
           <p className="text-slate-500">Generate and manage employee payslips</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={downloadPayrollData} variant="outline" className="border-green-600 text-green-700 hover:bg-green-50">
+            <Download className="w-4 h-4 mr-2" />
+            Download Payroll
+          </Button>
           <Button onClick={() => setShowBulkDialog(true)} className="bg-green-600 hover:bg-green-700">
             <Zap className="w-4 h-4 mr-2" />
             Auto Generate (Month)
