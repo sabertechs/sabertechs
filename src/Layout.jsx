@@ -163,6 +163,7 @@ export default function Layout({ children, currentPageName }) {
     if (userRole === 'hr' || userRole === 'manager') {
       if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
       if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      items.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
       if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
       if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
@@ -184,6 +185,7 @@ export default function Layout({ children, currentPageName }) {
     } else if (userRole === 'department_head') {
       if (hasAccess('employees')) items.push({ name: "Employees", icon: Users, page: "Employees" });
       if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      items.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
       if (hasAccess('employee_upload')) items.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
       if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) items.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
