@@ -89,16 +89,6 @@ export default function Employees() {
   const [showDocReviewDialog, setShowDocReviewDialog] = useState(false);
   const [docReviewEmployee, setDocReviewEmployee] = useState(null);
   const employeesPerPage = 40;
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [inviteData, setInviteData] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    department: "",
-    designation: "",
-    date_of_joining: "",
-    salary: ""
-  });
   const [sendingInvite, setSendingInvite] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
@@ -140,35 +130,6 @@ export default function Employees() {
   });
 
   const employees = useMemo(() => allEmployees.filter(emp => emp.employment_type === 'permanent'), [allEmployees]);
-
-  const { data: invites = [] } = useQuery({
-    queryKey: ['employeeInvites'],
-    queryFn: () => base44.entities.EmployeeInvite.list('-invite_sent_date'),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Auto-cleanup: Mark invites as completed if employee already exists
-  React.useEffect(() => {
-    const cleanupPendingInvites = async () => {
-      if (!invites.length || !employees.length) return;
-      
-      const pendingInvites = invites.filter(inv => inv.invite_status === 'sent');
-      const employeeEmails = employees.map(emp => emp.email.toLowerCase().trim());
-      
-      for (const invite of pendingInvites) {
-        const inviteEmail = invite.email.toLowerCase().trim();
-        if (employeeEmails.includes(inviteEmail)) {
-          await base44.entities.EmployeeInvite.update(invite.id, { invite_status: 'completed' });
-        }
-      }
-      
-      if (pendingInvites.some(inv => employeeEmails.includes(inv.email.toLowerCase().trim()))) {
-        queryClient.invalidateQueries(['employeeInvites']);
-      }
-    };
-    
-    cleanupPendingInvites();
-  }, [invites, employees, queryClient]);
 
   const { data: offerLetters = [] } = useQuery({
     queryKey: ['offerLetters'],
@@ -362,20 +323,6 @@ export default function Employees() {
       
       const newEmployeeId = String(maxId + 1);
       
-      // Check and mark any pending invites as completed
-      const pendingInvites = await base44.entities.EmployeeInvite.filter({ 
-        email: formData.email.trim().toLowerCase(), 
-        invite_status: 'sent' 
-      });
-      
-      if (pendingInvites.length > 0) {
-        await Promise.all(
-          pendingInvites.map(invite => 
-            base44.entities.EmployeeInvite.update(invite.id, { invite_status: 'completed' })
-          )
-        );
-      }
-      
       createMutation.mutate({ ...formData, employee_id: newEmployeeId, bg_verification_status: "pending" });
     } else {
       updateMutation.mutate({ id: selectedEmployee.id, data: formData });
@@ -459,94 +406,7 @@ export default function Employees() {
     }
   };
 
-  const handleSendInvite = async () => {
-    if (!inviteData.full_name || !inviteData.email) {
-      toast.error('Name and email are required');
-      return;
-    }
 
-    setSendingInvite(true);
-    try {
-      const user = await base44.auth.me();
-      
-      // Check for duplicates
-      try {
-        const existingByEmail = await base44.entities.Employee.filter({ email: inviteData.email.trim().toLowerCase() });
-        if (existingByEmail.length > 0) {
-          toast.error('An employee with this email already exists');
-          setSendingInvite(false);
-          return;
-        }
-        
-        if (inviteData.phone) {
-          const existingByPhone = await base44.entities.Employee.filter({ phone: inviteData.phone.trim() });
-          if (existingByPhone.length > 0) {
-            toast.error('An employee with this phone number already exists');
-            setSendingInvite(false);
-            return;
-          }
-        }
-      } catch (dupError) {
-        console.error('Duplicate check error:', dupError);
-        toast.error('Failed to validate employee data');
-        setSendingInvite(false);
-        return;
-      }
-      
-      // Generate employee ID
-      const maxId = employees.reduce((max, emp) => {
-        if (emp.employee_id && emp.employee_id.startsWith('66')) {
-          const num = parseInt(emp.employee_id);
-          return num > max ? num : max;
-        }
-        return max;
-      }, 66000);
-      
-      const newEmployeeId = String(maxId + 1);
-      
-      // Create employee record with pending status
-      await base44.entities.Employee.create({
-        ...inviteData,
-        employee_id: newEmployeeId,
-        employment_type: "permanent",
-        status: "pending",
-        role: "employee",
-        bg_verification_status: "pending"
-      });
-
-      // Track the invitation
-      await base44.entities.EmployeeInvite.create({
-        ...inviteData,
-        invited_by: user.email,
-        invite_status: "sent",
-        invite_sent_date: new Date().toISOString()
-      });
-
-      // Send invitation email
-      const emailResult = await base44.functions.invoke('sendEmployeeInvite', {
-        employee_name: inviteData.full_name,
-        employee_email: inviteData.email
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setShowInviteDialog(false);
-      setInviteData({
-        full_name: "",
-        email: "",
-        phone: "",
-        department: "",
-        designation: "",
-        date_of_joining: "",
-        salary: ""
-      });
-      toast.success(`Invitation email sent to ${inviteData.email}`);
-    } catch (error) {
-      toast.error('Failed to send invitation: ' + error.message);
-      console.error(error);
-    } finally {
-      setSendingInvite(false);
-    }
-  };
 
   const getOfferLetter = useCallback((email) => offerLetters.find(ol => ol.employee_email === email), [offerLetters]);
 
@@ -1330,62 +1190,9 @@ export default function Employees() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Employees</h2>
-          <p className="text-slate-500">
-            Manage your organization's employees
-            {invites.filter(inv => inv.invite_status === 'sent').length > 0 && (
-              <span className="ml-2 text-indigo-600 font-medium">
-                • {invites.filter(inv => inv.invite_status === 'sent').length} pending invite(s)
-              </span>
-            )}
-          </p>
+          <p className="text-slate-500">Manage your organization's employees</p>
         </div>
         <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline"
-                className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Invitations
-                {invites.filter(inv => inv.invite_status === 'sent').length > 0 && (
-                  <Badge className="ml-2 bg-indigo-600 text-white">
-                    {invites.filter(inv => inv.invite_status === 'sent').length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <div className="p-2">
-                <h4 className="font-semibold text-sm mb-2">Sent Invitations</h4>
-                {invites.filter(inv => inv.invite_status === 'sent').length === 0 ? (
-                  <p className="text-slate-500 text-sm text-center py-4">No pending invitations</p>
-                ) : (
-                  <div className="max-h-80 overflow-y-auto space-y-2">
-                    {invites.filter(inv => inv.invite_status === 'sent').map((invite) => (
-                      <div key={invite.id} className="p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{invite.full_name}</p>
-                            <p className="text-xs text-slate-500 truncate">{invite.email}</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              Sent {format(new Date(invite.invite_sent_date), 'MMM d, yyyy')}
-                            </p>
-                          </div>
-                          <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowInviteDialog(true)} className="cursor-pointer">
-                <Mail className="w-4 h-4 mr-2" />
-                Send New Invite
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <Button 
             variant="outline"
             onClick={exportToCSV}
@@ -2415,111 +2222,7 @@ export default function Employees() {
                                         employee={whatsAppEmployee}
                                       />
 
-                            {/* Invite Employee Dialog */}
-                            <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                              <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                  <DialogTitle>Invite Permanent Employee</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                                    <p className="text-sm text-blue-700">
-                                      <strong>Note:</strong> An invitation email will be sent to the employee with instructions to complete their registration and onboarding.
-                                    </p>
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label>Full Name *</Label>
-                                      <Input
-                                        value={inviteData.full_name}
-                                        onChange={(e) => setInviteData({ ...inviteData, full_name: e.target.value })}
-                                        placeholder="Employee full name"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Email *</Label>
-                                      <Input
-                                        type="email"
-                                        value={inviteData.email}
-                                        onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                                        placeholder="official@email.com"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Phone</Label>
-                                      <Input
-                                        value={inviteData.phone}
-                                        onChange={(e) => setInviteData({ ...inviteData, phone: e.target.value })}
-                                        placeholder="+91 XXXXX XXXXX"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Department</Label>
-                                      <Select value={inviteData.department} onValueChange={(v) => setInviteData({ ...inviteData, department: v })}>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select department" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {settingsDepartments.map(dept => (
-                                            <SelectItem key={dept.id} value={dept.id} className="capitalize">{dept.name}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Designation</Label>
-                                      <Select value={inviteData.designation} onValueChange={(v) => setInviteData({ ...inviteData, designation: v })}>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select designation" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {settingsDesignations.map(des => (
-                                            <SelectItem key={des.id} value={des.id}>{des.name}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Date of Joining</Label>
-                                      <Input
-                                        type="date"
-                                        value={inviteData.date_of_joining}
-                                        onChange={(e) => setInviteData({ ...inviteData, date_of_joining: e.target.value })}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Salary</Label>
-                                      <Input
-                                        type="number"
-                                        value={inviteData.salary}
-                                        onChange={(e) => setInviteData({ ...inviteData, salary: parseFloat(e.target.value) })}
-                                        placeholder="Monthly salary"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
-                                  <Button 
-                                    onClick={handleSendInvite} 
-                                    disabled={sendingInvite}
-                                    className="bg-indigo-600 hover:bg-indigo-700"
-                                  >
-                                    {sendingInvite ? (
-                                      <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Sending...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Mail className="w-4 h-4 mr-2" />
-                                        Send Invitation
-                                      </>
-                                    )}
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
+
 
                             {/* Document Review Dialog */}
                             <DocumentReviewDialog
