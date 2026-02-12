@@ -89,6 +89,8 @@ import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
+import EmployeeOnboarding from './pages/EmployeeOnboarding';
+import AddEmployee from './pages/AddEmployee';
 import __Layout from './Layout.jsx';
 
 
@@ -135,6 +137,8 @@ export const PAGES = {
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
+    "EmployeeOnboarding": EmployeeOnboarding,
+    "AddEmployee": AddEmployee,
 }
 
 export const pagesConfig = {
