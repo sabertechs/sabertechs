@@ -32,7 +32,9 @@ const AVAILABLE_SECTIONS = [
   { id: 'attendance', name: 'Attendance', description: 'Attendance management', category: 'Operations' },
   { id: 'payslips', name: 'Payslips', description: 'Payslip generation', category: 'Operations' },
   { id: 'expenses', name: 'Expenses', description: 'Expense approvals', category: 'Operations' },
+  { id: 'onboarding', name: 'Onboarding', description: 'Employee onboarding', category: 'Operations' },
   { id: 'team_view', name: 'Team View', description: 'View team members', category: 'Operations' },
+  { id: 'projects', name: 'Projects', description: 'Project management', category: 'Operations' },
   
   // Assets & Resources (HR only)
   { id: 'assets', name: 'Asset Management', description: 'Full asset control', category: 'Resources' },
