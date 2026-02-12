@@ -145,10 +145,6 @@ export default function AccessControl() {
   };
 
   const filteredEmployees = employees.filter(emp => {
-    // Exclude freelancers from access control unless explicitly filtered
-    if (emp.role === 'freelancer' && roleFilter !== 'freelancer' && roleFilter !== 'all') {
-      return false;
-    }
     const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
                          emp.email?.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter === "all" || emp.role === roleFilter;
