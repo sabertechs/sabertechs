@@ -32,6 +32,9 @@ Deno.serve(async (req) => {
           email: emp.email,
           old_role: emp.role
         });
+        
+        // Add delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
         results.failed.push({
           name: emp.full_name,
