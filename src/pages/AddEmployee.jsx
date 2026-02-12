@@ -43,21 +43,27 @@ export default function AddEmployee() {
 
       const token = generateToken();
       
-      await base44.entities.Employee.create({
+      const employeeData = {
         full_name: formData.full_name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         department: formData.department.toLowerCase(),
         designation: formData.designation.trim(),
         date_of_joining: formData.date_of_joining,
-        salary: formData.salary ? parseFloat(formData.salary) : null,
         role: formData.role,
         employee_id: newEmployeeId,
         employment_type: "permanent",
         status: "pending",
         bg_verification_status: "pending",
         onboarding_token: token
-      });
+      };
+      
+      // Only add salary if it has a value
+      if (formData.salary && formData.salary.trim() !== '') {
+        employeeData.salary = parseFloat(formData.salary);
+      }
+      
+      await base44.entities.Employee.create(employeeData);
 
       const link = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}#/EmployeeOnboarding?token=${token}`;
       setOnboardingLink(link);
