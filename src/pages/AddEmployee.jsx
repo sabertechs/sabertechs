@@ -11,6 +11,7 @@ export default function AddEmployee() {
   const [loading, setLoading] = useState(false);
   const [onboardingLink, setOnboardingLink] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -28,6 +29,22 @@ export default function AddEmployee() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({});
+    
+    // Validate required fields
+    const newErrors = {};
+    if (!formData.full_name.trim()) newErrors.full_name = "Full name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (!formData.department.trim()) newErrors.department = "Department is required";
+    if (!formData.designation.trim()) newErrors.designation = "Designation is required";
+    if (!formData.date_of_joining) newErrors.date_of_joining = "Joining date is required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -81,7 +98,20 @@ export default function AddEmployee() {
       });
     } catch (error) {
       console.error('Error creating employee:', error);
-      alert('Failed to create employee. Please try again.');
+      
+      // Parse error message for specific field errors
+      if (error.response?.data?.message) {
+        const errorMsg = error.response.data.message;
+        if (errorMsg.includes('email')) {
+          setErrors({ email: "Invalid email or email already exists" });
+        } else if (errorMsg.includes('phone')) {
+          setErrors({ phone: "Invalid phone number" });
+        } else {
+          setErrors({ general: errorMsg });
+        }
+      } else {
+        setErrors({ general: "Failed to create employee. Please check your input and try again." });
+      }
     } finally {
       setLoading(false);
     }
@@ -110,13 +140,20 @@ export default function AddEmployee() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errors.general && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                  {errors.general}
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label>Full Name *</Label>
                 <Input 
                   value={formData.full_name} 
                   onChange={(e) => setFormData({...formData, full_name: e.target.value})} 
-                  required 
+                  className={errors.full_name ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {errors.full_name && <p className="text-xs text-red-600">{errors.full_name}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -126,16 +163,18 @@ export default function AddEmployee() {
                     type="email"
                     value={formData.email} 
                     onChange={(e) => setFormData({...formData, email: e.target.value})} 
-                    required 
+                    className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Phone *</Label>
                   <Input 
                     value={formData.phone} 
                     onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                    required 
+                    className={errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
                 </div>
               </div>
 
@@ -145,16 +184,18 @@ export default function AddEmployee() {
                   <Input 
                     value={formData.department} 
                     onChange={(e) => setFormData({...formData, department: e.target.value})} 
-                    required 
+                    className={errors.department ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.department && <p className="text-xs text-red-600">{errors.department}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Designation *</Label>
                   <Input 
                     value={formData.designation} 
                     onChange={(e) => setFormData({...formData, designation: e.target.value})} 
-                    required 
+                    className={errors.designation ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.designation && <p className="text-xs text-red-600">{errors.designation}</p>}
                 </div>
               </div>
 
@@ -165,8 +206,9 @@ export default function AddEmployee() {
                     type="date"
                     value={formData.date_of_joining} 
                     onChange={(e) => setFormData({...formData, date_of_joining: e.target.value})} 
-                    required 
+                    className={errors.date_of_joining ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {errors.date_of_joining && <p className="text-xs text-red-600">{errors.date_of_joining}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Monthly Salary</Label>
