@@ -166,10 +166,8 @@ export default function Layout({ children, currentPageName }) {
       // HR Admin Section - grouped employee-related modules
       const hrAdminItems = [];
       if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
       if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
       if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
       
@@ -182,6 +180,10 @@ export default function Layout({ children, currentPageName }) {
           children: hrAdminItems 
         });
       }
+      
+      // Freelancer modules at top level
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       
       // Other modules at top level
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
@@ -202,10 +204,8 @@ export default function Layout({ children, currentPageName }) {
       // HR Admin Section for dept heads
       const hrAdminItems = [];
       if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
       if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) hrAdminItems.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
       if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
       
@@ -218,6 +218,10 @@ export default function Layout({ children, currentPageName }) {
           children: hrAdminItems 
         });
       }
+      
+      // Freelancer modules at top level
+      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       
       if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
