@@ -48,7 +48,11 @@ export default function PayslipManagement() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.filter({ status: 'active' }),
+    queryFn: async () => {
+      const allEmployees = await base44.entities.Employee.filter({ status: 'active' });
+      // Only show permanent employees in payslip generation
+      return allEmployees.filter(emp => emp.role !== 'freelancer' && emp.employment_type === 'permanent');
+    },
   });
 
   const { data: payslips = [] } = useQuery({

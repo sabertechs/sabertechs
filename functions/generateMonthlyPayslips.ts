@@ -15,10 +15,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Month and year are required' }, { status: 400 });
     }
 
-    // Get all active permanent employees
+    // Get all active permanent employees (exclude freelancers)
     const allEmployees = await base44.asServiceRole.entities.Employee.list();
     const employees = allEmployees.filter(emp => 
-      emp.status === 'active' && emp.employment_type === 'permanent'
+      emp.status === 'active' && 
+      emp.employment_type === 'permanent' && 
+      emp.role !== 'freelancer'
     );
 
     // Calculate days in month

@@ -243,7 +243,7 @@ export default function FreelancerUpload() {
               designation: data.designation?.trim() || '',
               date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               employment_type: 'contractual',
-              role: 'employee',
+              role: 'freelancer',
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
