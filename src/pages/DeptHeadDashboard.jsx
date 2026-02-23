@@ -48,7 +48,7 @@ export default function DeptHeadDashboard() {
   const { data: todayAttendance = [] } = useQuery({
     queryKey: ['todayAttendance'],
     queryFn: () => base44.entities.Attendance.filter({ date: format(new Date(), 'yyyy-MM-dd') }),
-    staleTime: 30000,
+    staleTime: 3 * 60 * 1000,
   });
 
   // Calculate pending attendance
