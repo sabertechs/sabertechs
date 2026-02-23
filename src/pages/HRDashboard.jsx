@@ -25,21 +25,25 @@ export default function HRDashboard() {
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.list(),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ['expenses'],
+    queryKey: ['hr-pending-expenses'],
     queryFn: () => base44.entities.Expense.filter({ status: 'pending' }, '-created_date', 5),
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: pendingVerifications = [] } = useQuery({
     queryKey: ['pendingVerifications'],
     queryFn: () => base44.entities.Employee.filter({ bg_verification_status: 'pending' }),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['todayAttendance'],
     queryFn: () => base44.entities.Attendance.filter({ date: format(new Date(), 'yyyy-MM-dd') }),
+    staleTime: 3 * 60 * 1000,
   });
 
   // Calculate pending attendance
