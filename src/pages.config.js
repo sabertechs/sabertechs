@@ -49,6 +49,7 @@
  */
 import APIModule from './pages/APIModule';
 import AccessControl from './pages/AccessControl';
+import AddEmployee from './pages/AddEmployee';
 import AssetDashboard from './pages/AssetDashboard';
 import AssetList from './pages/AssetList';
 import AssetMaintenance from './pages/AssetMaintenance';
@@ -61,6 +62,7 @@ import CompanyFeed from './pages/CompanyFeed';
 import CompanyPolicies from './pages/CompanyPolicies';
 import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeeOnboarding from './pages/EmployeeOnboarding';
 import EmployeeUpload from './pages/EmployeeUpload';
 import Employees from './pages/Employees';
 import ExpenseApproval from './pages/ExpenseApproval';
@@ -89,14 +91,13 @@ import Registration from './pages/Registration';
 import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import EmployeeOnboarding from './pages/EmployeeOnboarding';
-import AddEmployee from './pages/AddEmployee';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "APIModule": APIModule,
     "AccessControl": AccessControl,
+    "AddEmployee": AddEmployee,
     "AssetDashboard": AssetDashboard,
     "AssetList": AssetList,
     "AssetMaintenance": AssetMaintenance,
@@ -109,6 +110,7 @@ export const PAGES = {
     "CompanyPolicies": CompanyPolicies,
     "DeptHeadDashboard": DeptHeadDashboard,
     "EmployeeDashboard": EmployeeDashboard,
+    "EmployeeOnboarding": EmployeeOnboarding,
     "EmployeeUpload": EmployeeUpload,
     "Employees": Employees,
     "ExpenseApproval": ExpenseApproval,
@@ -137,8 +139,6 @@ export const PAGES = {
     "Settings": Settings,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "EmployeeOnboarding": EmployeeOnboarding,
-    "AddEmployee": AddEmployee,
 }
 
 export const pagesConfig = {
