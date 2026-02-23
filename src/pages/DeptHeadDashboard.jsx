@@ -30,23 +30,19 @@ export default function DeptHeadDashboard() {
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['allEmployees'],
     queryFn: () => base44.entities.Employee.list(),
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
   });
-
-  const teamMembers = allEmployees.filter(e => e.department === employee?.department && e.status === 'active');
-  const pendingBGV = allEmployees.filter(e => e.bg_verification_status === 'pending');
-  const permanentEmployees = allEmployees.filter(e => e.employment_type === 'permanent' && e.status === 'active');
 
   const { data: pendingExpenses = [] } = useQuery({
     queryKey: ['pendingExpenses'],
-    queryFn: () => base44.entities.Expense.filter({ status: 'pending' }, '-created_date'),
-    staleTime: 30000,
+    queryFn: () => base44.entities.Expense.filter({ status: 'pending' }, '-created_date', 5),
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: pendingOnboarding = [] } = useQuery({
     queryKey: ['pendingOnboarding'],
-    queryFn: () => base44.entities.Onboarding.filter({ status: 'in_progress' }),
-    staleTime: 30000,
+    queryFn: () => base44.entities.OnboardingChecklist.filter({ status: 'in_progress' }),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: todayAttendance = [] } = useQuery({
