@@ -65,10 +65,7 @@ export default function Layout({ children, currentPageName }) {
         const userData = await base44.auth.me();
         setUser(userData);
         
-        // Use case-insensitive email matching
-        const userEmail = userData.email.toLowerCase().trim();
-        const allEmployees = await base44.entities.Employee.list();
-        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
+        const employees = await base44.entities.Employee.filter({ email: userData.email });
         if (employees.length > 0) {
           const emp = employees[0];
           
@@ -120,10 +117,10 @@ export default function Layout({ children, currentPageName }) {
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.email],
-    queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }),
+    queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }, '-created_date', 10),
     enabled: !!user?.email,
-    staleTime: 2 * 60 * 1000,
-    refetchInterval: 3 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: moduleSettings } = useQuery({
@@ -140,6 +137,7 @@ export default function Layout({ children, currentPageName }) {
       return null;
     },
     enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
   });
 
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
