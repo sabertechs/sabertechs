@@ -18,9 +18,7 @@ import TestInterface from "@/components/lms/TestInterface";
 export default function FreelancerDashboard() {
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
-  const [videoCompleted, setVideoCompleted] = useState(false);
-  const [showTest, setShowTest] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,10 +50,6 @@ export default function FreelancerDashboard() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const lmsConfig = Array.isArray(lmsSettings[0]?.setting_value) 
-    ? lmsSettings[0].setting_value[0] 
-    : lmsSettings[0]?.setting_value || {};
-  
   const hasApplied = (projectId) => {
     return myApplications.some(app => app.project_id === projectId);
   };
