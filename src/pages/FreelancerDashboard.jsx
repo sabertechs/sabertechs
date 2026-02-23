@@ -34,27 +34,22 @@ export default function FreelancerDashboard() {
 
   const { data: openProjects = [] } = useQuery({
     queryKey: ['openProjects'],
-    queryFn: async () => {
-      const projects = await base44.entities.Project.filter({ status: 'open' });
-      return projects.slice(0, 10);
-    },
+    queryFn: () => base44.entities.Project.filter({ status: 'open' }, '-created_date', 10),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: myApplications = [] } = useQuery({
     queryKey: ['myApplications', user?.email],
     queryFn: () => base44.entities.ProjectApplication.filter({ freelancer_email: user?.email }),
     enabled: !!user?.email,
-  });
-
-  const { data: lmsSettings = [] } = useQuery({
-    queryKey: ['lmsSettings'],
-    queryFn: () => base44.entities.AppSettings.filter({ setting_key: 'lms_config' }),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: testResults = [] } = useQuery({
     queryKey: ['testResults', user?.email],
     queryFn: () => base44.entities.TestResult.filter({ employee_email: user?.email }, '-created_date', 5),
     enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
   });
 
   const lmsConfig = Array.isArray(lmsSettings[0]?.setting_value) 
