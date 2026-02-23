@@ -5,15 +5,12 @@ import { format } from "date-fns";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { 
-  User, Mail, Phone, MapPin, Calendar, Video, PlayCircle,
-  FileText, Download, Clock, Award, BookOpen, Briefcase, IndianRupee, Users
+  MapPin, Calendar, Award, BookOpen, Briefcase, IndianRupee, Users
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EditProfileSection from "@/components/employee/EditProfileSection";
-import VideoPlayer from "@/components/lms/VideoPlayer";
-import TestInterface from "@/components/lms/TestInterface";
 
 export default function FreelancerDashboard() {
   const [user, setUser] = useState(null);
