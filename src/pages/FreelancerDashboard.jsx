@@ -54,15 +54,6 @@ export default function FreelancerDashboard() {
     return myApplications.some(app => app.project_id === projectId);
   };
 
-  const handleVideoComplete = () => {
-    setVideoCompleted(true);
-  };
-
-  const handleTestComplete = (result) => {
-    setTestResult(result);
-    setShowTest(false);
-  };
-
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
