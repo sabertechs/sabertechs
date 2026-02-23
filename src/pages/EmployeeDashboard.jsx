@@ -41,20 +41,21 @@ export default function EmployeeDashboard() {
     queryKey: ['attendance', user?.email],
     queryFn: () => base44.entities.Attendance.filter({ employee_email: user?.email }),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
   });
-
-
 
   const { data: expenses = [] } = useQuery({
     queryKey: ['expenses', user?.email],
     queryFn: () => base44.entities.Expense.filter({ employee_email: user?.email }, '-created_date', 5),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: onboardingChecklists = [] } = useQuery({
     queryKey: ['onboarding-checklist', user?.email],
     queryFn: () => base44.entities.OnboardingChecklist.filter({ employee_email: user?.email, status: 'in_progress' }),
     enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
   });
 
   const currentMonth = new Date();
