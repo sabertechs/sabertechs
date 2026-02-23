@@ -153,55 +153,6 @@ export default function FreelancerDashboard() {
         </Card>
       </div>
 
-      {/* Learning Resources */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Video className="w-5 h-5 text-purple-600" />
-            Learning Resources
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {lmsConfig.video_url ? (
-            <>
-              {!showTest ? (
-                <>
-                  <VideoPlayer 
-                    videoUrl={lmsConfig.video_url} 
-                    onComplete={handleVideoComplete}
-                  />
-                  {videoCompleted && lmsConfig.questions?.length > 0 && (
-                    <div className="text-center">
-                      <Button 
-                        onClick={() => setShowTest(true)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Take Test
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <TestInterface 
-                  test={lmsConfig}
-                  onComplete={handleTestComplete}
-                />
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <BookOpen className="w-16 h-16 mx-auto text-purple-300 mb-4" />
-              <p className="text-slate-500 mb-4">
-                Training videos and resources will appear here when shared by your manager
-              </p>
-              <Badge className="bg-purple-100 text-purple-700">
-                Coming Soon
-              </Badge>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Open Projects */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
