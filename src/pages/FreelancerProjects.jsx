@@ -185,8 +185,8 @@ export default function FreelancerProjects() {
             );
           })
         )}
-            </div>
-          </TabsContent>
+            </TabsContent>
+          </div>
 
           <TabsContent value="mytasks">
             {acceptedProjectIds.length === 0 ? (
