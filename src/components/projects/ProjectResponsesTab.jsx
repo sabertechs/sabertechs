@@ -185,23 +185,24 @@ export default function ProjectResponsesTab({ projectId }) {
       {/* Image Preview Dialog */}
       {previewResponse && (
         <PreviewDialog open onOpenChange={() => setPreviewResponse(null)}>
-          <PreviewDialogContent className="max-w-2xl">
+          <PreviewDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{getTaskName(previewResponse.task_id)} — {previewResponse.freelancer_name}</h3>
-                <a
-                  href={previewResponse.response_value}
-                  download
-                  className="flex items-center gap-1 text-sm text-indigo-600 hover:underline"
-                >
-                  <Download className="w-4 h-4" /> Download
-                </a>
+              <h3 className="font-semibold">{getTaskName(previewResponse.task_id)} — {previewResponse.freelancer_name}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {parseUrls(previewResponse.response_value).map((url, i) => (
+                  <div key={i} className="relative group">
+                    <img src={url} alt={`Submission ${i + 1}`} className="w-full rounded-lg object-contain max-h-72 bg-slate-50" />
+                    <a
+                      href={url}
+                      download
+                      className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4 text-slate-700" />
+                    </a>
+                  </div>
+                ))}
               </div>
-              <img
-                src={previewResponse.response_value}
-                alt="Task submission"
-                className="w-full rounded-lg object-contain max-h-[70vh]"
-              />
             </div>
           </PreviewDialogContent>
         </PreviewDialog>
