@@ -253,6 +253,33 @@ export default function ProjectManagement() {
               className="pl-10 w-64"
             />
           </div>
+          <Button
+            onClick={async () => {
+              setExporting(true);
+              setExportResult(null);
+              const res = await base44.functions.invoke('exportProjectsToDrive');
+              setExporting(false);
+              if (res.data?.success) {
+                setExportResult(res.data);
+                toast.success('Exported to Google Drive!');
+              } else {
+                toast.error(res.data?.error || 'Export failed');
+              }
+            }}
+            disabled={exporting}
+            variant="outline"
+            className="border-green-600 text-green-700 hover:bg-green-50"
+          >
+            <CloudUpload className="w-4 h-4 mr-2" />
+            {exporting ? 'Exporting...' : 'Export to Drive'}
+          </Button>
+          {exportResult?.file_url && (
+            <a href={exportResult.file_url} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                <ExternalLink className="w-4 h-4 mr-1" /> View File
+              </Button>
+            </a>
+          )}
           <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
             <Plus className="w-4 h-4 mr-2" />
             Add Project
