@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, MapPin, FileText, Image as ImageIcon } from "lucide-react";
+import { CheckCircle, XCircle, Eye, MapPin, FileText, Image as ImageIcon, Download, ExternalLink } from "lucide-react";
+import { Dialog as PreviewDialog, DialogContent as PreviewDialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
