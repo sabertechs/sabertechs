@@ -162,21 +162,23 @@ export default function Layout({ children, currentPageName }) {
     // Role-based module access
     if (userRole === 'hr' || userRole === 'manager') {
       // HR Admin Section - grouped employee-related modules
-      const hrAdminItems = [];
-      if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-      hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-      if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-      if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
-      
-      if (hrAdminItems.length > 0) {
-        items.push({ 
-          name: "HR Admin", 
-          icon: Users, 
-          isSection: true, 
-          sectionId: "hrAdmin",
-          children: hrAdminItems 
-        });
+      if (isModuleEnabled('hr_admin')) {
+        const hrAdminItems = [];
+        if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+        hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
+        if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+        if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+        if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+        
+        if (hrAdminItems.length > 0) {
+          items.push({ 
+            name: "HR Admin", 
+            icon: Users, 
+            isSection: true, 
+            sectionId: "hrAdmin",
+            children: hrAdminItems 
+          });
+        }
       }
       
       // Freelancer modules at top level
