@@ -33,6 +33,10 @@ export default function FreelancerProjects() {
     enabled: !!user?.email,
   });
 
+  const acceptedProjectIds = myApplications
+    .filter(a => a.status === 'accepted')
+    .map(a => a.project_id);
+
   const applyMutation = useMutation({
     mutationFn: async (project) => {
       const employees = await base44.entities.Employee.filter({ email: user.email });
