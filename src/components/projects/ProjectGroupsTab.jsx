@@ -47,6 +47,27 @@ export default function ProjectGroupsTab({ projectId, project }) {
     }
   });
 
+  const updateMembersMutation = useMutation({
+    mutationFn: ({ id, members }) => base44.entities.ProjectGroup.update(id, { members }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries(['projectGroups']);
+      // Refresh managing group state
+      setManagingGroup(prev => prev ? { ...prev, members: vars.members } : null);
+      toast.success('Members updated');
+    }
+  });
+
+  const toggleMember = (email) => {
+    if (!managingGroup) return;
+    const current = managingGroup.members || [];
+    const updated = current.includes(email)
+      ? current.filter(e => e !== email)
+      : [...current, email];
+    const updatedGroup = { ...managingGroup, members: updated };
+    setManagingGroup(updatedGroup);
+    updateMembersMutation.mutate({ id: managingGroup.id, members: updated });
+  };
+
   const handleCreate = () => {
     createMutation.mutate({
       project_id: projectId,
