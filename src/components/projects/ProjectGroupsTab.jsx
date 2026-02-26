@@ -15,10 +15,17 @@ export default function ProjectGroupsTab({ projectId, project }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [managingGroup, setManagingGroup] = useState(null); // group being managed
 
   const { data: groups = [] } = useQuery({
     queryKey: ['projectGroups', projectId],
     queryFn: () => base44.entities.ProjectGroup.filter({ project_id: projectId }),
+    enabled: !!projectId
+  });
+
+  const { data: acceptedApplications = [] } = useQuery({
+    queryKey: ['acceptedApplications', projectId],
+    queryFn: () => base44.entities.ProjectApplication.filter({ project_id: projectId, status: 'accepted' }),
     enabled: !!projectId
   });
 
