@@ -175,28 +175,42 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
                     {task.task_type === 'image_upload' ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-                    {task.task_type === 'image_upload' ? 'Upload Image' : 'Upload File'}
+                    {task.task_type === 'image_upload' ? 'Upload Images' : 'Upload Files'}
+                    <span className="text-xs text-slate-400 font-normal">(multiple allowed)</span>
                   </Label>
 
-                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-6 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                  {/* Uploaded files list */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-slate-50 rounded-lg p-2 border border-slate-200">
+                          {task.task_type === 'image_upload' ? (
+                            <img src={file.url} alt={file.name} className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                          ) : (
+                            <FileText className="w-8 h-8 text-indigo-400 flex-shrink-0" />
+                          )}
+                          <span className="text-sm text-slate-700 flex-1 truncate">{file.name}</span>
+                          <button onClick={() => removeFile(idx)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload drop zone */}
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
                     {uploading ? (
-                      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-2" />
-                    ) : uploadedUrl ? (
                       <>
-                        {task.task_type === 'image_upload' ? (
-                          <img src={uploadedUrl} alt="Preview" className="max-h-40 rounded-lg object-contain mb-2" />
-                        ) : (
-                          <FileText className="w-10 h-10 text-indigo-500 mb-2" />
-                        )}
-                        <span className="text-sm text-green-600 font-medium">{uploadedFileName || 'File uploaded'}</span>
-                        <span className="text-xs text-slate-400 mt-1">Click to replace</span>
+                        <Loader2 className="w-7 h-7 text-indigo-500 animate-spin mb-1" />
+                        <span className="text-sm text-indigo-600">Uploading...</span>
                       </>
                     ) : (
                       <>
-                        <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                        <span className="text-sm text-slate-600">Click to upload</span>
-                        <span className="text-xs text-slate-400 mt-1">
-                          {task.task_type === 'image_upload' ? 'JPG, PNG, WEBP' : 'Any file type'}
+                        <Upload className="w-7 h-7 text-slate-400 mb-1" />
+                        <span className="text-sm text-slate-600">Click to add {task.task_type === 'image_upload' ? 'images' : 'files'}</span>
+                        <span className="text-xs text-slate-400 mt-0.5">
+                          {task.task_type === 'image_upload' ? 'JPG, PNG, WEBP — select multiple' : 'PDF, docs, any format — select multiple'}
                         </span>
                       </>
                     )}
@@ -204,6 +218,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
                       type="file"
                       className="hidden"
                       accept={task.task_type === 'image_upload' ? 'image/*' : '*'}
+                      multiple
                       onChange={handleFileUpload}
                       disabled={uploading}
                     />
