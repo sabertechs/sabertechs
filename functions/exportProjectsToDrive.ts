@@ -20,14 +20,18 @@ Deno.serve(async (req) => {
     workbook.creator = 'SaberTechs';
     workbook.created = new Date();
 
-    const headerStyle = { font: { bold: true, color: { argb: 'FFFFFFFF' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3730A3' } }, alignment: { horizontal: 'center' } };
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3730A3' } };
+    const headerFont = { bold: true, color: { argb: 'FFFFFFFF' } };
 
     const addSheet = (name, columns, rows) => {
       const sheet = workbook.addWorksheet(name);
       sheet.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width || 20 }));
-      sheet.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+      sheet.getRow(1).eachCell(cell => {
+        cell.font = headerFont;
+        cell.fill = headerFill;
+        cell.alignment = { horizontal: 'center' };
+      });
       rows.forEach(row => sheet.addRow(row));
-      return sheet;
     };
 
     // Sheet 1: Projects
@@ -38,14 +42,14 @@ Deno.serve(async (req) => {
       { header: 'Priority', key: 'priority', width: 12 },
       { header: 'Work Mode', key: 'work_mode', width: 15 },
       { header: 'Location', key: 'location', width: 25 },
-      { header: 'Payout (₹)', key: 'payout', width: 15 },
+      { header: 'Payout', key: 'payout', width: 15 },
       { header: 'Start Date', key: 'start_date', width: 15 },
       { header: 'End Date', key: 'end_date', width: 15 },
       { header: 'Total Slots', key: 'total_slots', width: 12 },
       { header: 'Filled Slots', key: 'filled_slots', width: 12 },
       { header: 'Supervisor', key: 'supervisor_name', width: 20 },
       { header: 'Description', key: 'description', width: 40 },
-      { header: 'Created At', key: 'created_date', width: 20 },
+      { header: 'Created At', key: 'created_date', width: 22 },
     ], projects.map(p => ({
       id: p.id?.slice(-8),
       name: p.name,
@@ -73,7 +77,7 @@ Deno.serve(async (req) => {
       { header: 'Status', key: 'status', width: 15 },
       { header: 'Rating', key: 'rating', width: 10 },
       { header: 'Notes', key: 'notes', width: 30 },
-      { header: 'Applied At', key: 'created_date', width: 20 },
+      { header: 'Applied At', key: 'created_date', width: 22 },
     ], applications.map(a => ({
       id: a.id?.slice(-8),
       project_name: a.project_name,
@@ -122,7 +126,7 @@ Deno.serve(async (req) => {
       { header: 'Response Value', key: 'response_value', width: 40 },
       { header: 'Status', key: 'status', width: 15 },
       { header: 'Admin Notes', key: 'admin_notes', width: 30 },
-      { header: 'Submitted At', key: 'submission_date', width: 20 },
+      { header: 'Submitted At', key: 'submission_date', width: 22 },
     ], responses.map(r => ({
       id: r.id?.slice(-8),
       task_id: r.task_id?.slice(-8),
@@ -138,16 +142,30 @@ Deno.serve(async (req) => {
 
     // Write to buffer
     const buffer = await workbook.xlsx.writeBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-    // Upload to Google Drive
+    // Convert to base64
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    // Upload to Google Drive via multipart upload
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
     const fileName = `Projects_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-    const metadata = { name: fileName, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
-
-    const boundary = '-------314159265358979323846';
-    const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\nContent-Transfer-Encoding: base64\r\n\r\n${base64}\r\n--${boundary}--`;
+    const boundary = 'foo_bar_baz';
+    const multipartBody =
+      `--${boundary}\r\n` +
+      `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+      `${JSON.stringify({ name: fileName, mimeType })}\r\n` +
+      `--${boundary}\r\n` +
+      `Content-Type: ${mimeType}\r\n` +
+      `Content-Transfer-Encoding: base64\r\n\r\n` +
+      `${base64}\r\n` +
+      `--${boundary}--`;
 
     const driveRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
       method: 'POST',
@@ -155,7 +173,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': `multipart/related; boundary="${boundary}"`,
       },
-      body,
+      body: multipartBody,
     });
 
     if (!driveRes.ok) {
