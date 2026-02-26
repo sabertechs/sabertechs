@@ -140,6 +140,7 @@ export default function ProjectTasksTab({ projectId, project }) {
       due_date: '',
       is_required: true,
       assigned_to: '',
+      group_id: '',
       depends_on_task_id: '',
       priority: 'medium',
       progress_percentage: 0
