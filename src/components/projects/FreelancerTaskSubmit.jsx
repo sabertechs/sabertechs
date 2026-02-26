@@ -30,12 +30,30 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   const [location, setLocation] = useState(
     existingResponse?.latitude ? { lat: existingResponse.latitude, lng: existingResponse.longitude } : null
   );
+  const [locationAddress, setLocationAddress] = useState('');
   const [locating, setLocating] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
-  const [capturedPhoto, setCapturedPhoto] = useState(null);
   const videoRef = React.useRef(null);
   const canvasRef = React.useRef(null);
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+      const data = await res.json();
+      const a = data.address || {};
+      const parts = [
+        a.building || a.amenity || a.shop || a.office || a.tourism,
+        a.road || a.pedestrian,
+        a.suburb || a.neighbourhood,
+        a.city || a.town || a.village || a.county,
+        a.state,
+      ].filter(Boolean);
+      return parts.join(', ');
+    } catch {
+      return '';
+    }
+  };
 
   // Auto-capture location when image task opens
   React.useEffect(() => {
