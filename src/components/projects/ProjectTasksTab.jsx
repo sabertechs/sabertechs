@@ -478,20 +478,21 @@ export default function ProjectTasksTab({ projectId, project }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Assign To</Label>
+                <Label>Assign To (Freelancer)</Label>
                 <Select value={formData.assigned_to} onValueChange={(v) => {
                   const app = applications.find(a => a.freelancer_email === v);
                   setFormData({ 
                     ...formData, 
-                    assigned_to: v,
-                    assigned_to_name: app?.freelancer_name || ''
+                    assigned_to: v === '__none__' ? '' : v,
+                    assigned_to_name: app?.freelancer_name || '',
+                    group_id: v !== '__none__' ? '' : formData.group_id // clear group if individual selected
                   });
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select freelancer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>Unassigned</SelectItem>
+                    <SelectItem value="__none__">Unassigned</SelectItem>
                     {applications.map((app) => (
                       <SelectItem key={app.id} value={app.freelancer_email}>
                         {app.freelancer_name}
@@ -502,13 +503,37 @@ export default function ProjectTasksTab({ projectId, project }) {
               </div>
 
               <div className="space-y-2">
-                <Label>Due Date</Label>
-                <Input
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                />
+                <Label>Assign to Group</Label>
+                <Select value={formData.group_id} onValueChange={(v) => {
+                  setFormData({ 
+                    ...formData, 
+                    group_id: v === '__none__' ? '' : v,
+                    assigned_to: v !== '__none__' ? '' : formData.assigned_to, // clear individual if group selected
+                    assigned_to_name: v !== '__none__' ? '' : formData.assigned_to_name
+                  });
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No group</SelectItem>
+                    {groups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.group_name} ({g.members?.length || 0} members)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              />
             </div>
 
             {!parentTask && (
