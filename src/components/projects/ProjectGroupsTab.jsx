@@ -151,6 +151,43 @@ export default function ProjectGroupsTab({ projectId, project }) {
         </CardContent>
       </Card>
 
+      {/* Manage Members Dialog */}
+      <Dialog open={!!managingGroup} onOpenChange={(open) => !open && setManagingGroup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Members — {managingGroup?.group_name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {acceptedApplications.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">No accepted freelancers yet</p>
+            ) : (
+              acceptedApplications.map((app) => {
+                const isMember = managingGroup?.members?.includes(app.freelancer_email);
+                return (
+                  <div key={app.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50">
+                    <div>
+                      <p className="font-medium text-sm">{app.freelancer_name}</p>
+                      <p className="text-xs text-slate-500">{app.freelancer_email}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={isMember ? "destructive" : "outline"}
+                      onClick={() => toggleMember(app.freelancer_email)}
+                      className={isMember ? '' : 'text-green-600 border-green-300 hover:bg-green-50'}
+                    >
+                      {isMember ? <><X className="w-3 h-3 mr-1" /> Remove</> : <><UserPlus className="w-3 h-3 mr-1" /> Add</>}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setManagingGroup(null)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Group Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
