@@ -113,15 +113,49 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     if (!video || !canvas) return;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    // Stamp geo info at the bottom of the image
+    const geoText = locationAddress
+      ? locationAddress
+      : location
+        ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`
+        : '';
+    const timestamp = new Date().toLocaleString('en-IN');
+    const lines = geoText ? [geoText, timestamp] : [timestamp];
+
+    const fontSize = Math.max(14, Math.floor(canvas.width / 40));
+    const padding = 10;
+    const lineHeight = fontSize + 6;
+    const boxHeight = lines.length * lineHeight + padding * 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, canvas.height - boxHeight, canvas.width, boxHeight);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textAlign = 'left';
+    lines.forEach((line, i) => {
+      // Wrap long text
+      const maxWidth = canvas.width - padding * 2;
+      let displayLine = line;
+      if (ctx.measureText(line).width > maxWidth) {
+        // Truncate with ellipsis
+        while (ctx.measureText(displayLine + '…').width > maxWidth && displayLine.length > 0) {
+          displayLine = displayLine.slice(0, -1);
+        }
+        displayLine += '…';
+      }
+      ctx.fillText(displayLine, padding, canvas.height - boxHeight + padding + (i + 1) * lineHeight - 4);
+    });
+
     canvas.toBlob(async (blob) => {
-      const file = new File([blob], `selfie_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
       setUploading(true);
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setUploadedFiles(prev => [...prev, { url: file_url, name: file.name }]);
       setUploading(false);
       toast.success('Photo captured and uploaded!');
-      // Stop camera
       cameraStream.getTracks().forEach(t => t.stop());
       setCameraStream(null);
       setCameraActive(false);
