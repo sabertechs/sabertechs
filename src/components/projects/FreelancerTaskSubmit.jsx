@@ -424,7 +424,10 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
                       {locating ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Capturing location...</>
                       ) : location ? (
-                        <><MapPin className="w-4 h-4" /> Location captured: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}</>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <span>{locationAddress || `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`}</span>
+                        </div>
                       ) : (
                         <>
                           <MapPin className="w-4 h-4" />
