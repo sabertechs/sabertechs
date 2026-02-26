@@ -239,7 +239,7 @@ export default function Layout({ children, currentPageName }) {
       // Freelancers have access to projects, payslips and company feed
       if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
-      items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+      if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     } else {
       // Regular employees
       if (true) {
