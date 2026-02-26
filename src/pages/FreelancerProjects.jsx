@@ -185,6 +185,35 @@ export default function FreelancerProjects() {
             );
           })
         )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="mytasks">
+            {acceptedProjectIds.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                <ListTodo className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p>You don't have any accepted projects yet</p>
+              </div>
+            ) : (
+              acceptedProjectIds.map(projectId => {
+                const app = myApplications.find(a => a.project_id === projectId);
+                return (
+                  <div key={projectId} className="mb-6">
+                    <h3 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                      <ListTodo className="w-4 h-4 text-indigo-600" />
+                      {app?.project_name || 'Project Tasks'}
+                    </h3>
+                    <FreelancerTasksView
+                      projectId={projectId}
+                      userEmail={user?.email}
+                      userName={user?.full_name}
+                    />
+                  </div>
+                );
+              })
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
