@@ -5,8 +5,10 @@ import { format, isAfter, isBefore } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, IndianRupee, Users, CheckCircle, Clock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Calendar, IndianRupee, Users, CheckCircle, Clock, ListTodo } from "lucide-react";
 import { toast } from "sonner";
+import FreelancerTasksView from "@/components/projects/FreelancerTasksView";
 
 export default function FreelancerProjects() {
   const [user, setUser] = useState(null);
