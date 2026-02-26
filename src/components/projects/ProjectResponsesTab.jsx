@@ -45,6 +45,17 @@ export default function ProjectResponsesTab({ projectId }) {
     return task?.title || 'Unknown Task';
   };
 
+  // Parse response_value: may be a JSON array of URLs or a single URL string
+  const parseUrls = (value) => {
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [value];
+    } catch {
+      return [value];
+    }
+  };
+
   const renderResponseValue = (response) => {
     if (response.response_type === 'location') {
       return (
@@ -60,35 +71,31 @@ export default function ProjectResponsesTab({ projectId }) {
         </a>
       );
     } else if (response.response_type === 'image') {
+      const urls = parseUrls(response.response_value);
       return (
         <button
           onClick={() => setPreviewResponse(response)}
           className="flex items-center gap-2 text-indigo-600 hover:underline"
         >
           <ImageIcon className="w-4 h-4" />
-          View Image
+          View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
         </button>
       );
     } else if (response.response_type === 'file') {
+      const urls = parseUrls(response.response_value);
       return (
-        <div className="flex items-center gap-2">
-          <a
-            href={response.response_value}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-indigo-600 hover:underline"
-          >
-            <FileText className="w-4 h-4" />
-            View File
-          </a>
-          <a
-            href={response.response_value}
-            download
-            className="text-slate-500 hover:text-slate-700"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </a>
+        <div className="flex flex-col gap-1">
+          {urls.map((url, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-indigo-600 hover:underline text-sm">
+                <FileText className="w-3 h-3" />
+                File {urls.length > 1 ? i + 1 : ''}
+              </a>
+              <a href={url} download className="text-slate-400 hover:text-slate-600" title="Download">
+                <Download className="w-3 h-3" />
+              </a>
+            </div>
+          ))}
         </div>
       );
     }
