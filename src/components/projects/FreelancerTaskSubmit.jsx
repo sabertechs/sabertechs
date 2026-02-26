@@ -59,14 +59,22 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   });
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setUploadedUrl(file_url);
-    setUploadedFileName(file.name);
+    const results = await Promise.all(files.map(async (file) => {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      return { url: file_url, name: file.name };
+    }));
+    setUploadedFiles(prev => [...prev, ...results]);
     setUploading(false);
-    toast.success('File uploaded!');
+    toast.success(`${results.length} file(s) uploaded!`);
+    // Reset input so same file can be re-added if needed
+    e.target.value = '';
+  };
+
+  const removeFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleGetLocation = () => {
