@@ -202,32 +202,34 @@ export default function Layout({ children, currentPageName }) {
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     } else if (userRole === 'department_head') {
       // HR Admin Section for dept heads
-      const hrAdminItems = [];
-      if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-      hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-      if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-      if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-      if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
-      
-      if (hrAdminItems.length > 0) {
-        items.push({ 
-          name: "HR Admin", 
-          icon: Users, 
-          isSection: true, 
-          sectionId: "hrAdmin",
-          children: hrAdminItems 
-        });
+      if (isModuleEnabled('hr_admin')) {
+        const hrAdminItems = [];
+        if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+        hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
+        if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+        if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+        if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+        
+        if (hrAdminItems.length > 0) {
+          items.push({ 
+            name: "HR Admin", 
+            icon: Users, 
+            isSection: true, 
+            sectionId: "hrAdmin",
+            children: hrAdminItems 
+          });
+        }
       }
       
       // Freelancer modules at top level
       if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       
-      if (hasAccess('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+      if (hasAccess('attendance') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
       if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
       if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
       if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-      if (hasAccess('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+      if (hasAccess('company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
       if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
       if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
