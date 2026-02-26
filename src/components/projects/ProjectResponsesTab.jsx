@@ -15,6 +15,7 @@ export default function ProjectResponsesTab({ projectId }) {
   const queryClient = useQueryClient();
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
+  const [previewResponse, setPreviewResponse] = useState(null);
 
   const { data: responses = [] } = useQuery({
     queryKey: ['taskResponses', projectId],
