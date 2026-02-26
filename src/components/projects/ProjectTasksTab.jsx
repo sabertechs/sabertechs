@@ -47,6 +47,12 @@ export default function ProjectTasksTab({ projectId, project }) {
     enabled: !!projectId
   });
 
+  const { data: groups = [] } = useQuery({
+    queryKey: ['projectGroups', projectId],
+    queryFn: () => base44.entities.ProjectGroup.filter({ project_id: projectId }),
+    enabled: !!projectId
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const task = await base44.entities.ProjectTask.create({
