@@ -155,12 +155,54 @@ Deno.serve(async (req) => {
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googledrive');
     const fileName = `Projects_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
     const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const folderName = 'SaberTechs Project Exports';
+
+    // Parse optional folder_id from request body
+    let { folder_id } = await req.json().catch(() => ({}));
+
+    // If no folder_id provided, find or create the shared folder
+    if (!folder_id) {
+      // Search for existing folder
+      const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      const searchData = await searchRes.json();
+
+      if (searchData.files && searchData.files.length > 0) {
+        folder_id = searchData.files[0].id;
+      } else {
+        // Create the folder
+        const createFolderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder' }),
+        });
+        const folderData = await createFolderRes.json();
+        folder_id = folderData.id;
+
+        // Make folder accessible to anyone with the link
+        await fetch(`https://www.googleapis.com/drive/v3/files/${folder_id}/permissions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+        });
+      }
+    }
+
+    const fileMetadata = { name: fileName, mimeType, parents: [folder_id] };
 
     const boundary = 'foo_bar_baz';
     const multipartBody =
       `--${boundary}\r\n` +
       `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
-      `${JSON.stringify({ name: fileName, mimeType })}\r\n` +
+      `${JSON.stringify(fileMetadata)}\r\n` +
       `--${boundary}\r\n` +
       `Content-Type: ${mimeType}\r\n` +
       `Content-Transfer-Encoding: base64\r\n\r\n` +
@@ -183,8 +225,9 @@ Deno.serve(async (req) => {
 
     const driveData = await driveRes.json();
     const fileUrl = `https://drive.google.com/file/d/${driveData.id}/view`;
+    const folderUrl = `https://drive.google.com/drive/folders/${folder_id}`;
 
-    return Response.json({ success: true, file_name: fileName, file_url: fileUrl, drive_file_id: driveData.id });
+    return Response.json({ success: true, file_name: fileName, file_url: fileUrl, folder_url: folderUrl, folder_id });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
