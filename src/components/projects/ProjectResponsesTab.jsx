@@ -48,29 +48,51 @@ export default function ProjectResponsesTab({ projectId }) {
   const renderResponseValue = (response) => {
     if (response.response_type === 'location') {
       return (
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-green-600" />
-          <span>{response.latitude}, {response.longitude}</span>
-        </div>
-      );
-    } else if (response.response_type === 'image' || response.response_type === 'file') {
-      return (
-        <a 
-          href={response.response_value} 
-          target="_blank" 
+        <a
+          href={`https://maps.google.com/?q=${response.latitude},${response.longitude}`}
+          target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-indigo-600 hover:underline"
+          className="flex items-center gap-2 text-green-600 hover:underline"
         >
-          {response.response_type === 'image' ? (
-            <ImageIcon className="w-4 h-4" />
-          ) : (
-            <FileText className="w-4 h-4" />
-          )}
-          View {response.response_type}
+          <MapPin className="w-4 h-4" />
+          <span>{Number(response.latitude).toFixed(5)}, {Number(response.longitude).toFixed(5)}</span>
+          <ExternalLink className="w-3 h-3" />
         </a>
       );
+    } else if (response.response_type === 'image') {
+      return (
+        <button
+          onClick={() => setPreviewResponse(response)}
+          className="flex items-center gap-2 text-indigo-600 hover:underline"
+        >
+          <ImageIcon className="w-4 h-4" />
+          View Image
+        </button>
+      );
+    } else if (response.response_type === 'file') {
+      return (
+        <div className="flex items-center gap-2">
+          <a
+            href={response.response_value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-indigo-600 hover:underline"
+          >
+            <FileText className="w-4 h-4" />
+            View File
+          </a>
+          <a
+            href={response.response_value}
+            download
+            className="text-slate-500 hover:text-slate-700"
+            title="Download"
+          >
+            <Download className="w-4 h-4" />
+          </a>
+        </div>
+      );
     }
-    return response.response_value;
+    return <span className="text-sm text-slate-700">{response.response_value}</span>;
   };
 
   return (
