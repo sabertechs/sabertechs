@@ -302,6 +302,14 @@ export default function ProjectTasksTab({ projectId, project }) {
                                     Assigned: {task.assigned_to_name || task.assigned_to}
                                   </Badge>
                                 )}
+                                {task.group_id && (() => {
+                                  const grp = groups.find(g => g.id === task.group_id);
+                                  return grp ? (
+                                    <Badge className="bg-purple-100 text-purple-700">
+                                      Group: {grp.group_name}
+                                    </Badge>
+                                  ) : null;
+                                })()}
                               </div>
 
                               {/* Dependencies */}
