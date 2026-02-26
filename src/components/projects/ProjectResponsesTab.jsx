@@ -73,13 +73,27 @@ export default function ProjectResponsesTab({ projectId }) {
     } else if (response.response_type === 'image') {
       const urls = parseUrls(response.response_value);
       return (
-        <button
-          onClick={() => setPreviewResponse(response)}
-          className="flex items-center gap-2 text-indigo-600 hover:underline"
-        >
-          <ImageIcon className="w-4 h-4" />
-          View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
-        </button>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={() => setPreviewResponse(response)}
+            className="flex items-center gap-2 text-indigo-600 hover:underline text-sm"
+          >
+            <ImageIcon className="w-4 h-4" />
+            View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
+          </button>
+          {response.latitude && (
+            <a
+              href={`https://maps.google.com/?q=${response.latitude},${response.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-green-600 hover:underline text-xs"
+            >
+              <MapPin className="w-3 h-3" />
+              {Number(response.latitude).toFixed(5)}, {Number(response.longitude).toFixed(5)}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
       );
     } else if (response.response_type === 'file') {
       const urls = parseUrls(response.response_value);
