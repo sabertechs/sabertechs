@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight, AlertCircle, CloudUpload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
