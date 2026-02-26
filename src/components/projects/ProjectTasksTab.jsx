@@ -63,7 +63,7 @@ export default function ProjectTasksTab({ projectId, project }) {
         status: 'pending'
       });
 
-      // Send notification if task is assigned
+      // Send notification if task is assigned to individual
       if (data.assigned_to) {
         await base44.entities.Notification.create({
           recipient_email: data.assigned_to,
@@ -72,6 +72,21 @@ export default function ProjectTasksTab({ projectId, project }) {
           type: 'info',
           link: `/ProjectDetails?id=${projectId}`
         });
+      }
+      // Send notification to all group members if assigned to group
+      if (data.group_id) {
+        const grp = groups.find(g => g.id === data.group_id);
+        if (grp?.members?.length) {
+          await Promise.all(grp.members.map(email =>
+            base44.entities.Notification.create({
+              recipient_email: email,
+              title: 'New Group Task Assigned',
+              message: `Your group "${grp.group_name}" has been assigned task: ${data.title} in project ${project.name}`,
+              type: 'info',
+              link: `/ProjectDetails?id=${projectId}`
+            })
+          ));
+        }
       }
 
       return task;
