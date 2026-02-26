@@ -79,12 +79,22 @@ export default function FreelancerProjects() {
     <div className="min-h-screen bg-slate-50 pb-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold">Active Projects</h1>
-        <p className="text-blue-100 text-sm">Browse and apply to projects</p>
+        <h1 className="text-xl font-bold">Projects</h1>
+        <p className="text-blue-100 text-sm">Browse, apply & submit tasks</p>
       </div>
 
-      {/* Projects List */}
-      <div className="p-4 space-y-4">
+      <div className="p-4">
+        <Tabs defaultValue="browse">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="browse" className="flex-1">Browse Projects</TabsTrigger>
+            <TabsTrigger value="mytasks" className="flex-1">
+              <ListTodo className="w-4 h-4 mr-1" />
+              My Tasks
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="browse">
+            <div className="space-y-4">
         {projects.length === 0 ? (
           <Card className="p-8 text-center">
             <Clock className="w-16 h-16 mx-auto text-slate-300 mb-4" />
