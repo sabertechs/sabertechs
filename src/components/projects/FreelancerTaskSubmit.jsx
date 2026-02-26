@@ -60,9 +60,12 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     if (task.task_type === 'image_upload' && !existingResponse?.latitude) {
       setLocating(true);
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        async (pos) => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          setLocation({ lat, lng });
           setLocating(false);
+          const addr = await reverseGeocode(lat, lng);
+          setLocationAddress(addr);
         },
         () => setLocating(false)
       );
