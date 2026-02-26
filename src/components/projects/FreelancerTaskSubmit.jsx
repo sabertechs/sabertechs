@@ -16,8 +16,17 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   const [textValue, setTextValue] = useState(existingResponse?.response_value || '');
   const [numberValue, setNumberValue] = useState(existingResponse?.response_value || '');
   const [uploading, setUploading] = useState(false);
-  const [uploadedUrl, setUploadedUrl] = useState(existingResponse?.response_value || null);
-  const [uploadedFileName, setUploadedFileName] = useState('');
+  // Support multiple uploads: store as array of {url, name}
+  const [uploadedFiles, setUploadedFiles] = useState(() => {
+    if (!existingResponse?.response_value) return [];
+    // Handle legacy single URL or new JSON array
+    try {
+      const parsed = JSON.parse(existingResponse.response_value);
+      return Array.isArray(parsed) ? parsed : [{ url: existingResponse.response_value, name: 'Existing file' }];
+    } catch {
+      return [{ url: existingResponse.response_value, name: 'Existing file' }];
+    }
+  });
   const [location, setLocation] = useState(
     existingResponse?.latitude ? { lat: existingResponse.latitude, lng: existingResponse.longitude } : null
   );
