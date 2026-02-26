@@ -32,6 +32,22 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   );
   const [locating, setLocating] = useState(false);
 
+  // Auto-capture location when image task opens
+  React.useEffect(() => {
+    if (task.task_type === 'image_upload' && !existingResponse?.latitude) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setLocating(false);
+        },
+        () => {
+          setLocating(false);
+        }
+      );
+    }
+  }, []);
+
   const submitMutation = useMutation({
     mutationFn: async (payload) => {
       if (existingResponse && existingResponse.status !== 'approved') {
