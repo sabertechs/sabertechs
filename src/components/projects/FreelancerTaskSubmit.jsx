@@ -283,52 +283,53 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
 
                   {/* Camera capture (for image_upload) + regular upload */}
                   {task.task_type === 'image_upload' ? (
-                    <div className="flex gap-2">
-                      <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 rounded-xl p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mb-1" />
-                            <span className="text-xs text-indigo-600">Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-6 h-6 text-indigo-400 mb-1" />
-                            <span className="text-xs text-indigo-700 font-medium">Open Camera</span>
+                    <div className="space-y-3">
+                      {/* Live camera view */}
+                      {cameraActive && (
+                        <div className="relative rounded-xl overflow-hidden bg-black">
+                          <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-xl" style={{ maxHeight: 260 }} />
+                          <canvas ref={canvasRef} className="hidden" />
+                          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
+                            <button
+                              type="button"
+                              onClick={capturePhoto}
+                              disabled={uploading}
+                              className="bg-white text-slate-800 font-semibold px-5 py-2 rounded-full shadow-lg flex items-center gap-2 hover:bg-indigo-50"
+                            >
+                              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                              {uploading ? 'Uploading...' : 'Click Photo'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={closeCamera}
+                              className="bg-red-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+                            >
+                              <X className="w-4 h-4" /> Close
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Buttons */}
+                      {!cameraActive && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={openCamera}
+                            className="flex-1 flex flex-col items-center justify-center border-2 border-indigo-300 rounded-xl p-4 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+                          >
+                            <Camera className="w-7 h-7 text-indigo-500 mb-1" />
+                            <span className="text-sm text-indigo-700 font-semibold">Open Camera</span>
                             <span className="text-xs text-slate-400">Take selfie</span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          capture="user"
-                          multiple
-                          onChange={handleFileUpload}
-                          disabled={uploading}
-                        />
-                      </label>
-                      <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-colors">
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-6 h-6 text-slate-400 animate-spin mb-1" />
-                            <span className="text-xs text-slate-500">Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                            <span className="text-xs text-slate-700 font-medium">From Gallery</span>
+                          </button>
+                          <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                            <Upload className="w-7 h-7 text-slate-400 mb-1" />
+                            <span className="text-sm text-slate-700 font-semibold">From Gallery</span>
                             <span className="text-xs text-slate-400">Select images</span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          disabled={uploading}
-                        />
-                      </label>
+                            <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} disabled={uploading} />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
