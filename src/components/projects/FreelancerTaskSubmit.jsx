@@ -31,6 +31,11 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     existingResponse?.latitude ? { lat: existingResponse.latitude, lng: existingResponse.longitude } : null
   );
   const [locating, setLocating] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const videoRef = React.useRef(null);
+  const canvasRef = React.useRef(null);
 
   // Auto-capture location when image task opens
   React.useEffect(() => {
@@ -41,12 +46,68 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
           setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           setLocating(false);
         },
-        () => {
-          setLocating(false);
-        }
+        () => setLocating(false)
       );
     }
   }, []);
+
+  // Assign stream to video element when both are ready
+  React.useEffect(() => {
+    if (cameraActive && cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraActive, cameraStream]);
+
+  // Cleanup camera on unmount
+  React.useEffect(() => {
+    return () => {
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    };
+  }, [cameraStream]);
+
+  const openCamera = async () => {
+    // Also grab location at camera open
+    if (!location) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      );
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      setCameraStream(stream);
+      setCameraActive(true);
+    } catch (err) {
+      toast.error('Could not access camera. Please allow camera permission.');
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], `selfie_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      setUploading(true);
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploadedFiles(prev => [...prev, { url: file_url, name: file.name }]);
+      setUploading(false);
+      toast.success('Photo captured and uploaded!');
+      // Stop camera
+      cameraStream.getTracks().forEach(t => t.stop());
+      setCameraStream(null);
+      setCameraActive(false);
+    }, 'image/jpeg', 0.9);
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    setCameraStream(null);
+    setCameraActive(false);
+  };
 
   const submitMutation = useMutation({
     mutationFn: async (payload) => {
