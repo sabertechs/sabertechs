@@ -97,7 +97,7 @@ export default function ProjectGroupsTab({ projectId, project }) {
             ) : (
               groups.map((group) => (
                 <Card key={group.id} className="border-2">
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="p-2 bg-green-100 rounded-lg">
@@ -108,14 +108,35 @@ export default function ProjectGroupsTab({ projectId, project }) {
                           <p className="text-sm text-slate-500">{group.members?.length || 0} members</p>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(group.id)}
-                        className="text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setManagingGroup(group)}
+                          className="text-green-600"
+                          title="Manage Members"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(group.id)}
+                          className="text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {(group.members || []).map(email => {
+                        const app = acceptedApplications.find(a => a.freelancer_email === email);
+                        return (
+                          <Badge key={email} variant="outline" className="text-xs">
+                            {app?.freelancer_name || email}
+                          </Badge>
+                        );
+                      })}
                     </div>
                     <Badge className={
                       group.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
