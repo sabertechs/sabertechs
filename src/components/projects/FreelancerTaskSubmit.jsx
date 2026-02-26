@@ -220,31 +220,100 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
                     </div>
                   )}
 
-                  {/* Upload drop zone */}
-                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-7 h-7 text-indigo-500 animate-spin mb-1" />
-                        <span className="text-sm text-indigo-600">Uploading...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-7 h-7 text-slate-400 mb-1" />
-                        <span className="text-sm text-slate-600">Click to add {task.task_type === 'image_upload' ? 'images' : 'files'}</span>
-                        <span className="text-xs text-slate-400 mt-0.5">
-                          {task.task_type === 'image_upload' ? 'JPG, PNG, WEBP — select multiple' : 'PDF, docs, any format — select multiple'}
-                        </span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept={task.task_type === 'image_upload' ? 'image/*' : '*'}
-                      multiple
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                    />
-                  </label>
+                  {/* Camera capture (for image_upload) + regular upload */}
+                  {task.task_type === 'image_upload' ? (
+                    <div className="flex gap-2">
+                      <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 rounded-xl p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mb-1" />
+                            <span className="text-xs text-indigo-600">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-indigo-400 mb-1" />
+                            <span className="text-xs text-indigo-700 font-medium">Open Camera</span>
+                            <span className="text-xs text-slate-400">Take selfie</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          capture="user"
+                          multiple
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                        />
+                      </label>
+                      <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 text-slate-400 animate-spin mb-1" />
+                            <span className="text-xs text-slate-500">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                            <span className="text-xs text-slate-700 font-medium">From Gallery</span>
+                            <span className="text-xs text-slate-400">Select images</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          multiple
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-5 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-7 h-7 text-indigo-500 animate-spin mb-1" />
+                          <span className="text-sm text-indigo-600">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-7 h-7 text-slate-400 mb-1" />
+                          <span className="text-sm text-slate-600">Click to add files</span>
+                          <span className="text-xs text-slate-400 mt-0.5">PDF, docs, any format — select multiple</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="*"
+                        multiple
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                      />
+                    </label>
+                  )}
+
+                  {/* Geo location status for image uploads */}
+                  {task.task_type === 'image_upload' && (
+                    <div className={`flex items-center gap-2 text-sm rounded-lg p-2 ${location ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                      {locating ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Capturing location...</>
+                      ) : location ? (
+                        <><MapPin className="w-4 h-4" /> Location captured: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}</>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4" />
+                          <span>Location not captured.</span>
+                          <button
+                            type="button"
+                            className="underline font-medium ml-1"
+                            onClick={handleGetLocation}
+                          >Retry</button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
