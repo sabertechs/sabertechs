@@ -216,9 +216,12 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   const handleGetLocation = () => {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        setLocation({ lat, lng });
         setLocating(false);
+        const addr = await reverseGeocode(lat, lng);
+        setLocationAddress(addr);
       },
       () => {
         toast.error('Could not get location. Please allow location access.');
