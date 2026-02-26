@@ -244,7 +244,7 @@ export default function Layout({ children, currentPageName }) {
       // Regular employees
       if (true) {
         // Permanent employees - show pages based on section_access or defaults
-        if (sectionAccess.includes('attendance') || sectionAccess.length === 0) {
+        if ((sectionAccess.includes('attendance') || sectionAccess.length === 0) && isModuleEnabled('attendance')) {
           items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
         }
         if (sectionAccess.includes('payslips') || sectionAccess.length === 0) {
@@ -260,6 +260,7 @@ export default function Layout({ children, currentPageName }) {
         items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
         if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
         if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+        if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
       }
     }
 
