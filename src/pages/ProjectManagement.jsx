@@ -274,11 +274,20 @@ export default function ProjectManagement() {
             {exporting ? 'Exporting...' : 'Export to Drive'}
           </Button>
           {exportResult?.file_url && (
-            <a href={exportResult.file_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
-                <ExternalLink className="w-4 h-4 mr-1" /> View File
-              </Button>
-            </a>
+            <>
+              <a href={exportResult.file_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                  <ExternalLink className="w-4 h-4 mr-1" /> View File
+                </Button>
+              </a>
+              {exportResult?.folder_url && (
+                <a href={exportResult.folder_url} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                    <ExternalLink className="w-4 h-4 mr-1" /> Open Folder
+                  </Button>
+                </a>
+              )}
+            </>
           )}
           <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
             <Plus className="w-4 h-4 mr-2" />
