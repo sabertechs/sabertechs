@@ -17,6 +17,8 @@ import { createPageUrl } from "@/utils";
 export default function ProjectManagement() {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
