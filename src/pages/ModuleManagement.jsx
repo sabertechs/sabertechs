@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Package, Users, Briefcase, Gamepad2, Shield, Settings, Save, AlertCircle } from "lucide-react";
+import { Package, Users, Briefcase, Gamepad2, Shield, Settings, Save, AlertCircle, UserPlus, Newspaper, Clock } from "lucide-react";
 
 const AVAILABLE_MODULES = [
+  { id: 'hr_admin', name: 'HR Admin Section', icon: UserPlus, description: 'Employee management, uploads, onboarding, and offer letters' },
   { id: 'assets', name: 'Assets Management', icon: Package, description: 'Manage company assets, assignments, and tracking' },
+  { id: 'company_feed', name: 'Company Feed', icon: Newspaper, description: 'Company announcements and social feed' },
+  { id: 'attendance', name: 'Attendance Management', icon: Clock, description: 'Track and manage employee attendance' },
   { id: 'freelancers', name: 'Freelancers', icon: Users, description: 'Manage freelancers and their profiles' },
   { id: 'projects', name: 'Projects', icon: Briefcase, description: 'Manage projects, tasks, and assignments' },
   { id: 'games', name: 'Games & Arena', icon: Gamepad2, description: 'Office games and leaderboards' },
