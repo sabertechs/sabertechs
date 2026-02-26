@@ -87,10 +87,14 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   }, [cameraStream]);
 
   const openCamera = async () => {
-    // Also grab location at camera open
     if (!location) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        async (pos) => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          setLocation({ lat, lng });
+          const addr = await reverseGeocode(lat, lng);
+          setLocationAddress(addr);
+        },
         () => {}
       );
     }
