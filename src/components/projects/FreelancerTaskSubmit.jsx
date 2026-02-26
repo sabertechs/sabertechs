@@ -116,10 +116,16 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
       submitMutation.mutate({ response_type: 'number', response_value: String(numberValue) });
     } else if (task.task_type === 'image_upload' || task.task_type === 'file_upload') {
       if (!uploadedFiles.length) return toast.error('Please upload at least one file');
-      submitMutation.mutate({
+      const payload = {
         response_type: task.task_type === 'image_upload' ? 'image' : 'file',
         response_value: JSON.stringify(uploadedFiles.map(f => f.url))
-      });
+      };
+      // Attach geo location if captured for image uploads
+      if (task.task_type === 'image_upload' && location) {
+        payload.latitude = location.lat;
+        payload.longitude = location.lng;
+      }
+      submitMutation.mutate(payload);
     } else if (task.task_type === 'geo_location') {
       if (!location) return toast.error('Please capture your location first');
       submitMutation.mutate({
