@@ -99,10 +99,10 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
       if (!numberValue) return toast.error('Please enter a number');
       submitMutation.mutate({ response_type: 'number', response_value: String(numberValue) });
     } else if (task.task_type === 'image_upload' || task.task_type === 'file_upload') {
-      if (!uploadedUrl) return toast.error('Please upload a file first');
+      if (!uploadedFiles.length) return toast.error('Please upload at least one file');
       submitMutation.mutate({
         response_type: task.task_type === 'image_upload' ? 'image' : 'file',
-        response_value: uploadedUrl
+        response_value: JSON.stringify(uploadedFiles.map(f => f.url))
       });
     } else if (task.task_type === 'geo_location') {
       if (!location) return toast.error('Please capture your location first');
