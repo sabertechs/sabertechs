@@ -30,10 +30,16 @@ export default function ProjectResponsesTab({ projectId }) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status, notes }) => 
-      base44.entities.TaskResponse.update(id, { status, admin_notes: notes }),
+    mutationFn: async ({ id, status, notes, taskId }) => {
+      await base44.entities.TaskResponse.update(id, { status, admin_notes: notes });
+      // Auto-update task status to completed when response is approved
+      if (status === 'approved' && taskId) {
+        await base44.entities.ProjectTask.update(taskId, { status: 'completed' });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['taskResponses']);
+      queryClient.invalidateQueries(['projectTasks']);
       setSelectedResponse(null);
       setAdminNotes('');
       toast.success('Response updated');
