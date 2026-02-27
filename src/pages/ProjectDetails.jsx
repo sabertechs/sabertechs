@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, CheckCircle, ListTodo, DollarSign, ArrowLeft } from "lucide-react";
+import { Users, CheckCircle, ListTodo, DollarSign, ArrowLeft, ClipboardCheck } from "lucide-react";
 import ProjectApplicationsTab from "@/components/projects/ProjectApplicationsTab";
 import ProjectTasksTab from "@/components/projects/ProjectTasksTab";
 import ProjectGroupsTab from "@/components/projects/ProjectGroupsTab";
