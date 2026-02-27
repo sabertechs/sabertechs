@@ -56,6 +56,8 @@ export default function ProjectDetails() {
   const pendingCount = applications.filter(a => a.status === 'pending').length;
   const activeGroups = groups.filter(g => g.status === 'active').length;
   const responsesCount = responses.filter(r => r.status === 'submitted').length;
+  const completedTasksCount = tasks.filter(t => t.status === 'completed').length;
+  const remainingTasksCount = tasks.filter(t => t.status !== 'completed' && t.status !== 'archived').length;
 
   if (!project) {
     return <div className="p-8 text-center">Loading...</div>;
