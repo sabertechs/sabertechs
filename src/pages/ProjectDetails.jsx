@@ -160,12 +160,12 @@ export default function ProjectDetails() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold">{tasks.length}</p>
-                <p className="text-purple-100 text-sm">{responsesCount} responses received</p>
+                <p className="text-3xl font-bold">{responses.length}</p>
+                <p className="text-purple-100 text-sm">{responsesCount} awaiting review</p>
               </div>
               <ListTodo className="w-12 h-12 opacity-50" />
             </div>
-            <p className="mt-2 font-medium">Tasks</p>
+            <p className="mt-2 font-medium">Total Responses</p>
           </CardContent>
         </Card>
 
