@@ -173,12 +173,12 @@ export default function ProjectDetails() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold">₹0.00</p>
-                <p className="text-orange-100 text-sm">0 transactions</p>
+                <p className="text-3xl font-bold">{remainingTasksCount}</p>
+                <p className="text-orange-100 text-sm">{completedTasksCount} of {tasks.length} completed</p>
               </div>
-              <DollarSign className="w-12 h-12 opacity-50" />
+              <ClipboardCheck className="w-12 h-12 opacity-50" />
             </div>
-            <p className="mt-2 font-medium">Payroll</p>
+            <p className="mt-2 font-medium">Remaining Tasks</p>
           </CardContent>
         </Card>
       </div>
