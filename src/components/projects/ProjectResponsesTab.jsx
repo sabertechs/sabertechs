@@ -173,7 +173,8 @@ export default function ProjectResponsesTab({ projectId }) {
                               onClick={() => updateStatusMutation.mutate({ 
                                 id: response.id, 
                                 status: 'approved',
-                                notes: ''
+                                notes: '',
+                                taskId: response.task_id
                               })}
                               className="bg-green-600 hover:bg-green-700"
                             >
