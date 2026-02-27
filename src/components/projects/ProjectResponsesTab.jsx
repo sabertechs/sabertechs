@@ -29,6 +29,19 @@ export default function ProjectResponsesTab({ projectId }) {
     enabled: !!projectId
   });
 
+  // Auto-fix: mark tasks as completed if they have an approved response but status isn't completed
+  React.useEffect(() => {
+    if (!responses.length || !tasks.length) return;
+    const approvedResponses = responses.filter(r => r.status === 'approved');
+    approvedResponses.forEach(async (r) => {
+      const task = tasks.find(t => t.id === r.task_id);
+      if (task && task.status !== 'completed') {
+        await base44.entities.ProjectTask.update(task.id, { status: 'completed' });
+        queryClient.invalidateQueries(['projectTasks']);
+      }
+    });
+  }, [responses, tasks]);
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes, taskId }) => {
       await base44.entities.TaskResponse.update(id, { status, admin_notes: notes });
