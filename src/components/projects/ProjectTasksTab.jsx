@@ -472,6 +472,47 @@ export default function ProjectTasksTab({ projectId, project }) {
         </CardContent>
       </Card>
 
+      {/* Template Import Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import Tasks from Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {taskTemplates.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">No active templates found. Create templates in the Task Templates page.</p>
+            ) : taskTemplates.map((t) => (
+              <div key={t.id} className="border border-slate-200 rounded-lg p-4 hover:border-purple-400 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">{t.template_name}</p>
+                    {t.project_type && <span className="text-xs text-slate-500">{t.project_type} · </span>}
+                    <span className="text-xs text-slate-500">{t.tasks?.length || 0} tasks</span>
+                    {t.description && <p className="text-sm text-slate-500 mt-1">{t.description}</p>}
+                    <div className="mt-2 space-y-1">
+                      {t.tasks?.slice(0, 4).map((task, i) => (
+                        <p key={i} className="text-xs text-slate-600">• {task.title}</p>
+                      ))}
+                      {t.tasks?.length > 4 && <p className="text-xs text-slate-400">+{t.tasks.length - 4} more...</p>}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 ml-4 flex-shrink-0"
+                    onClick={() => handleImportTemplate(t)}
+                  >
+                    Import
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Task Dialog */}
       <Dialog open={showDialog || showSubTaskDialog} onOpenChange={(open) => {
         if (!open) {
