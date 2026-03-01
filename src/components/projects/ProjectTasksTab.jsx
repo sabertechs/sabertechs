@@ -210,6 +210,34 @@ export default function ProjectTasksTab({ projectId, project }) {
     }
   };
 
+  const handleImportTemplate = async (template) => {
+    const projectStartDate = project?.start_date ? new Date(project.start_date) : new Date();
+    let successCount = 0;
+    for (const task of template.tasks) {
+      const dueDate = task.due_days_offset > 0
+        ? format(addDays(projectStartDate, task.due_days_offset), 'yyyy-MM-dd')
+        : project?.start_date || '';
+      await createMutation.mutateAsync({
+        title: task.title,
+        description: task.description || '',
+        task_type: task.task_type,
+        priority: task.priority || 'medium',
+        is_required: task.is_required ?? true,
+        due_date: dueDate,
+        assigned_to: '',
+        group_id: '',
+        depends_on_task_id: '',
+        progress_percentage: 0,
+        project_id: projectId,
+        project_name: project.name,
+        status: 'pending'
+      });
+      successCount++;
+    }
+    setShowTemplateDialog(false);
+    toast.success(`Imported ${successCount} tasks from "${template.template_name}"`);
+  };
+
   const taskIcons = {
     file_upload: FileText,
     image_upload: Image,
