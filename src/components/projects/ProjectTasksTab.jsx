@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, AlertCircle, CheckCircle, Clock, GitBranch, ArrowRight } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, AlertCircle, CheckCircle, Clock, GitBranch, ArrowRight, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 
 export default function ProjectTasksTab({ projectId, project }) {
