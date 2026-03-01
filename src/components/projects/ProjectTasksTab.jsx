@@ -33,10 +33,17 @@ export default function ProjectTasksTab({ projectId, project }) {
     progress_percentage: 0
   });
 
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
     queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }),
     enabled: !!projectId
+  });
+
+  const { data: taskTemplates = [] } = useQuery({
+    queryKey: ['taskTemplates'],
+    queryFn: () => base44.entities.TaskTemplate.filter({ is_active: true }),
   });
 
   const { data: applications = [] } = useQuery({
