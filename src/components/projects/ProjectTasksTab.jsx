@@ -286,10 +286,16 @@ export default function ProjectTasksTab({ projectId, project }) {
               <h3 className="text-lg font-semibold">Project Tasks</h3>
               <p className="text-sm text-slate-500">{mainTasks.length} main tasks, {tasks.length - mainTasks.length} sub-tasks</p>
             </div>
-            <Button onClick={openAddDialog} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Task
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowTemplateDialog(true)} size="sm" variant="outline" className="border-purple-400 text-purple-700 hover:bg-purple-50">
+                <LayoutTemplate className="w-4 h-4 mr-2" />
+                Import Template
+              </Button>
+              <Button onClick={openAddDialog} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Task
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-4">
