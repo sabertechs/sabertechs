@@ -92,6 +92,7 @@ import Settings from './pages/Settings';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
 import TaskTemplates from './pages/TaskTemplates';
+import ProjectAnalytics from './pages/ProjectAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -141,6 +142,7 @@ export const PAGES = {
     "TeamView": TeamView,
     "TestEmail": TestEmail,
     "TaskTemplates": TaskTemplates,
+    "ProjectAnalytics": ProjectAnalytics,
 }
 
 export const pagesConfig = {
