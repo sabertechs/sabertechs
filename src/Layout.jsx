@@ -235,6 +235,7 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
       if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     } else if (userRole === 'freelancer') {
       // Freelancers have access to projects, payslips and company feed
