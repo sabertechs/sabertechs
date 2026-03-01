@@ -197,6 +197,7 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
       if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
