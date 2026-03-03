@@ -503,6 +503,148 @@ export default function ProjectAnalytics() {
         </div>
       </div>
 
+      {/* Tasks: Remaining vs Completed per Project */}
+      {taskCompletionData.length > 0 && (
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold text-slate-700">Tasks: Completed vs Remaining (Top Projects)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={taskCompletionData} barSize={24} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                <Tooltip
+                  formatter={(val, name) => [val, name === "completed" ? "Completed" : "Remaining"]}
+                  labelFormatter={(label, payload) => payload?.[0]?.payload?.fullName || label}
+                />
+                <Legend formatter={(val) => val === "completed" ? "Completed" : "Remaining"} />
+                <Bar dataKey="completed" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} name="completed" />
+                <Bar dataKey="remaining" stackId="a" fill="#fca5a5" radius={[0, 4, 4, 0]} name="remaining" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Best & Worst Performing Projects */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <CardTitle className="text-base font-semibold text-slate-700">Best Performing Projects</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {projectPerformance.best.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">No task data available</p>
+            ) : (
+              <div className="space-y-3">
+                {projectPerformance.best.map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-amber-400 w-6">#{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
+                      <p className="text-xs text-slate-500">{p.completedTasks}/{p.totalTasks} tasks · {p.location}</p>
+                      <div className="mt-1 h-2 bg-slate-100 rounded-full">
+                        <div className="h-2 bg-green-500 rounded-full" style={{ width: `${p.completionPct}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-green-600">{p.completionPct}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="w-5 h-5 text-red-500" />
+              <CardTitle className="text-base font-semibold text-slate-700">Least Performing Projects</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {projectPerformance.worst.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">No task data available</p>
+            ) : (
+              <div className="space-y-3">
+                {projectPerformance.worst.map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-red-300 w-6">#{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
+                      <p className="text-xs text-slate-500">{p.completedTasks}/{p.totalTasks} tasks · {p.location}</p>
+                      <div className="mt-1 h-2 bg-slate-100 rounded-full">
+                        <div className="h-2 bg-red-400 rounded-full" style={{ width: `${p.completionPct}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-red-500">{p.completionPct}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Center Performance */}
+      {centerPerformance.length > 0 && (
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-indigo-500" />
+              <CardTitle className="text-base font-semibold text-slate-700">Center / Location Performance</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Location</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Projects</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Total Tasks</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Completed</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Remaining</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Completion</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {centerPerformance.map((c, i) => (
+                    <tr key={c.location} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-3 py-2 font-medium text-slate-800">{c.location}</td>
+                      <td className="px-3 py-2 text-slate-600">{c.projects}</td>
+                      <td className="px-3 py-2 text-slate-600">{c.totalTasks}</td>
+                      <td className="px-3 py-2 text-green-600 font-medium">{c.completedTasks}</td>
+                      <td className="px-3 py-2 text-red-500 font-medium">{c.totalTasks - c.completedTasks}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-slate-100 rounded-full w-20">
+                            <div className="h-2 rounded-full" style={{ width: `${c.completionPct}%`, backgroundColor: c.completionPct >= 75 ? "#22c55e" : c.completionPct >= 40 ? "#f59e0b" : "#ef4444" }} />
+                          </div>
+                          <span className="font-semibold text-slate-700">{c.completionPct}%</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {i === 0 && <Badge className="bg-green-100 text-green-700 text-xs">Best</Badge>}
+                        {i === centerPerformance.length - 1 && centerPerformance.length > 1 && (
+                          <Badge className="bg-red-100 text-red-700 text-xs">Lowest</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Project list summary */}
       <Card className="border border-slate-200">
         <CardHeader className="pb-2">
