@@ -486,6 +486,11 @@ export default function BulkPANVerification() {
                           </Badge>
                         ) : "—"}
                       </td>
+                      <td className="px-3 py-2 text-slate-600 text-xs">{r.email || "—"}</td>
+                      <td className="px-3 py-2 font-mono text-slate-600 text-xs">{r.phone_number || "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">{r.city || "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">{r.state || "—"}</td>
+                      <td className="px-3 py-2 text-slate-600 text-xs max-w-xs truncate">{r.full_address || "—"}</td>
                       <td className="px-3 py-2 text-red-500 text-xs max-w-xs truncate">{r.error_message || ""}</td>
                     </tr>
                   ))}
