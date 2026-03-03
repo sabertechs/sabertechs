@@ -40,6 +40,11 @@ export default function ProjectAnalytics() {
     queryFn: () => base44.entities.ProjectApplication.list("-created_date", 500),
   });
 
+  const { data: allTasks = [] } = useQuery({
+    queryKey: ["allProjectTasks"],
+    queryFn: () => base44.entities.ProjectTask.list("-created_date", 1000),
+  });
+
   // Apply filters
   const filtered = useMemo(() => {
     return projects.filter((p) => {
