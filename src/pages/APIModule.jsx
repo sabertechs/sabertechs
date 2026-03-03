@@ -311,6 +311,10 @@ export default function APIModule() {
             <TestTube className="w-4 h-4 mr-2" />
             Test PAN Plus
           </Button>
+          <Button onClick={() => setShowTestPlusV2Dialog(true)} variant="outline" className="border-pink-600 text-pink-600 hover:bg-pink-50">
+            <TestTube className="w-4 h-4 mr-2" />
+            Test PAN Plus V2
+          </Button>
           <Button onClick={() => setShowAddDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
             New Request
