@@ -45,6 +45,10 @@ export default function APIModule() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [showTestPlusDialog, setShowTestPlusDialog] = useState(false);
+  const [showTestPlusV2Dialog, setShowTestPlusV2Dialog] = useState(false);
+  const [testPlusV2Result, setTestPlusV2Result] = useState(null);
+  const [testPlusV2Loading, setTestPlusV2Loading] = useState(false);
+  const [testPanV2Number, setTestPanV2Number] = useState("");
   const [showConnectionTest, setShowConnectionTest] = useState(false);
   const [connectionTestResult, setConnectionTestResult] = useState(null);
   const [connectionTestLoading, setConnectionTestLoading] = useState(false);
