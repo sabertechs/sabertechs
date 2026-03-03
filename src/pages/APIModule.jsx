@@ -226,6 +226,30 @@ export default function APIModule() {
     setTestPlusResult(null);
   };
 
+  const handleTestPANPlusV2 = async () => {
+    if (!testPanV2Number) { toast.error('Please enter PAN number'); return; }
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(testPanV2Number)) { toast.error('Invalid PAN format. Use: ABCDE1234F'); return; }
+
+    setTestPlusV2Loading(true);
+    setTestPlusV2Result(null);
+    try {
+      const response = await base44.functions.invoke('verifyPANPlusV2', { pan_number: testPanV2Number });
+      if (response.data.success) {
+        setTestPlusV2Result({ success: true, ...response.data });
+        toast.success('PAN Plus V2 verified successfully');
+      } else {
+        setTestPlusV2Result({ success: false, error: response.data.error || 'Verification failed', ...response.data });
+        toast.error(response.data.error || 'Verification failed');
+      }
+    } catch (error) {
+      setTestPlusV2Result({ success: false, error: error.message });
+      toast.error(error.message || 'Verification failed');
+    } finally {
+      setTestPlusV2Loading(false);
+    }
+  };
+
   const handleConnectionTest = async () => {
     setConnectionTestLoading(true);
     setConnectionTestResult(null);
