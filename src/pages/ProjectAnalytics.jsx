@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { format, isWithinInterval, parseISO, isAfter } from "date-fns";
+import { format, parseISO, isAfter } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { Briefcase, CheckCircle, Clock, AlertTriangle, TrendingUp, IndianRupee, MapPin, Users, Trophy, TrendingDown } from "lucide-react";
+import { Briefcase, CheckCircle, Clock, AlertTriangle, TrendingUp, IndianRupee, MapPin, Trophy, TrendingDown } from "lucide-react";
 
 const STATUS_COLORS = {
   draft: "#94a3b8",
