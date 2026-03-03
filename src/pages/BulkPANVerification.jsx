@@ -164,7 +164,7 @@ export default function BulkPANVerification() {
       queryClient.invalidateQueries(["bulkPANVerification"]);
 
       try {
-        const response = await base44.functions.invoke("verifyPANPlus", {
+        const response = await base44.functions.invoke("verifyPANPlusV2", {
           pan_number: record.pan_number,
         });
 

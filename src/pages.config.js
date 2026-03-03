@@ -58,6 +58,7 @@ import AssetRequests from './pages/AssetRequests';
 import AttendanceManagement from './pages/AttendanceManagement';
 import AuthRedirect from './pages/AuthRedirect';
 import BackgroundVerification from './pages/BackgroundVerification';
+import BulkPANVerification from './pages/BulkPANVerification';
 import CompanyFeed from './pages/CompanyFeed';
 import CompanyPolicies from './pages/CompanyPolicies';
 import DeptHeadDashboard from './pages/DeptHeadDashboard';
@@ -93,7 +94,6 @@ import Settings from './pages/Settings';
 import TaskTemplates from './pages/TaskTemplates';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import BulkPANVerification from './pages/BulkPANVerification';
 import __Layout from './Layout.jsx';
 
 
@@ -109,6 +109,7 @@ export const PAGES = {
     "AttendanceManagement": AttendanceManagement,
     "AuthRedirect": AuthRedirect,
     "BackgroundVerification": BackgroundVerification,
+    "BulkPANVerification": BulkPANVerification,
     "CompanyFeed": CompanyFeed,
     "CompanyPolicies": CompanyPolicies,
     "DeptHeadDashboard": DeptHeadDashboard,
@@ -144,7 +145,6 @@ export const PAGES = {
     "TaskTemplates": TaskTemplates,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "BulkPANVerification": BulkPANVerification,
 }
 
 export const pagesConfig = {
