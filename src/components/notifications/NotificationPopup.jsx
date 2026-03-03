@@ -22,13 +22,18 @@ export default function NotificationPopup({ userEmail }) {
   useEffect(() => {
     if (!userEmail) return;
 
-    // Check for new notifications every 10 seconds
+    // Check for new notifications every 30 seconds
     const checkNotifications = async () => {
-      const notifications = await base44.entities.Notification.filter(
-        { recipient_email: userEmail, is_read: false },
-        '-created_date',
-        5
-      );
+      let notifications;
+      try {
+        notifications = await base44.entities.Notification.filter(
+          { recipient_email: userEmail, is_read: false },
+          '-created_date',
+          5
+        );
+      } catch (e) {
+        return; // Silently ignore network errors
+      }
 
       // Find the newest notification that we haven't shown yet
       const newNotification = notifications.find(n => !seenIds.has(n.id));
