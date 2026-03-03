@@ -93,6 +93,7 @@ import Settings from './pages/Settings';
 import TaskTemplates from './pages/TaskTemplates';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
+import BulkPANVerification from './pages/BulkPANVerification';
 import __Layout from './Layout.jsx';
 
 
@@ -143,6 +144,7 @@ export const PAGES = {
     "TaskTemplates": TaskTemplates,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
+    "BulkPANVerification": BulkPANVerification,
 }
 
 export const pagesConfig = {
