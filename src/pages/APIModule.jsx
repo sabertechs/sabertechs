@@ -788,6 +788,124 @@ export default function APIModule() {
         </DialogContent>
       </Dialog>
 
+      {/* PAN Plus V2 Dialog */}
+      <Dialog open={showTestPlusV2Dialog} onOpenChange={(open) => { setShowTestPlusV2Dialog(open); if (!open) { setTestPanV2Number(""); setTestPlusV2Result(null); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Test PAN Plus V2 - Full Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>PAN Number *</Label>
+              <Input
+                value={testPanV2Number}
+                onChange={(e) => setTestPanV2Number(e.target.value.toUpperCase())}
+                placeholder="ABCDE1234F"
+                maxLength={10}
+                className="uppercase"
+              />
+              <p className="text-xs text-slate-500">Format: 5 letters + 4 digits + 1 letter</p>
+            </div>
+
+            <Button onClick={handleTestPANPlusV2} disabled={testPlusV2Loading} className="w-full bg-pink-600 hover:bg-pink-700">
+              {testPlusV2Loading ? <><Clock className="w-4 h-4 mr-2 animate-spin" />Verifying...</> : <><TestTube className="w-4 h-4 mr-2" />Verify PAN Plus V2</>}
+            </Button>
+
+            {testPlusV2Result && (
+              <div className="space-y-3 mt-2">
+                <div className={`flex items-center justify-between p-3 rounded-lg ${!testPlusV2Result.success ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                  <span className={`font-semibold ${!testPlusV2Result.success ? 'text-red-800' : 'text-green-800'}`}>
+                    API Response {testPlusV2Result.statusCode && `(${testPlusV2Result.statusCode})`}
+                  </span>
+                  <Badge className={!testPlusV2Result.success ? 'bg-red-600' : 'bg-green-600'}>
+                    {testPlusV2Result.success ? 'Success' : 'Failed'}
+                  </Badge>
+                </div>
+
+                {testPlusV2Result.success && testPlusV2Result.data && (() => {
+                  const d = testPlusV2Result.data;
+                  return (
+                    <div className="p-4 bg-slate-50 rounded-lg space-y-4">
+                      {/* Identity */}
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Identity</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div><Label className="text-xs text-slate-500">PAN Number</Label><p className="font-mono font-medium">{d.pan_number}</p></div>
+                          <div><Label className="text-xs text-slate-500">Category</Label><p className="capitalize">{d.category}</p></div>
+                          <div className="col-span-2"><Label className="text-xs text-slate-500">Full Name</Label><p className="font-semibold text-lg">{d.full_name}</p></div>
+                          {d.dob && <div><Label className="text-xs text-slate-500">Date of Birth</Label><p>{d.dob}</p></div>}
+                          {d.gender && <div><Label className="text-xs text-slate-500">Gender</Label><p className="capitalize">{d.gender === 'M' ? 'Male' : d.gender === 'F' ? 'Female' : d.gender}</p></div>}
+                        </div>
+                      </div>
+
+                      {/* Contact */}
+                      <div className="border-t pt-3">
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Contact</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {d.email && <div><Label className="text-xs text-slate-500">Email</Label><p className="font-mono text-sm">{d.email}</p></div>}
+                          {d.phone_number && <div><Label className="text-xs text-slate-500">Phone</Label><p className="font-mono">{d.phone_number}</p></div>}
+                        </div>
+                      </div>
+
+                      {/* Aadhaar */}
+                      <div className="border-t pt-3">
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Aadhaar</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {d.masked_aadhaar && <div><Label className="text-xs text-slate-500">Masked Aadhaar</Label><p className="font-mono">{d.masked_aadhaar}</p></div>}
+                          <div><Label className="text-xs text-slate-500">Aadhaar Linked</Label>
+                            <Badge className={d.aadhaar_linked ? 'bg-green-600' : 'bg-red-600'}>{d.aadhaar_linked ? 'Yes' : 'No'}</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      {d.address && (
+                        <div className="border-t pt-3">
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Address</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {d.address.line_1 && <div className="col-span-2"><Label className="text-xs text-slate-500">Line 1</Label><p>{d.address.line_1}</p></div>}
+                            {d.address.line_2 && <div className="col-span-2"><Label className="text-xs text-slate-500">Line 2</Label><p>{d.address.line_2}</p></div>}
+                            {d.address.street_name && <div><Label className="text-xs text-slate-500">Street</Label><p>{d.address.street_name}</p></div>}
+                            {d.address.city && <div><Label className="text-xs text-slate-500">City</Label><p>{d.address.city}</p></div>}
+                            {d.address.state && <div><Label className="text-xs text-slate-500">State</Label><p>{d.address.state}</p></div>}
+                            {d.address.zip && <div><Label className="text-xs text-slate-500">ZIP Code</Label><p>{d.address.zip}</p></div>}
+                            {d.address.country && <div><Label className="text-xs text-slate-500">Country</Label><p>{d.address.country}</p></div>}
+                            {d.address.full && <div className="col-span-2 p-2 bg-white rounded border border-slate-200"><Label className="text-xs text-slate-500">Full Address</Label><p className="text-sm mt-1">{d.address.full}</p></div>}
+                          </div>
+                        </div>
+                      )}
+
+                      {testPlusV2Result.transaction_id && (
+                        <div className="border-t pt-3 text-xs text-slate-400">
+                          Transaction ID: <span className="font-mono">{testPlusV2Result.transaction_id}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {testPlusV2Result.error && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <Label className="text-xs text-red-600">Error</Label>
+                    <p className="text-sm text-red-800 font-medium mt-1">{testPlusV2Result.error}</p>
+                  </div>
+                )}
+
+                <details className="pt-2">
+                  <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-800">View Full Response JSON</summary>
+                  <pre className="mt-2 p-3 bg-slate-900 text-slate-100 rounded text-xs overflow-auto max-h-48">
+                    {JSON.stringify(testPlusV2Result, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowTestPlusV2Dialog(false); setTestPanV2Number(""); setTestPlusV2Result(null); }}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* View Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
         <DialogContent className="max-w-2xl">
