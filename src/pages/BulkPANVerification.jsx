@@ -462,6 +462,11 @@ export default function BulkPANVerification() {
                     <th className="text-left px-3 py-2 text-slate-500 font-medium">Gender</th>
                     <th className="text-left px-3 py-2 text-slate-500 font-medium">Masked Aadhaar</th>
                     <th className="text-left px-3 py-2 text-slate-500 font-medium">Aadhaar Linked</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Email</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Phone</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">City</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">State</th>
+                    <th className="text-left px-3 py-2 text-slate-500 font-medium">Full Address</th>
                     <th className="text-left px-3 py-2 text-slate-500 font-medium">Error</th>
                   </tr>
                 </thead>
