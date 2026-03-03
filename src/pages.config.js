@@ -84,15 +84,15 @@ import OfficeOpsArena from './pages/OfficeOpsArena';
 import OnboardingTemplates from './pages/OnboardingTemplates';
 import PayslipManagement from './pages/PayslipManagement';
 import PolicyManagement from './pages/PolicyManagement';
+import ProjectAnalytics from './pages/ProjectAnalytics';
 import ProjectDetails from './pages/ProjectDetails';
 import ProjectManagement from './pages/ProjectManagement';
 import PushNotificationTest from './pages/PushNotificationTest';
 import Registration from './pages/Registration';
 import Settings from './pages/Settings';
+import TaskTemplates from './pages/TaskTemplates';
 import TeamView from './pages/TeamView';
 import TestEmail from './pages/TestEmail';
-import TaskTemplates from './pages/TaskTemplates';
-import ProjectAnalytics from './pages/ProjectAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -134,15 +134,15 @@ export const PAGES = {
     "OnboardingTemplates": OnboardingTemplates,
     "PayslipManagement": PayslipManagement,
     "PolicyManagement": PolicyManagement,
+    "ProjectAnalytics": ProjectAnalytics,
     "ProjectDetails": ProjectDetails,
     "ProjectManagement": ProjectManagement,
     "PushNotificationTest": PushNotificationTest,
     "Registration": Registration,
     "Settings": Settings,
+    "TaskTemplates": TaskTemplates,
     "TeamView": TeamView,
     "TestEmail": TestEmail,
-    "TaskTemplates": TaskTemplates,
-    "ProjectAnalytics": ProjectAnalytics,
 }
 
 export const pagesConfig = {
