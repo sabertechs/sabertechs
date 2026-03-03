@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import CityAutocomplete from "@/components/forms/CityAutocomplete";
 import { INDIAN_STATES } from "@/components/data/indiaData";
 
-const InputWithError = ({ label, value, onChange, error, type = "text", placeholder, ...props }) => (
+const InputWithError = function({ label, value, onChange, error, type = "text", placeholder, id, ...props }) { return (
   <div className="space-y-2">
     <Label>{label} *</Label>
     <Input
