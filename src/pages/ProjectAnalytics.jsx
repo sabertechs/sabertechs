@@ -134,6 +134,78 @@ export default function ProjectAnalytics() {
     { name: "Overdue", value: metrics.completedOverdue, fill: "#ef4444" },
   ].filter((d) => d.value > 0);
 
+  // Task metrics per project
+  const tasksByProject = useMemo(() => {
+    const map = {};
+    allTasks.forEach((t) => {
+      if (!map[t.project_id]) map[t.project_id] = { total: 0, completed: 0 };
+      map[t.project_id].total += 1;
+      if (t.status === "completed") map[t.project_id].completed += 1;
+    });
+    return map;
+  }, [allTasks]);
+
+  // Remaining vs total tasks chart data (per filtered project, top 10 by total tasks)
+  const taskCompletionData = useMemo(() => {
+    return filtered
+      .map((p) => {
+        const t = tasksByProject[p.id] || { total: 0, completed: 0 };
+        return {
+          name: p.name.length > 20 ? p.name.slice(0, 20) + "…" : p.name,
+          fullName: p.name,
+          completed: t.completed,
+          remaining: t.total - t.completed,
+          total: t.total,
+          completionPct: t.total > 0 ? Math.round((t.completed / t.total) * 100) : 0,
+        };
+      })
+      .filter((d) => d.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+  }, [filtered, tasksByProject]);
+
+  // Project performance (best/worst) by task completion %
+  const projectPerformance = useMemo(() => {
+    const withTasks = filtered
+      .map((p) => {
+        const t = tasksByProject[p.id] || { total: 0, completed: 0 };
+        return {
+          ...p,
+          totalTasks: t.total,
+          completedTasks: t.completed,
+          remainingTasks: t.total - t.completed,
+          completionPct: t.total > 0 ? Math.round((t.completed / t.total) * 100) : null,
+        };
+      })
+      .filter((p) => p.totalTasks > 0);
+
+    const sorted = [...withTasks].sort((a, b) => (b.completionPct ?? 0) - (a.completionPct ?? 0));
+    return {
+      best: sorted.slice(0, 3),
+      worst: sorted.slice(-3).reverse(),
+    };
+  }, [filtered, tasksByProject]);
+
+  // Center performance (group by location)
+  const centerPerformance = useMemo(() => {
+    const map = {};
+    filtered.forEach((p) => {
+      const center = p.location || "Unknown";
+      if (!map[center]) map[center] = { location: center, totalTasks: 0, completedTasks: 0, projects: 0 };
+      const t = tasksByProject[p.id] || { total: 0, completed: 0 };
+      map[center].totalTasks += t.total;
+      map[center].completedTasks += t.completed;
+      map[center].projects += 1;
+    });
+    return Object.values(map)
+      .map((c) => ({
+        ...c,
+        completionPct: c.totalTasks > 0 ? Math.round((c.completedTasks / c.totalTasks) * 100) : 0,
+      }))
+      .filter((c) => c.totalTasks > 0)
+      .sort((a, b) => b.completionPct - a.completionPct);
+  }, [filtered, tasksByProject]);
+
   // Payout by month
   const payoutByMonth = useMemo(() => {
     const map = {};
