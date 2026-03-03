@@ -234,7 +234,7 @@ export default function BulkPANVerification() {
   };
 
   const exportBatch = (records) => {
-    const headers = ["PAN Number", "Status", "Full Name", "Date of Birth", "Gender", "Masked Aadhaar", "Aadhaar Linked", "Category", "Error", "Verified At"];
+    const headers = ["PAN Number", "Status", "Full Name", "Date of Birth", "Gender", "Masked Aadhaar", "Aadhaar Linked", "Category", "Email", "Phone", "Address Line 1", "Address Line 2", "City", "State", "ZIP", "Full Address", "Error", "Verified At"];
     const rows = records.map((r) => [
       r.pan_number,
       r.status,
@@ -244,6 +244,14 @@ export default function BulkPANVerification() {
       r.masked_aadhaar || "",
       r.aadhaar_linked != null ? (r.aadhaar_linked ? "Yes" : "No") : "",
       r.category || "",
+      r.email || "",
+      r.phone_number || "",
+      r.address_line1 || "",
+      r.address_line2 || "",
+      r.city || "",
+      r.state || "",
+      r.zip_code || "",
+      r.full_address || "",
       r.error_message || "",
       r.verified_at || "",
     ]);
