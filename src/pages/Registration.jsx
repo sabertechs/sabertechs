@@ -29,7 +29,7 @@ const InputWithError = function({ label, value, onChange, error, type = "text", 
       </p>
     )}
   </div>
-);
+); };
 
 export default function Registration() {
   const navigate = useNavigate();
