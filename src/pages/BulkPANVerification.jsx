@@ -170,14 +170,23 @@ export default function BulkPANVerification() {
 
         const res = response.data;
         if (res.success) {
+          const d = res.data || {};
           await base44.entities.BulkPANVerification.update(record.id, {
             status: "success",
-            full_name: res.data?.full_name || "",
-            date_of_birth: res.data?.dob || "",
-            gender: res.data?.gender || "",
-            masked_aadhaar: res.data?.masked_aadhaar || "",
-            aadhaar_linked: res.data?.aadhaar_linked ?? false,
-            category: res.data?.category || "",
+            full_name: d.full_name || "",
+            date_of_birth: d.dob || "",
+            gender: d.gender || "",
+            masked_aadhaar: d.masked_aadhaar || "",
+            aadhaar_linked: d.aadhaar_linked ?? false,
+            category: d.category || "",
+            email: d.email || "",
+            phone_number: d.phone_number || "",
+            address_line1: d.address?.line_1 || "",
+            address_line2: d.address?.line_2 || "",
+            city: d.address?.city || "",
+            state: d.address?.state || "",
+            zip_code: d.address?.zip || "",
+            full_address: d.address?.full || "",
             verified_at: new Date().toISOString(),
           });
         } else {
