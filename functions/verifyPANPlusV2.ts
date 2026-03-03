@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
 const DEEPVUE_PAN_PLUS_V2_URL = 'https://production.deepvue.tech/v1/verification/pan-plus-v2';
 
