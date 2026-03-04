@@ -497,7 +497,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </header>
 
-        <div className="p-4 lg:p-8">
+        <div className="p-3 lg:p-8 pb-6" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)'}}>
           {children}
         </div>
       </main>
