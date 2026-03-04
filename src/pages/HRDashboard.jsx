@@ -264,53 +264,34 @@ export default function HRDashboard() {
           </Link>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 text-sm font-medium text-slate-500">Name</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Department</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Status</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">BGV Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.slice(0, 5).map((emp) => (
-                  <tr key={emp.id} className="border-b border-slate-50">
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
-                          {emp.full_name?.[0] || 'E'}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-800">{emp.full_name}</p>
-                          <p className="text-sm text-slate-500">{emp.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 capitalize text-slate-600">{emp.department || '-'}</td>
-                    <td className="py-4">
-                      <Badge className={
-                        emp.status === 'active' ? 'bg-green-100 text-green-700' :
-                        emp.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                        'bg-slate-100 text-slate-700'
-                      }>
-                        {emp.status}
-                      </Badge>
-                    </td>
-                    <td className="py-4">
-                      <Badge className={
-                        emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
-                        emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-amber-100 text-amber-700'
-                      }>
-                        {emp.bg_verification_status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            {employees.slice(0, 5).map((emp) => (
+              <div key={emp.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm flex-shrink-0">
+                  {emp.full_name?.[0] || 'E'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-800 truncate">{emp.full_name}</p>
+                  <p className="text-xs text-slate-500 capitalize truncate">{emp.department || emp.email}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge className={`text-xs ${
+                    emp.status === 'active' ? 'bg-green-100 text-green-700' :
+                    emp.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                    'bg-slate-100 text-slate-700'
+                  }`}>
+                    {emp.status}
+                  </Badge>
+                  <Badge className={`text-xs ${
+                    emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
+                    emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-amber-100 text-amber-700'
+                  }`}>
+                    {emp.bg_verification_status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
