@@ -258,35 +258,25 @@ export default function EmployeeDashboard() {
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b border-slate-100">
-                    <th className="pb-3 text-sm font-medium text-slate-500">Type</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Date</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Amount</th>
-                    <th className="pb-3 text-sm font-medium text-slate-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((expense) => (
-                    <tr key={expense.id} className="border-b border-slate-50">
-                      <td className="py-4 capitalize">{expense.expense_type?.replace('_', ' ')}</td>
-                      <td className="py-4 text-slate-600">{format(new Date(expense.date), 'MMM d, yyyy')}</td>
-                      <td className="py-4 font-medium">₹{expense.amount?.toLocaleString()}</td>
-                      <td className="py-4">
-                        <Badge className={
-                          expense.status === 'approved' ? 'bg-green-100 text-green-700' :
-                          expense.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }>
-                          {expense.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-2">
+              {expenses.map((expense) => (
+                <div key={expense.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                  <div>
+                    <p className="font-medium text-sm text-slate-800 capitalize">{expense.expense_type?.replace('_', ' ')}</p>
+                    <p className="text-xs text-slate-500">{format(new Date(expense.date), 'MMM d, yyyy')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm text-slate-800">₹{expense.amount?.toLocaleString()}</p>
+                    <Badge className={
+                      expense.status === 'approved' ? 'bg-green-100 text-green-700 text-xs mt-1' :
+                      expense.status === 'rejected' ? 'bg-red-100 text-red-700 text-xs mt-1' :
+                      'bg-amber-100 text-amber-700 text-xs mt-1'
+                    }>
+                      {expense.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
