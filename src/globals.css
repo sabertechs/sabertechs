@@ -1,0 +1,57 @@
+/* Mobile-first global styles */
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: pan-y;
+}
+
+/* Better tap target sizes on mobile */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Smooth scrolling */
+* {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* Fix iOS input zoom */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Safe area insets for notched phones */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile table helper */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+/* Prevent text overflow */
+.truncate-mobile {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Card touch feedback */
+.card-touch {
+  -webkit-tap-highlight-color: rgba(79, 70, 229, 0.1);
+  cursor: pointer;
+}
+
+/* Bottom nav padding for mobile */
+@media (max-width: 1024px) {
+  .main-content {
+    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+  }
+}
