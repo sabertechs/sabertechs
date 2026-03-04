@@ -331,33 +331,21 @@ export default function MyAttendance() {
           <CardTitle className="text-lg font-semibold">Attendance History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-3 text-sm font-medium text-slate-500">Date</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Check In</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Check Out</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Hours</th>
-                  <th className="pb-3 text-sm font-medium text-slate-500">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendance.slice(0, 10).map((att) => (
-                  <tr key={att.id} className="border-b border-slate-50">
-                    <td className="py-4 font-medium">{format(new Date(att.date), 'MMM d, yyyy')}</td>
-                    <td className="py-4 text-slate-600">{att.check_in || '-'}</td>
-                    <td className="py-4 text-slate-600">{att.check_out || '-'}</td>
-                    <td className="py-4 text-slate-600">{att.working_hours ? `${att.working_hours}h` : '-'}</td>
-                    <td className="py-4">
-                      <Badge className={statusColors[att.status]}>
-                        {att.status?.replace('_', ' ')}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-2">
+            {attendance.slice(0, 10).map((att) => (
+              <div key={att.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-slate-800">{format(new Date(att.date), 'MMM d, yyyy')}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {att.check_in ? `In: ${att.check_in}` : ''}{att.check_out ? ` · Out: ${att.check_out}` : ''}
+                    {att.working_hours ? ` · ${att.working_hours}h` : ''}
+                  </p>
+                </div>
+                <Badge className={statusColors[att.status]}>
+                  {att.status?.replace('_', ' ')}
+                </Badge>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
