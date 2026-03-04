@@ -306,6 +306,14 @@ export default function Layout({ children, currentPageName }) {
           --primary-foreground: 210 40% 98%;
           --accent: 210 40% 96.1%;
         }
+        /* Prevent iOS bounce */
+        html { height: 100%; }
+        body { height: 100%; overflow: hidden; }
+        #root { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        /* Improve tap targets */
+        button, a { touch-action: manipulation; }
+        /* Fix input zoom on iOS */
+        input, select, textarea { font-size: 16px !important; }
       `}</style>
 
       {/* Mobile Header */}
