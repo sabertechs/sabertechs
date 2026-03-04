@@ -1384,7 +1384,59 @@ export default function Employees() {
       {/* Employee List */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="block md:hidden divide-y divide-slate-100">
+            {paginatedEmployees.map((emp) => (
+              <div key={emp.id} className="p-4 flex items-center gap-3">
+                <Checkbox 
+                  checked={selectedEmployees.includes(emp.id)}
+                  onCheckedChange={() => toggleSelectEmployee(emp.id)}
+                  className="flex-shrink-0"
+                />
+                <div className="flex-shrink-0">
+                  {emp.profile_photo ? (
+                    <img src={emp.profile_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                      {emp.full_name?.[0] || 'E'}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0" onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}>
+                  <p className="font-medium text-slate-800 truncate text-sm">{emp.full_name}</p>
+                  <p className="text-xs text-slate-500 truncate">{emp.designation || emp.department || emp.email}</p>
+                  <div className="flex gap-1.5 mt-1 flex-wrap">
+                    <Badge className={`text-xs ${emp.status === 'active' ? 'bg-green-100 text-green-700' : emp.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
+                      {emp.status}
+                    </Badge>
+                    <Badge className={`text-xs ${emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' : emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                      BGV: {emp.bg_verification_status || 'pending'}
+                    </Badge>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex-shrink-0 h-8 w-8 p-0">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}><Eye className="w-4 h-4 mr-2" /> View</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(emp)}><Edit className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => sendInvite(emp)} disabled={sendingInvite === emp.id}>
+                      {sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />} Resend Invite
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}><MessageCircle className="w-4 h-4 mr-2 text-green-600" /> WhatsApp</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
@@ -1395,10 +1447,7 @@ export default function Employees() {
                     />
                   </th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500 cursor-pointer hover:text-indigo-600" onClick={() => handleSort('full_name')}>
-                    <div className="flex items-center gap-1">
-                      Employee
-                      {sortField === 'full_name' && <ArrowUpDown className="w-3 h-3" />}
-                    </div>
+                    <div className="flex items-center gap-1">Employee {sortField === 'full_name' && <ArrowUpDown className="w-3 h-3" />}</div>
                   </th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Department</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Designation</th>
@@ -1406,10 +1455,7 @@ export default function Employees() {
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">BGV Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500 cursor-pointer hover:text-indigo-600" onClick={() => handleSort('date_of_joining')}>
-                    <div className="flex items-center gap-1">
-                      Joined
-                      {sortField === 'date_of_joining' && <ArrowUpDown className="w-3 h-3" />}
-                    </div>
+                    <div className="flex items-center gap-1">Joined {sortField === 'date_of_joining' && <ArrowUpDown className="w-3 h-3" />}</div>
                   </th>
                   <th className="text-right px-4 py-4 text-sm font-medium text-slate-500">Actions</th>
                 </tr>
@@ -1417,98 +1463,45 @@ export default function Employees() {
               <tbody>
                 {paginatedEmployees.map((emp) => (
                   <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-4">
-                      <Checkbox 
-                        checked={selectedEmployees.includes(emp.id)}
-                        onCheckedChange={() => toggleSelectEmployee(emp.id)}
-                      />
-                    </td>
+                    <td className="px-4 py-4"><Checkbox checked={selectedEmployees.includes(emp.id)} onCheckedChange={() => toggleSelectEmployee(emp.id)} /></td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         {emp.profile_photo ? (
                           <img src={emp.profile_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                            {emp.full_name?.[0] || 'E'}
-                          </div>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">{emp.full_name?.[0] || 'E'}</div>
                         )}
                         <div>
-                          <button 
-                            onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}
-                            className="font-medium text-slate-800 hover:text-indigo-600 hover:underline text-left"
-                          >
-                            {emp.full_name}
-                          </button>
+                          <button onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }} className="font-medium text-slate-800 hover:text-indigo-600 hover:underline text-left">{emp.full_name}</button>
                           <p className="text-sm text-slate-500">{emp.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
                     <td className="px-4 py-4 text-slate-600">{emp.designation || '-'}</td>
-                    <td className="px-4 py-4">
-                      <Badge className={
-                        emp.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                      }>
-                        {emp.employment_type === 'contractual' ? 'Contract' : 'Permanent'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4">
-                      <Badge className={
-                        emp.status === 'active' ? 'bg-green-100 text-green-700' :
-                        emp.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                        'bg-slate-100 text-slate-700'
-                      }>
-                        {emp.status}
-                      </Badge>
-                    </td>
+                    <td className="px-4 py-4"><Badge className={emp.employment_type === 'contractual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>{emp.employment_type === 'contractual' ? 'Contract' : 'Permanent'}</Badge></td>
+                    <td className="px-4 py-4"><Badge className={emp.status === 'active' ? 'bg-green-100 text-green-700' : emp.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}>{emp.status}</Badge></td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         {bgvStatusIcon(emp.bg_verification_status)}
-                        <Badge className={
-                          emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
-                          emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :
-                          'bg-amber-100 text-amber-700'
-                        }>
-                          {emp.bg_verification_status || 'pending'}
-                        </Badge>
+                        <Badge className={emp.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' : emp.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>{emp.bg_verification_status || 'pending'}</Badge>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}
-                    </td>
+                    <td className="px-4 py-4 text-slate-600">{emp.date_of_joining && !isNaN(new Date(emp.date_of_joining).getTime()) ? format(new Date(emp.date_of_joining), 'MMM d, yyyy') : '-'}</td>
                     <td className="px-4 py-4 text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}>
-                            <Eye className="w-4 h-4 mr-2" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(emp)}>
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => sendInvite(emp)} disabled={sendingInvite === emp.id}>
-                            {sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                            Resend Invite
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}>
-                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                            <AssignChecklistDialog employee={emp} />
-                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedEmployee(emp); setShowViewDialog(true); }}><Eye className="w-4 h-4 mr-2" /> View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(emp)}><Edit className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => sendInvite(emp)} disabled={sendingInvite === emp.id}>{sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />} Resend Invite</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}><MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}><AssignChecklistDialog employee={emp} /></DropdownMenuItem>
                           {(emp.aadhaar_document || emp.pan_document || emp.profile_photo) && (
-                            <DropdownMenuItem onClick={() => { setDocReviewEmployee(emp); setShowDocReviewDialog(true); }}>
-                              <ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Review Documents
-                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setDocReviewEmployee(emp); setShowDocReviewDialog(true); }}><ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Review Documents</DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
-                                                      <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
