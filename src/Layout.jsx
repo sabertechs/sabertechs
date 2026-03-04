@@ -309,19 +309,19 @@ export default function Layout({ children, currentPageName }) {
       `}</style>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
-        <button onClick={() => setSidebarOpen(true)} className="p-2">
-          <Menu className="w-6 h-6 text-slate-700" />
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-3" style={{paddingTop: 'env(safe-area-inset-top, 0px)'}}>
+        <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg active:bg-slate-100 touch-manipulation">
+          <Menu className="w-5 h-5 text-slate-700" />
         </button>
-        <div className="flex items-center gap-2">
-          <Building2 className="w-7 h-7 text-indigo-600" />
-          <span className="font-bold text-lg text-slate-800">SaberTechs</span>
+        <div className="flex items-center gap-1.5">
+          <Building2 className="w-6 h-6 text-indigo-600" />
+          <span className="font-bold text-base text-slate-800">SaberTechs</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Link to={createPageUrl("Notifications")} className="relative p-2">
+        <div className="flex items-center gap-1">
+          <Link to={createPageUrl("Notifications")} className="relative p-2 rounded-lg active:bg-slate-100">
             <Bell className="w-5 h-5 text-slate-600" />
             {notifications.length > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500">
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-red-500 text-xs">
                 {notifications.length}
               </Badge>
             )}
