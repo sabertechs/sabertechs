@@ -463,7 +463,7 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-16 min-h-screen pt-16 lg:pt-0 transition-all duration-300">
+      <main className="lg:ml-16 min-h-screen pt-14 lg:pt-0 transition-all duration-300">
         {/* Desktop Header */}
         <header className="hidden lg:flex h-16 bg-white border-b border-slate-200 items-center justify-between px-8">
           <h1 className="text-xl font-semibold text-slate-800">
