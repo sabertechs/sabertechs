@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Image as ImageIcon, MapPin, Hash, Type, CheckCircle, Clock, AlertCircle, Upload } from "lucide-react";
+import { FileText, Image as ImageIcon, MapPin, Hash, Type, CheckCircle, Clock, AlertCircle, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
 import FreelancerTaskSubmit from "./FreelancerTaskSubmit";
 
