@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Upload, MapPin, FileText, Image as ImageIcon, Hash, Type, Loader2, CheckCircle, AlertCircle, X, Camera, Download } from "lucide-react";
+import { downloadFile } from "./downloadFile";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
