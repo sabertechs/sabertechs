@@ -103,17 +103,14 @@ export default function ProjectResponsesTab({ projectId }) {
               View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
             </button>
             {urls.map((url, i) => (
-              <a
+              <button
                 key={i}
-                href={url}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => downloadFile(url, `image_${i + 1}.jpg`)}
                 className="text-slate-400 hover:text-indigo-600"
                 title={`Download image ${urls.length > 1 ? i + 1 : ''}`}
               >
                 <Download className="w-3.5 h-3.5" />
-              </a>
+              </button>
             ))}
           </div>
           {response.latitude && (
@@ -140,9 +137,9 @@ export default function ProjectResponsesTab({ projectId }) {
                 <FileText className="w-3 h-3" />
                 File {urls.length > 1 ? i + 1 : ''}
               </a>
-              <a href={url} download className="text-slate-400 hover:text-slate-600" title="Download">
+              <button onClick={() => downloadFile(url, url.split('/').pop())} className="text-slate-400 hover:text-slate-600" title="Download">
                 <Download className="w-3 h-3" />
-              </a>
+              </button>
             </div>
           ))}
         </div>
@@ -242,14 +239,13 @@ export default function ProjectResponsesTab({ projectId }) {
                 {parseUrls(previewResponse.response_value).map((url, i) => (
                   <div key={i} className="relative group">
                     <img src={url} alt={`Submission ${i + 1}`} className="w-full rounded-lg object-contain max-h-72 bg-slate-50" />
-                    <a
-                      href={url}
-                      download
+                    <button
+                      onClick={() => downloadFile(url, `image_${i + 1}.jpg`)}
                       className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Download"
                     >
                       <Download className="w-4 h-4 text-slate-700" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
