@@ -85,6 +85,39 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
                           </span>
                         )}
                       </div>
+                      {/* Show submitted images/files with download button */}
+                      {response && (response.response_type === 'image' || response.response_type === 'file') && response.response_value && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(() => {
+                            let files = [];
+                            try {
+                              const parsed = JSON.parse(response.response_value);
+                              files = Array.isArray(parsed) ? parsed.map(u => ({ url: u, name: u.split('/').pop() })) : [{ url: response.response_value, name: 'file' }];
+                            } catch {
+                              files = [{ url: response.response_value, name: 'file' }];
+                            }
+                            return files.map((file, idx) => (
+                              <a
+                                key={idx}
+                                href={file.url}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg px-2 py-1.5 border border-indigo-200"
+                                title="Download"
+                              >
+                                {response.response_type === 'image' ? (
+                                  <img src={file.url} alt="" className="w-6 h-6 rounded object-cover" />
+                                ) : (
+                                  <FileText className="w-3.5 h-3.5" />
+                                )}
+                                <Download className="w-3 h-3" />
+                                {response.response_type === 'image' ? `Image ${idx + 1}` : file.name.slice(0, 20)}
+                              </a>
+                            ));
+                          })()}
+                        </div>
+                      )}
                       {response?.admin_notes && (
                         <p className="text-xs text-red-600 mt-2 bg-red-50 rounded p-2">
                           <strong>Admin note:</strong> {response.admin_notes}
