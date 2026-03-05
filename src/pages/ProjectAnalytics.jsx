@@ -249,20 +249,6 @@ export default function ProjectAnalytics() {
       bg: "bg-green-50",
     },
     {
-      label: "Avg Payout",
-      value: `₹${Math.round(metrics.avgPayout).toLocaleString()}`,
-      icon: IndianRupee,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-    {
-      label: "Total Payout",
-      value: `₹${Math.round(metrics.totalPayout).toLocaleString()}`,
-      icon: IndianRupee,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
       label: "Completed On Time",
       value: metrics.completedOnTime,
       icon: CheckCircle,
@@ -436,29 +422,7 @@ export default function ProjectAnalytics() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Payout by Month */}
-        <Card className="border border-slate-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-700">Total Payout by Project Start Month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {payoutByMonth.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-slate-400 text-sm">No payout data</div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={payoutByMonth} barSize={36}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(val) => [`₹${val.toLocaleString()}`, "Total Payout"]} />
-                  <Bar dataKey="totalPayout" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Work Mode & Priority Split */}
+      {/* Work Mode & Priority Split */}
         <div className="space-y-4">
           <Card className="border border-slate-200">
             <CardHeader className="pb-1">
@@ -659,7 +623,6 @@ export default function ProjectAnalytics() {
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">Status</th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">Priority</th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">Mode</th>
-                  <th className="text-left px-3 py-2 text-slate-500 font-medium">Payout</th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">Start</th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">End</th>
                 </tr>
@@ -675,9 +638,6 @@ export default function ProjectAnalytics() {
                     </td>
                     <td className="px-3 py-2 capitalize text-slate-600">{p.priority || "—"}</td>
                     <td className="px-3 py-2 text-slate-600 capitalize">{p.work_mode?.replace("_", " ")}</td>
-                    <td className="px-3 py-2 text-slate-700">
-                      {p.payout ? `₹${p.payout.toLocaleString()}` : "—"}
-                    </td>
                     <td className="px-3 py-2 text-slate-500">
                       {p.start_date ? format(parseISO(p.start_date), "dd MMM yy") : "—"}
                     </td>
@@ -688,7 +648,7 @@ export default function ProjectAnalytics() {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-slate-400">
+                    <td colSpan={6} className="text-center py-8 text-slate-400">
                       No projects match the current filters
                     </td>
                   </tr>
