@@ -98,14 +98,11 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
                               files = [{ url: response.response_value, name: 'file' }];
                             }
                             return files.map((file, idx) => (
-                              <a
-                                key={idx}
-                                href={file.url}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg px-2 py-1.5 border border-indigo-200"
-                                title="Download"
+                              <button
+                               key={idx}
+                               onClick={() => downloadFile(file.url, file.name)}
+                               className="flex items-center gap-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg px-2 py-1.5 border border-indigo-200"
+                               title="Download"
                               >
                                 {response.response_type === 'image' ? (
                                   <img src={file.url} alt="" className="w-6 h-6 rounded object-cover" />
@@ -114,7 +111,7 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
                                 )}
                                 <Download className="w-3 h-3" />
                                 {response.response_type === 'image' ? `Image ${idx + 1}` : file.name.slice(0, 20)}
-                              </a>
+                              </button>
                             ));
                           })()}
                         </div>

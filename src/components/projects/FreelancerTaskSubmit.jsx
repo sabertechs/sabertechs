@@ -336,16 +336,13 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
                             <FileText className="w-8 h-8 text-indigo-400 flex-shrink-0" />
                           )}
                           <span className="text-sm text-slate-700 flex-1 truncate">{file.name}</span>
-                          <a
-                            href={file.url}
-                            download
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => downloadFile(file.url, file.name)}
                             className="text-slate-400 hover:text-indigo-500 flex-shrink-0"
                             title="Download"
                           >
                             <Download className="w-4 h-4" />
-                          </a>
+                          </button>
                           <button onClick={() => removeFile(idx)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
                             <X className="w-4 h-4" />
                           </button>
