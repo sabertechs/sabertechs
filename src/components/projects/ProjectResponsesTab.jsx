@@ -76,6 +76,15 @@ export default function ProjectResponsesTab({ projectId }) {
     }
   };
 
+  const sanitizeName = (name) => (name || '').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+  const getDownloadName = (response, index, ext) => {
+    const taskName = sanitizeName(getTaskName(response.task_id));
+    const freelancer = sanitizeName(response.freelancer_name);
+    const suffix = index > 0 ? `_${index + 1}` : '';
+    return `${taskName}_${freelancer}${suffix}.${ext}`;
+  };
+
   const renderResponseValue = (response) => {
     if (response.response_type === 'location') {
       return (
