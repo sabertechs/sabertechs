@@ -114,7 +114,7 @@ export default function ProjectResponsesTab({ projectId }) {
             {urls.map((url, i) => (
               <button
                 key={i}
-                onClick={() => downloadFile(url, `image_${i + 1}.jpg`)}
+                onClick={() => downloadFile(url, getDownloadName(response, i, 'jpg'))}
                 className="text-slate-400 hover:text-indigo-600"
                 title={`Download image ${urls.length > 1 ? i + 1 : ''}`}
               >
@@ -146,7 +146,7 @@ export default function ProjectResponsesTab({ projectId }) {
                 <FileText className="w-3 h-3" />
                 File {urls.length > 1 ? i + 1 : ''}
               </a>
-              <button onClick={() => downloadFile(url, url.split('/').pop())} className="text-slate-400 hover:text-slate-600" title="Download">
+              <button onClick={() => downloadFile(url, getDownloadName(response, i, url.split('.').pop() || 'file'))} className="text-slate-400 hover:text-slate-600" title="Download">
                 <Download className="w-3 h-3" />
               </button>
             </div>
@@ -249,7 +249,7 @@ export default function ProjectResponsesTab({ projectId }) {
                   <div key={i} className="relative group">
                     <img src={url} alt={`Submission ${i + 1}`} className="w-full rounded-lg object-contain max-h-72 bg-slate-50" />
                     <button
-                      onClick={() => downloadFile(url, `image_${i + 1}.jpg`)}
+                      onClick={() => downloadFile(url, getDownloadName(previewResponse, i, 'jpg'))}
                       className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Download"
                     >
