@@ -93,13 +93,28 @@ export default function ProjectResponsesTab({ projectId }) {
       const urls = parseUrls(response.response_value);
       return (
         <div className="flex flex-col gap-1">
-          <button
-            onClick={() => setPreviewResponse(response)}
-            className="flex items-center gap-2 text-indigo-600 hover:underline text-sm"
-          >
-            <ImageIcon className="w-4 h-4" />
-            View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPreviewResponse(response)}
+              className="flex items-center gap-2 text-indigo-600 hover:underline text-sm"
+            >
+              <ImageIcon className="w-4 h-4" />
+              View {urls.length > 1 ? `${urls.length} Images` : 'Image'}
+            </button>
+            {urls.map((url, i) => (
+              <a
+                key={i}
+                href={url}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-indigo-600"
+                title={`Download image ${urls.length > 1 ? i + 1 : ''}`}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </a>
+            ))}
+          </div>
           {response.latitude && (
             <a
               href={`https://maps.google.com/?q=${response.latitude},${response.longitude}`}
