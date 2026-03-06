@@ -661,18 +661,18 @@ export default function ProjectTasksTab({ projectId, project }) {
               </div>
             )}
 
-            {editingTask && (
-              <div className="space-y-2">
-                <Label>Progress (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.progress_percentage}
-                  onChange={(e) => setFormData({ ...formData, progress_percentage: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-            )}
+            <div className="space-y-3">
+              <Label>Progress: <span className="font-semibold text-indigo-600">{formData.progress_percentage}%</span></Label>
+              <Slider
+                min={0}
+                max={100}
+                step={5}
+                value={[formData.progress_percentage]}
+                onValueChange={([v]) => setFormData({ ...formData, progress_percentage: v })}
+                className="w-full"
+              />
+              <Progress value={formData.progress_percentage} className="h-2" />
+            </div>
 
             <div className="flex items-center gap-2">
               <input
