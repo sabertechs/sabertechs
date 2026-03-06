@@ -378,15 +378,15 @@ export default function ProjectTasksTab({ projectId, project }) {
                               )}
 
                               {/* Progress Bar */}
-                              {task.progress_percentage > 0 && (
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Progress</span>
-                                    <span className="font-medium">{task.progress_percentage}%</span>
-                                  </div>
-                                  <Progress value={task.progress_percentage} className="h-2" />
+                              <div className="space-y-1 mt-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Progress</span>
+                                  <span className={`font-semibold ${task.progress_percentage === 100 ? 'text-green-600' : 'text-indigo-600'}`}>
+                                    {task.progress_percentage || 0}%
+                                  </span>
                                 </div>
-                              )}
+                                <Progress value={task.progress_percentage || 0} className="h-2.5" />
+                              </div>
                             </div>
                             
                             <div className="flex gap-1">
