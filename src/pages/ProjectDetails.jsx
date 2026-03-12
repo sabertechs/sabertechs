@@ -79,6 +79,11 @@ export default function ProjectDetails() {
           <div className="flex justify-between items-start mb-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
+                {project.project_code && (
+                  <Badge variant="outline" className="font-mono text-sm border-indigo-300 text-indigo-700">
+                    {project.project_code}
+                  </Badge>
+                )}
                 <h1 className="text-2xl font-bold">{project.name}</h1>
                 <Badge className={
                   project.status === 'open' ? 'bg-green-100 text-green-700' :
