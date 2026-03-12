@@ -48,7 +48,16 @@ export default function ProjectManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Project.create(data),
+    mutationFn: async (data) => {
+      // Generate sequential project code
+      const allProjects = await base44.entities.Project.list('-created_date');
+      const lastCode = allProjects.length > 0 && allProjects[0].project_code 
+        ? parseInt(allProjects[0].project_code.replace('PRJ-', ''))
+        : 0;
+      const nextCode = `PRJ-${String(lastCode + 1).padStart(3, '0')}`;
+      
+      return base44.entities.Project.create({ ...data, project_code: nextCode });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
       setShowDialog(false);
@@ -317,7 +326,7 @@ export default function ProjectManagement() {
               {paginatedProjects.map((project, index) => (
                 <tr key={project.id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-4 text-sm font-medium text-slate-800">
-                    #PRJ-{project.id?.slice(-2) || index}
+                    {project.project_code || `#${index + 1}`}
                   </td>
                   <td className="px-4 py-4 text-sm text-slate-800 max-w-xs">
                     <div className="font-medium">{project.name}</div>
