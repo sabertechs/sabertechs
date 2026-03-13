@@ -42,15 +42,6 @@ export default function FreelancerProjects() {
       const employees = await base44.entities.Employee.filter({ email: user.email });
       const employee = employees[0];
       
-      // Validate state match
-      if (!employee?.state) {
-        throw new Error('Please update your profile with your state information before applying.');
-      }
-      
-      if (employee.state !== project.location) {
-        throw new Error(`Location mismatch: This project is for ${project.location} but your registered state is ${employee.state}. You can only apply for projects in your registered state.`);
-      }
-      
       return base44.entities.ProjectApplication.create({
         project_id: project.id,
         project_name: project.name,
@@ -64,8 +55,8 @@ export default function FreelancerProjects() {
       queryClient.invalidateQueries(['myApplications']);
       toast.success('Application submitted successfully!');
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to apply');
+    onError: () => {
+      toast.error('Failed to apply');
     }
   });
 
