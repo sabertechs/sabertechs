@@ -35,10 +35,14 @@ const AVAILABLE_SECTIONS = [
   { id: 'onboarding', name: 'Onboarding', description: 'Employee onboarding', category: 'Operations' },
   { id: 'team_view', name: 'Team View', description: 'View team members', category: 'Operations' },
   { id: 'projects', name: 'Projects', description: 'Project management', category: 'Operations' },
+  { id: 'task_templates', name: 'Task Templates', description: 'Manage project task templates', category: 'Operations' },
+  { id: 'project_analytics', name: 'Project Analytics', description: 'View project analytics and reports', category: 'Operations' },
   
   // Assets & Resources (HR only)
   { id: 'assets', name: 'Asset Management', description: 'Full asset control', category: 'Resources' },
   { id: 'settings', name: 'Settings', description: 'App configuration', category: 'Resources' },
+  { id: 'access_control', name: 'Access Control', description: 'Manage user permissions', category: 'Resources' },
+  { id: 'module_management', name: 'Module Management', description: 'Enable/disable app modules', category: 'Resources' },
   
   // Communication (All)
   { id: 'company_feed', name: 'Company Feed', description: 'Posts and updates', category: 'Communication' },
@@ -53,19 +57,22 @@ const DEFAULT_ACCESS_BY_ROLE = {
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters', 
     'bg_verification', 'api_verification', 'attendance', 'payslips', 
     'expenses', 'assets', 'settings', 'company_feed', 'policies', 
-    'notifications', 'games', 'projects'
+    'notifications', 'games', 'projects', 'onboarding', 'task_templates', 
+    'project_analytics', 'access_control', 'module_management'
   ],
   manager: [
     // Team management + operations (NO assets/settings)
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters',
     'bg_verification', 'api_verification', 'attendance', 'payslips',
     'expenses', 'team_view', 'company_feed', 'policies', 
-    'notifications', 'games', 'projects'
+    'notifications', 'games', 'projects', 'onboarding', 'task_templates', 
+    'project_analytics'
   ],
   department_head: [
     // Department-level only (filtered by department in backend/UI)
     'employees', 'freelancers', 'attendance', 'payslips', 'expenses',
-    'team_view', 'company_feed', 'policies', 'notifications', 'games'
+    'team_view', 'company_feed', 'policies', 'notifications', 'games', 
+    'projects', 'onboarding', 'task_templates', 'project_analytics'
   ],
   employee: [
     // Self-service only
