@@ -70,9 +70,13 @@ export default function ProjectResponsesTab({ projectId }) {
     if (!value) return [];
     try {
       const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [value];
+      if (Array.isArray(parsed)) {
+        // Filter out null/undefined values
+        return parsed.filter(url => url && url !== 'null');
+      }
+      return value && value !== 'null' ? [value] : [];
     } catch {
-      return [value];
+      return value && value !== 'null' ? [value] : [];
     }
   };
 
@@ -101,6 +105,27 @@ export default function ProjectResponsesTab({ projectId }) {
       );
     } else if (response.response_type === 'image') {
       const urls = parseUrls(response.response_value);
+      
+      if (urls.length === 0) {
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-red-600 italic">Image upload failed</span>
+            {response.latitude && (
+              <a
+                href={`https://maps.google.com/?q=${response.latitude},${response.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-green-600 hover:underline text-xs"
+              >
+                <MapPin className="w-3 h-3" />
+                {Number(response.latitude).toFixed(5)}, {Number(response.longitude).toFixed(5)}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
+        );
+      }
+      
       return (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
