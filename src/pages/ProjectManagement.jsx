@@ -49,12 +49,16 @@ export default function ProjectManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Generate sequential project code
-      const allProjects = await base44.entities.Project.list('-created_date');
-      const lastCode = allProjects.length > 0 && allProjects[0].project_code 
-        ? parseInt(allProjects[0].project_code.replace('PRJ-', ''))
-        : 0;
-      const nextCode = `PRJ-${String(lastCode + 1).padStart(3, '0')}`;
+      // Generate sequential project code by finding the highest existing code number
+      const allProjects = await base44.entities.Project.list();
+      const maxCode = allProjects.reduce((max, project) => {
+        if (project.project_code) {
+          const codeNum = parseInt(project.project_code.replace('PRJ-', ''));
+          return codeNum > max ? codeNum : max;
+        }
+        return max;
+      }, 0);
+      const nextCode = `PRJ-${String(maxCode + 1).padStart(3, '0')}`;
       
       return base44.entities.Project.create({ ...data, project_code: nextCode });
     },
