@@ -5,10 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Eye, MapPin, FileText, Image as ImageIcon, Download, ExternalLink } from "lucide-react";
 import { downloadFile } from "./downloadFile";
-import { Dialog as PreviewDialog, DialogContent as PreviewDialogContent } from "@/components/ui/dialog";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -239,29 +239,30 @@ export default function ProjectResponsesTab({ projectId }) {
       </Card>
 
       {/* Image Preview Dialog */}
-      {previewResponse && (
-        <PreviewDialog open onOpenChange={() => setPreviewResponse(null)}>
-          <PreviewDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="space-y-3">
-              <h3 className="font-semibold">{getTaskName(previewResponse.task_id)} — {previewResponse.freelancer_name}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {parseUrls(previewResponse.response_value).map((url, i) => (
-                  <div key={i} className="relative group">
-                    <img src={url} alt={`Submission ${i + 1}`} className="w-full rounded-lg object-contain max-h-72 bg-slate-50" />
-                    <button
-                      onClick={() => downloadFile(url, getDownloadName(previewResponse, i, 'jpg'))}
-                      className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Download"
-                    >
-                      <Download className="w-4 h-4 text-slate-700" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+      <Dialog open={!!previewResponse} onOpenChange={() => setPreviewResponse(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{previewResponse && `${getTaskName(previewResponse.task_id)} — ${previewResponse.freelancer_name}`}</DialogTitle>
+            <DialogDescription className="sr-only">View submitted images</DialogDescription>
+          </DialogHeader>
+          {previewResponse && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {parseUrls(previewResponse.response_value).map((url, i) => (
+                <div key={i} className="relative group">
+                  <img src={url} alt={`Submission ${i + 1}`} className="w-full rounded-lg object-contain max-h-72 bg-slate-50" />
+                  <button
+                    onClick={() => downloadFile(url, getDownloadName(previewResponse, i, 'jpg'))}
+                    className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4 text-slate-700" />
+                  </button>
+                </div>
+              ))}
             </div>
-          </PreviewDialogContent>
-        </PreviewDialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Resubmit Dialog */}
       <Dialog open={!!selectedResponse} onOpenChange={() => setSelectedResponse(null)}>
