@@ -48,7 +48,8 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
   const { data: responses = [] } = useQuery({
     queryKey: ['myTaskResponses', projectId, userEmail],
     queryFn: () => base44.entities.TaskResponse.filter({ project_id: projectId, freelancer_email: userEmail }),
-    enabled: !!projectId && !!userEmail
+    enabled: !!projectId && !!userEmail,
+    staleTime: 0
   });
 
   const getResponse = (taskId) => responses.find(r => r.task_id === taskId);
