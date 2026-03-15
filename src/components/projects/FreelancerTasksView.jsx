@@ -20,11 +20,30 @@ const taskTypeIcons = {
 export default function FreelancerTasksView({ projectId, userEmail, userName }) {
   const [selectedTask, setSelectedTask] = useState(null);
 
-  const { data: tasks = [] } = useQuery({
+  // Fetch all tasks for the project - we'll filter client-side to handle group/unassigned tasks
+  const { data: allTasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
-    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId, assigned_to: userEmail }),
+    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }),
     enabled: !!projectId && !!userEmail
   });
+
+  // Fetch groups to know which groups the user belongs to
+  const { data: groups = [] } = useQuery({
+    queryKey: ['projectGroups', projectId],
+    queryFn: () => base44.entities.ProjectGroup.filter({ project_id: projectId }),
+    enabled: !!projectId && !!userEmail
+  });
+
+  const userGroupIds = groups
+    .filter(g => g.members?.includes(userEmail))
+    .map(g => g.id);
+
+  // Show tasks that are: assigned directly to user, assigned to user's group, or unassigned (for all)
+  const tasks = allTasks.filter(t =>
+    t.assigned_to === userEmail ||
+    (t.group_id && userGroupIds.includes(t.group_id)) ||
+    (!t.assigned_to && !t.group_id)
+  );
 
   const { data: responses = [] } = useQuery({
     queryKey: ['myTaskResponses', projectId, userEmail],
