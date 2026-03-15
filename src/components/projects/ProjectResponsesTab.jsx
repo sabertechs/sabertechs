@@ -36,8 +36,8 @@ export default function ProjectResponsesTab({ projectId }) {
     const approvedResponses = responses.filter(r => r.status === 'approved');
     approvedResponses.forEach(async (r) => {
       const task = tasks.find(t => t.id === r.task_id);
-      if (task && task.status !== 'completed') {
-        await base44.entities.ProjectTask.update(task.id, { status: 'completed' });
+      if (task && (task.status !== 'completed' || task.progress_percentage !== 100)) {
+        await base44.entities.ProjectTask.update(task.id, { status: 'completed', progress_percentage: 100 });
         queryClient.invalidateQueries(['projectTasks']);
       }
     });
