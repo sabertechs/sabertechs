@@ -62,7 +62,7 @@ export default function ProjectResponsesTab({ projectId }) {
 
   const getTaskName = (taskId) => {
     const task = tasks.find(t => t.id === taskId);
-    return task?.title || 'Unknown Task';
+    return task?.title || '[Deleted Task]';
   };
 
   // Parse response_value: may be a JSON array of URLs or a single URL string
@@ -226,7 +226,7 @@ export default function ProjectResponsesTab({ projectId }) {
                         {response.submission_date ? format(new Date(response.submission_date), 'MMM d, h:mm a') : '-'}
                       </td>
                       <td className="px-4 py-4">
-                        {response.status === 'submitted' && (
+                        {(response.status === 'submitted' || response.status === 'resubmit_required') && (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
@@ -245,7 +245,7 @@ export default function ProjectResponsesTab({ projectId }) {
                               variant="outline"
                               onClick={() => {
                                 setSelectedResponse(response);
-                                setAdminNotes('');
+                                setAdminNotes(response.admin_notes || '');
                               }}
                               className="text-red-600 hover:bg-red-50"
                             >
