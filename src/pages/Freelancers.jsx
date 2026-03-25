@@ -118,7 +118,7 @@ export default function Freelancers() {
     queryKey: ['freelancers', currentPage, sortField, sortOrder, buildQuery()],
     queryFn: async () => {
       const sortStr = sortOrder === 'desc' ? `-${sortField}` : sortField;
-      return await base44.entities.Employee.filter(buildQuery(), sortStr, employeesPerPage * 3);
+      return await base44.entities.Employee.filter(buildQuery(), sortStr, 1000);
     },
     staleTime: 5 * 60 * 1000,
   });
