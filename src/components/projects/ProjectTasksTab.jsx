@@ -38,7 +38,7 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
-    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }),
+    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }, 'created_date'),
     enabled: !!projectId
   });
 
