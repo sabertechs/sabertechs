@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Clock,
+  DollarSign,
   FileText,
   Receipt,
   Mail,
@@ -201,6 +202,7 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
+      items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     } else if (userRole === 'department_head') {
@@ -241,10 +243,12 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+      items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
     } else if (userRole === 'freelancer') {
       // Freelancers have access to projects, payslips and company feed
       if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+      items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
       if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     } else {
       // Regular employees

@@ -1,0 +1,66 @@
+{
+  "name": "FreelancerPayroll",
+  "type": "object",
+  "properties": {
+    "proctor_name": {
+      "type": "string"
+    },
+    "proctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "drive_id": {
+      "type": "number"
+    },
+    "account_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "number"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "drive_start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string"
+    },
+    "drive_end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_time": {
+      "type": "string"
+    },
+    "driver_hours": {
+      "type": "string"
+    },
+    "total_amount": {
+      "type": "number"
+    },
+    "project_month": {
+      "type": "string",
+      "description": "e.g. 2025-01"
+    },
+    "upload_batch": {
+      "type": "string",
+      "description": "Batch ID for grouping uploads"
+    }
+  },
+  "required": [
+    "proctor_email",
+    "drive_id"
+  ],
+  "rls": {
+    "read": {
+      "rule": "user_field",
+      "field": "proctor_email"
+    }
+  }
+}

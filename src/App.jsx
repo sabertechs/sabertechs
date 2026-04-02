@@ -1,4 +1,6 @@
 import './App.css'
+import FreelancerPayrollUpload from './pages/FreelancerPayrollUpload';
+import FreelancerPayrollView from './pages/FreelancerPayrollView';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -60,6 +62,8 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route path="/FreelancerPayrollUpload" element={<LayoutWrapper currentPageName="FreelancerPayrollUpload"><FreelancerPayrollUpload /></LayoutWrapper>} />
+      <Route path="/FreelancerPayrollView" element={<LayoutWrapper currentPageName="FreelancerPayrollView"><FreelancerPayrollView /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
