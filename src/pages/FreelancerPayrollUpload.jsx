@@ -4,9 +4,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Trash2, FileSpreadsheet, Users } from "lucide-react";
+import { Upload, Trash2, FileSpreadsheet, Users, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+const SAMPLE_ROWS = [
+  { 'S. No': 1, 'Proctor Name': 'John Doe', 'Proctor Email': 'john.doe@gmail.com', 'Drive ID': 702982, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': '2025-01-02', 'Start Time': '09:00:00', 'Drive End Date': '2025-01-02', 'End Time': '15:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
+  { 'S. No': 2, 'Proctor Name': 'Jane Smith', 'Proctor Email': 'jane.smith@gmail.com', 'Drive ID': 702983, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': '2025-01-05', 'Start Time': '10:00:00', 'Drive End Date': '2025-01-05', 'End Time': '16:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
+];
+
+function downloadSample() {
+  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, 'payroll_sample_template.xlsx');
+}
 
 export default function FreelancerPayrollUpload() {
   const queryClient = useQueryClient();
@@ -60,6 +73,9 @@ export default function FreelancerPayrollUpload() {
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Freelancer Payroll Upload</h1>
         <p className="text-slate-500 mt-1">Upload XLSX payroll reports. Freelancers will only see their own records.</p>
+        <Button variant="outline" size="sm" onClick={downloadSample} className="mt-2 border-green-400 text-green-700 hover:bg-green-50">
+          <Download className="w-4 h-4 mr-2" /> Download Sample Template
+        </Button>
       </div>
 
       {/* Upload Card */}
