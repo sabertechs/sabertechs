@@ -87,6 +87,7 @@ export default function Freelancers() {
     designation: "",
     employment_type: "contractual",
     date_of_joining: format(new Date(), 'yyyy-MM-dd'),
+    work_type: "online",
     status: "active",
     role: "employee"
   });
@@ -179,6 +180,7 @@ export default function Freelancers() {
       designation: "",
       employment_type: "contractual",
       date_of_joining: format(new Date(), 'yyyy-MM-dd'),
+      work_type: "online",
       status: "active",
       role: "employee"
     });
@@ -196,6 +198,7 @@ export default function Freelancers() {
       designation: employee.designation || "",
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
+      work_type: employee.work_type || "online",
       status: employee.status || "active",
       role: employee.role || "employee"
     });
@@ -1099,6 +1102,7 @@ export default function Freelancers() {
                     </div>
                   </th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Department</th>
+                  <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Work Type</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Designation</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">Status</th>
                   <th className="text-left px-4 py-4 text-sm font-medium text-slate-500">BGV Status</th>
@@ -1141,6 +1145,11 @@ export default function Freelancers() {
                       </div>
                     </td>
                     <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
+                    <td className="px-4 py-4">
+                      <Badge variant="outline" className={emp.work_type === 'online' ? 'text-blue-700 border-blue-200' : emp.work_type === 'center_based' ? 'text-orange-700 border-orange-200' : 'text-green-700 border-green-200'}>
+                        {emp.work_type === 'center_based' ? 'Centre Based' : emp.work_type === 'both' ? 'Both' : emp.work_type ? 'Online' : '-'}
+                      </Badge>
+                    </td>
                     <td className="px-4 py-4 text-slate-600">{emp.designation || '-'}</td>
                     <td className="px-4 py-4">
                       <Badge className={
@@ -1335,6 +1344,19 @@ export default function Freelancers() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Work Type *</Label>
+              <Select value={formData.work_type} onValueChange={(v) => setFormData({ ...formData, work_type: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select work type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="center_based">Centre Based</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
                 <SelectTrigger>
@@ -1459,7 +1481,13 @@ export default function Freelancers() {
                     <p className="font-medium">{selectedEmployee.date_of_joining && !isNaN(new Date(selectedEmployee.date_of_joining).getTime()) ? format(new Date(selectedEmployee.date_of_joining), 'MMM d, yyyy') : '-'}</p>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-sm text-slate-500">BGV Status</p>
+                    <p className="text-sm text-slate-500">Work Type</p>
+                    <Badge className={selectedEmployee.work_type === 'online' ? 'bg-blue-100 text-blue-700' : selectedEmployee.work_type === 'center_based' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+                      {selectedEmployee.work_type === 'center_based' ? 'Centre Based' : selectedEmployee.work_type === 'both' ? 'Both' : 'Online'}
+                    </Badge>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                     <p className="text-sm text-slate-500">BGV Status</p>
                     <Badge className={
                       selectedEmployee.bg_verification_status === 'approved' ? 'bg-green-100 text-green-700' :
                       selectedEmployee.bg_verification_status === 'rejected' ? 'bg-red-100 text-red-700' :

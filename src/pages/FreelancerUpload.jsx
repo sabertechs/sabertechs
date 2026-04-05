@@ -39,6 +39,7 @@ export default function FreelancerUpload() {
       department: "design",
       designation: "Graphic Designer",
       date_of_joining: "01/06/2024",
+      work_type: "online",
       status: "active"
     }
   ];
@@ -48,7 +49,7 @@ export default function FreelancerUpload() {
       "full_name", "father_name", "email", "phone", "date_of_birth", "gender",
       "address", "locality", "city", "state", "pincode",
       "aadhaar_number", "pan_number", "department", "designation",
-      "date_of_joining", "status"
+      "date_of_joining", "work_type", "status"
     ];
 
     const csvContent = [
@@ -244,6 +245,7 @@ export default function FreelancerUpload() {
               date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               employment_type: 'contractual',
               role: 'freelancer',
+              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
@@ -346,6 +348,7 @@ export default function FreelancerUpload() {
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
                 <li>• department, designation, date_of_joining (DD/MM/YYYY)</li>
+                <li>• <strong>work_type</strong> (online/center_based/both)</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
             </div>
