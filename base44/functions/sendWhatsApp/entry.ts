@@ -15,44 +15,53 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Phone number and message are required' }, { status: 400 });
         }
 
-        const instanceId = Deno.env.get("WHATSAPP_INSTANCE_ID");
-        const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+        const accessToken = Deno.env.get("META_WHATSAPP_ACCESS_TOKEN");
+        const phoneNumberId = Deno.env.get("META_WHATSAPP_PHONE_NUMBER_ID");
 
-        if (!instanceId || !accessToken) {
-            return Response.json({ error: 'WhatsApp credentials not configured' }, { status: 500 });
+        if (!accessToken || !phoneNumberId) {
+            return Response.json({ error: 'Meta WhatsApp credentials not configured' }, { status: 500 });
         }
 
         // Format phone number - remove any non-digits and ensure country code
         let formattedPhone = phone.replace(/\D/g, '');
-        // If starts with 0, assume Indian number and add 91
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '91' + formattedPhone.substring(1);
         }
-        // If doesn't have country code (less than 12 digits), add 91
         if (formattedPhone.length === 10) {
             formattedPhone = '91' + formattedPhone;
         }
 
-        const payload = {
-            number: formattedPhone,
-            type: type,
-            message: message,
-            instance_id: instanceId,
-            access_token: accessToken
-        };
-
-        // Add media URL if sending media
+        // Build Meta Cloud API payload
+        let payload;
         if (type === 'media' && media_url) {
-            payload.media_url = media_url;
-            if (filename) {
-                payload.filename = filename;
-            }
+            // Determine media type from URL
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(media_url);
+            const isPdf = /\.pdf$/i.test(media_url);
+            const mediaType = isImage ? 'image' : isPdf ? 'document' : 'document';
+            payload = {
+                messaging_product: 'whatsapp',
+                to: formattedPhone,
+                type: mediaType,
+                [mediaType]: {
+                    link: media_url,
+                    ...(message ? { caption: message } : {}),
+                    ...(filename && !isImage ? { filename } : {})
+                }
+            };
+        } else {
+            payload = {
+                messaging_product: 'whatsapp',
+                to: formattedPhone,
+                type: 'text',
+                text: { body: message }
+            };
         }
 
-        const response = await fetch('https://web.saasyto.com/api/send', {
+        const response = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify(payload)
         });
