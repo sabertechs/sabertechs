@@ -11,6 +11,7 @@ import ProjectApplicationsTab from "@/components/projects/ProjectApplicationsTab
 import ProjectTasksTab from "@/components/projects/ProjectTasksTab";
 import ProjectGroupsTab from "@/components/projects/ProjectGroupsTab";
 import ProjectResponsesTab from "@/components/projects/ProjectResponsesTab";
+import ProjectPayrollTab from "@/components/projects/ProjectPayrollTab";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -220,12 +221,7 @@ export default function ProjectDetails() {
         </TabsContent>
 
         <TabsContent value="payroll">
-          <Card>
-            <CardContent className="pt-6 text-center py-12">
-              <DollarSign className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500">Payroll management coming soon</p>
-            </CardContent>
-          </Card>
+          <ProjectPayrollTab projectId={projectId} project={project} />
         </TabsContent>
       </Tabs>
     </div>

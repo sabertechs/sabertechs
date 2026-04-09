@@ -1,0 +1,54 @@
+{
+  "name": "ProjectApplication",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "freelancer_email": {
+      "type": "string"
+    },
+    "freelancer_name": {
+      "type": "string"
+    },
+    "freelancer_phone": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "rating": {
+      "type": "number",
+      "description": "Rating given by admin (1-5)"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Assigned group"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid"
+      ],
+      "default": "pending",
+      "description": "Payment status for this freelancer"
+    }
+  },
+  "required": [
+    "project_id",
+    "freelancer_email"
+  ]
+}
