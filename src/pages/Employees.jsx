@@ -24,7 +24,7 @@ import {
   FolderDown,
   ChevronLeft,
   ChevronRight,
-  Archive,
+  AlertCircle,
   CreditCard,
   User,
   MapPin,
@@ -2119,7 +2119,7 @@ export default function Employees() {
                               onClick={() => {
                                 const reason = prompt('Enter rejection reason (will be sent to employee):');
                                 if (reason) {
-                                  rejectDocuments(selectedEmployee, reason);
+                                  handleRejectDocument('aadhaar_document', reason);
                                   setShowViewDialog(false);
                                 }
                               }}

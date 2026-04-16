@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -50,6 +51,10 @@ export default function DeptHeadDashboard() {
     queryFn: () => base44.entities.Attendance.filter({ date: format(new Date(), 'yyyy-MM-dd') }),
     staleTime: 3 * 60 * 1000,
   });
+
+  const permanentEmployees = useMemo(() => allEmployees.filter(e => e.employment_type === 'permanent' && e.status === 'active'), [allEmployees]);
+  const teamMembers = useMemo(() => allEmployees.filter(e => e.employment_type === 'permanent'), [allEmployees]);
+  const pendingBGV = useMemo(() => allEmployees.filter(e => e.bg_verification_status === 'pending'), [allEmployees]);
 
   // Calculate pending attendance
   const pendingAttendanceCount = permanentEmployees.filter(emp => 
