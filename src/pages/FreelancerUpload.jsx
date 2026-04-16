@@ -168,6 +168,13 @@ export default function FreelancerUpload() {
     const existingEmployees = await base44.entities.Employee.list();
     const existingEmails = new Set(existingEmployees.map(e => e.email?.toLowerCase().trim()));
     const existingPhones = new Set(existingEmployees.map(e => e.phone?.trim()).filter(Boolean));
+    // Map aadhaar/pan → employee name for duplicate reporting
+    const existingAadhaar = new Map(
+      existingEmployees.filter(e => e.aadhaar_number).map(e => [e.aadhaar_number.replace(/\s/g, ''), e.full_name])
+    );
+    const existingPAN = new Map(
+      existingEmployees.filter(e => e.pan_number).map(e => [e.pan_number.toUpperCase(), e.full_name])
+    );
 
     const errors = [];
     let successCount = 0;
@@ -204,6 +211,40 @@ export default function FreelancerUpload() {
           name: data.full_name || 'N/A',
           errors: ['Freelancer with this phone number already exists - skipped'],
           skipped: true
+        });
+        skippedCount++;
+        setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+        continue;
+      }
+
+      const aadhaarNormalized = data.aadhaar_number?.replace(/\s/g, '');
+      if (aadhaarNormalized && existingAadhaar.has(aadhaarNormalized)) {
+        const existingName = existingAadhaar.get(aadhaarNormalized);
+        errors.push({
+          line: lineNumber,
+          email: data.email || 'N/A',
+          name: data.full_name || 'N/A',
+          errors: [`Aadhaar ${aadhaarNormalized} already belongs to "${existingName}" - skipped`],
+          skipped: true,
+          duplicateType: 'aadhaar',
+          conflictsWith: existingName
+        });
+        skippedCount++;
+        setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+        continue;
+      }
+
+      const panNormalized = data.pan_number?.toUpperCase();
+      if (panNormalized && existingPAN.has(panNormalized)) {
+        const existingName = existingPAN.get(panNormalized);
+        errors.push({
+          line: lineNumber,
+          email: data.email || 'N/A',
+          name: data.full_name || 'N/A',
+          errors: [`PAN ${panNormalized} already belongs to "${existingName}" - skipped`],
+          skipped: true,
+          duplicateType: 'pan',
+          conflictsWith: existingName
         });
         skippedCount++;
         setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
@@ -293,17 +334,34 @@ export default function FreelancerUpload() {
   const downloadErrorLog = () => {
     if (errorLog.length === 0) return;
 
+    const skipped = errorLog.filter(e => e.skipped);
+    const failed = errorLog.filter(e => !e.skipped);
     const logContent = [
-      `Freelancer Upload Error Log - ${format(new Date(), 'dd-MM-yyyy HH:mm:ss')}`,
+      `Freelancer Upload Report - ${format(new Date(), 'dd-MM-yyyy HH:mm:ss')}`,
       `${'='.repeat(60)}`,
       '',
-      `Total Errors: ${errorLog.length}`,
+      `Total Skipped (Duplicates): ${skipped.length}`,
+      `Total Failed (Validation): ${failed.length}`,
       '',
-      ...errorLog.map(err => [
-        `Line ${err.line}: ${err.name} (${err.email})`,
-        `  Errors: ${err.errors.join(', ')}`,
-        ''
-      ].join('\n'))
+      ...(skipped.length > 0 ? [
+        'SKIPPED RECORDS (Duplicates)',
+        '-'.repeat(40),
+        ...skipped.map(err => [
+          `Line ${err.line}: ${err.name} (${err.email})`,
+          `  Reason: ${err.errors.join(', ')}`,
+          err.conflictsWith ? `  Conflicts With: ${err.conflictsWith}` : '',
+          ''
+        ].filter(Boolean).join('\n'))
+      ] : []),
+      ...(failed.length > 0 ? [
+        'FAILED RECORDS (Validation Errors)',
+        '-'.repeat(40),
+        ...failed.map(err => [
+          `Line ${err.line}: ${err.name} (${err.email})`,
+          `  Errors: ${err.errors.join(', ')}`,
+          ''
+        ].join('\n'))
+      ] : [])
     ].join('\n');
 
     const blob = new Blob([logContent], { type: 'text/plain' });
@@ -422,10 +480,10 @@ export default function FreelancerUpload() {
                   <Button 
                     onClick={downloadErrorLog} 
                     variant="outline" 
-                    className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                    className="w-full border-amber-400 text-amber-700 hover:bg-amber-50"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Error Log ({errorLog.length} errors)
+                    Download Full Report ({errorLog.length} records)
                   </Button>
                 )}
               </div>
@@ -445,16 +503,29 @@ export default function FreelancerUpload() {
           </CardHeader>
           <CardContent>
             <div className="max-h-64 overflow-y-auto space-y-2">
-              {errorLog.slice(0, 10).map((err, idx) => (
-                <div key={idx} className={`${err.skipped ? 'bg-amber-50' : 'bg-red-50'} rounded-lg p-3 text-sm`}>
-                  <div className="flex items-center gap-2 mb-1">
+              {errorLog.slice(0, 15).map((err, idx) => (
+                <div key={idx} className={`${err.skipped ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'} rounded-lg p-3 text-sm`}>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Badge variant="outline" className={err.skipped ? "text-amber-600 border-amber-300" : "text-red-600 border-red-300"}>
                       Line {err.line}
                     </Badge>
+                    {err.skipped && (
+                      <Badge className={
+                        err.duplicateType === 'aadhaar' ? 'bg-orange-100 text-orange-700' :
+                        err.duplicateType === 'pan' ? 'bg-purple-100 text-purple-700' :
+                        'bg-amber-100 text-amber-700'
+                      }>
+                        {err.duplicateType === 'aadhaar' ? 'Duplicate Aadhaar' :
+                         err.duplicateType === 'pan' ? 'Duplicate PAN' : 'Duplicate'}
+                      </Badge>
+                    )}
                     <span className="font-medium text-slate-800">{err.name}</span>
-                    <span className="text-slate-500">({err.email})</span>
+                    <span className="text-slate-500 text-xs">({err.email})</span>
                   </div>
-                  <p className={`${err.skipped ? 'text-amber-600' : 'text-red-600'} text-xs`}>{err.errors.join(', ')}</p>
+                  <p className={`${err.skipped ? 'text-amber-700' : 'text-red-600'} text-xs`}>{err.errors.join(', ')}</p>
+                  {err.conflictsWith && (
+                    <p className="text-xs text-slate-500 mt-1">⚠️ Already registered as: <strong>{err.conflictsWith}</strong></p>
+                  )}
                 </div>
               ))}
               {errorLog.length > 10 && (
