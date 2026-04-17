@@ -187,6 +187,12 @@ export default function FreelancerUpload() {
     
     for (let i = 0; i < rows.length; i++) {
       const { data, lineNumber } = rows[i];
+
+      // Skip blank rows (all values empty)
+      if (Object.values(data).every(v => !v || !v.trim())) {
+        setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+        continue;
+      }
       
       const emailLower = data.email?.toLowerCase().trim();
       const phoneTrimmed = data.phone?.trim();
