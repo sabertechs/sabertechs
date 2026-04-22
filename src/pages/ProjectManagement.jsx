@@ -21,6 +21,8 @@ export default function ProjectManagement() {
   const [exportResult, setExportResult] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [errors, setErrors] = useState({});
@@ -218,11 +220,16 @@ export default function ProjectManagement() {
   };
 
   // Filter and paginate projects
-  const filteredProjects = projects.filter(project => 
-    project.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.supervisor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = !searchQuery ||
+      project.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.supervisor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.project_code?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter;
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -254,18 +261,6 @@ export default function ProjectManagement() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Projects</h2>
         <div className="flex gap-3 items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10 w-64"
-            />
-          </div>
           <Button
             onClick={async () => {
               setExporting(true);
@@ -307,6 +302,49 @@ export default function ProjectManagement() {
             Add Project
           </Button>
         </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-wrap gap-3 items-center bg-white rounded-lg border border-slate-200 p-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Search by name, location, supervisor, code..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            className="pl-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); setCurrentPage(1); }}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="All Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priority</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+        {(searchQuery || statusFilter !== 'all' || priorityFilter !== 'all') && (
+          <Button variant="ghost" size="sm" className="text-slate-500" onClick={() => { setSearchQuery(''); setStatusFilter('all'); setPriorityFilter('all'); setCurrentPage(1); }}>
+            Clear Filters
+          </Button>
+        )}
+        <span className="text-sm text-slate-500 ml-auto">{filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Projects Table */}
