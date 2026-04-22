@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { 
-  MapPin, Calendar, Award, BookOpen, Briefcase, IndianRupee, Users
+  MapPin, Calendar, Award, BookOpen, Briefcase, IndianRupee, Users, TrendingUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,22 @@ export default function FreelancerDashboard() {
     enabled: !!user?.email,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Last month payout summary
+  const lastMonth = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+  })();
+
+  const { data: lastMonthPayroll = [] } = useQuery({
+    queryKey: ['lastMonthPayroll', user?.email],
+    queryFn: () => base44.entities.FreelancerPayroll.filter({ proctor_email: user?.email?.toLowerCase(), project_month: lastMonth }, '-drive_start_date', 100),
+    enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const lastMonthEarnings = lastMonthPayroll.reduce((sum, r) => sum + (r.total_amount || 0), 0);
 
   const { data: testResults = [] } = useQuery({
     queryKey: ['testResults', user?.email],
@@ -78,7 +94,7 @@ export default function FreelancerDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -128,6 +144,25 @@ export default function FreelancerDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        <Link to={`${createPageUrl("FreelancerPayrollView")}?month=${encodeURIComponent(lastMonth)}`} className="block">
+          <Card className="border-0 shadow-sm hover:shadow-md hover:border-emerald-300 border transition-all cursor-pointer">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-100 rounded-xl">
+                  <IndianRupee className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {lastMonthEarnings > 0 ? `₹${lastMonthEarnings.toLocaleString('en-IN')}` : '—'}
+                  </p>
+                  <p className="text-sm text-slate-500">Last Month Payout</p>
+                  <p className="text-xs text-emerald-600 font-medium">{lastMonth}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Open Projects */}

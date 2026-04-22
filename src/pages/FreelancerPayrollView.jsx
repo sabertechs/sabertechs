@@ -3,12 +3,36 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { IndianRupee, Clock, Briefcase, Calendar, Building2 } from "lucide-react";
+import { IndianRupee, Clock, Briefcase, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function FreelancerPayrollView() {
   const [userEmail, setUserEmail] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState('all');
+
+  // Read month from URL param or default to current month
+  const getInitialMonth = () => {
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get('month');
+    if (m) return m;
+    const now = new Date();
+    return `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+  };
+
+  const [selectedMonth, setSelectedMonth] = useState(getInitialMonth);
+
+  // Navigate months
+  const navigateMonth = (direction) => {
+    const [monthName, year] = selectedMonth.split(' ');
+    const date = new Date(`${monthName} 1, ${year}`);
+    date.setMonth(date.getMonth() + direction);
+    setSelectedMonth(`${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`);
+  };
+
+  const currentMonthLabel = (() => {
+    const now = new Date();
+    return `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+  })();
 
   useEffect(() => {
     base44.auth.me().then(u => setUserEmail(u?.email?.toLowerCase()));
@@ -21,12 +45,10 @@ export default function FreelancerPayrollView() {
     enabled: !!userEmail,
   });
 
-  // Get unique months
+  // Get unique months for dropdown
   const months = [...new Set(allRecords.map(r => r.project_month).filter(Boolean))].sort().reverse();
 
-  const records = selectedMonth === 'all'
-    ? allRecords
-    : allRecords.filter(r => r.project_month === selectedMonth);
+  const records = allRecords.filter(r => r.project_month === selectedMonth);
 
   const totalAmount = records.reduce((sum, r) => sum + (r.total_amount || 0), 0);
   const totalHours = records.reduce((sum, r) => {
@@ -56,17 +78,39 @@ export default function FreelancerPayrollView() {
           <h1 className="text-2xl font-bold text-slate-800">My Payroll</h1>
           <p className="text-slate-500 mt-1">Your work records and earnings</p>
         </div>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by month" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Months</SelectItem>
-            {months.map(m => (
-              <SelectItem key={m} value={m}>{m}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {/* Show a range of months: 12 past + current */}
+              {Array.from({ length: 13 }, (_, i) => {
+                const d = new Date();
+                d.setMonth(d.getMonth() - (12 - i));
+                return `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+              }).map(m => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigateMonth(1)}
+            disabled={selectedMonth === currentMonthLabel}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          {selectedMonth !== currentMonthLabel && (
+            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => setSelectedMonth(currentMonthLabel)}>
+              Current
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}
