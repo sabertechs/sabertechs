@@ -10,16 +10,29 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const SAMPLE_ROWS = [
-  { 'S. No': 1, 'Proctor Name': 'John Doe', 'Proctor Email': 'john.doe@gmail.com', 'Drive ID': 702982, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': '2025-01-02', 'Start Time': '09:00:00', 'Drive End Date': '2025-01-02', 'End Time': '15:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
-  { 'S. No': 2, 'Proctor Name': 'Jane Smith', 'Proctor Email': 'jane.smith@gmail.com', 'Drive ID': 702983, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': '2025-01-05', 'Start Time': '10:00:00', 'Drive End Date': '2025-01-05', 'End Time': '16:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
-];
-
 function downloadSample() {
-  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS);
+  const SAMPLE_ROWS = [
+    { 'S. No': 1, 'Proctor Name': 'John Doe', 'Proctor Email': 'john.doe@gmail.com', 'Drive ID': 702982, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': new Date(2026, 3, 4), 'Start Time': '09:00:00', 'Drive End Date': new Date(2026, 3, 4), 'End Time': '15:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
+    { 'S. No': 2, 'Proctor Name': 'Jane Smith', 'Proctor Email': 'jane.smith@gmail.com', 'Drive ID': 702983, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': new Date(2026, 3, 5), 'Start Time': '10:00:00', 'Drive End Date': new Date(2026, 3, 5), 'End Time': '16:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
+  ];
+
+  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { cellDates: true });
+
+  // Format date columns as dd-mm-yy
+  const dateColumns = ['I', 'K']; // Drive Start Date, Drive End Date columns
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r + 1; R <= range.e.r; R++) {
+    dateColumns.forEach(col => {
+      const cellAddr = `${col}${R + 1}`;
+      if (ws[cellAddr] && ws[cellAddr].t === 'd') {
+        ws[cellAddr].z = 'dd-mm-yy';
+      }
+    });
+  }
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  XLSX.writeFile(wb, 'payroll_sample_template.xlsx');
+  XLSX.writeFile(wb, 'payroll_sample_template.xlsx', { cellDates: true });
 }
 
 export default function FreelancerPayrollUpload() {
