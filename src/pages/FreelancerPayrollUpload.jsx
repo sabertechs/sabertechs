@@ -58,9 +58,19 @@ export default function FreelancerPayrollUpload() {
         setProgress(p => p < 80 ? p + 5 : p);
       }, 600);
 
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await base44.functions.invoke('uploadFreelancerPayroll', fd);
+      // Read file as base64 and send as JSON payload
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = btoa(binary);
+
+      const res = await base44.functions.invoke('uploadFreelancerPayroll', {
+        file_base64: base64,
+        file_name: file.name
+      });
 
       clearInterval(progressTimer);
       setProgress(100);

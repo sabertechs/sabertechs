@@ -10,17 +10,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file');
+    const body = await req.json();
+    const { file_base64, file_name } = body;
 
-    if (!file) {
+    if (!file_base64) {
       return Response.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
+    // Decode base64 to Uint8Array
+    const binaryStr = atob(file_base64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+
     let workbook;
     try {
-      workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      workbook = XLSX.read(bytes, { type: 'array' });
     } catch (e) {
       return Response.json({ error: `Failed to parse Excel file: ${e.message}` }, { status: 400 });
     }
