@@ -12,27 +12,37 @@ import { format } from "date-fns";
 
 function downloadSample() {
   const SAMPLE_ROWS = [
-    { 'S. No': 1, 'Proctor Name': 'John Doe', 'Proctor Email': 'john.doe@gmail.com', 'Drive ID': 702982, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': new Date(2026, 3, 4), 'Start Time': '09:00:00', 'Drive End Date': new Date(2026, 3, 4), 'End Time': '15:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
-    { 'S. No': 2, 'Proctor Name': 'Jane Smith', 'Proctor Email': 'jane.smith@gmail.com', 'Drive ID': 702983, 'Account ID': 'client.account@example.com', 'Client ID': 375199, 'Client': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Start Date': new Date(2026, 3, 5), 'Start Time': '10:00:00', 'Drive End Date': new Date(2026, 3, 5), 'End Time': '16:00:00', 'Driver hours': '06:00:00', 'Amount': 500 },
+    { 'Proctor Email': 'john.doe@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 4), 'Drive Hours': '06:00:00', 'Amount': 500 },
+    { 'Proctor Email': 'jane.smith@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 5), 'Drive Hours': '06:00:00', 'Amount': 500 },
   ];
 
   const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { cellDates: true });
 
-  // Format date columns as dd-mm-yy
-  const dateColumns = ['I', 'K']; // Drive Start Date, Drive End Date columns
+  // Format Drive Date column (D) as dd-mm-yy
   const range = XLSX.utils.decode_range(ws['!ref']);
   for (let R = range.s.r + 1; R <= range.e.r; R++) {
-    dateColumns.forEach(col => {
-      const cellAddr = `${col}${R + 1}`;
-      if (ws[cellAddr] && ws[cellAddr].t === 'd') {
-        ws[cellAddr].z = 'dd-mm-yy';
-      }
-    });
+    const cellAddr = `D${R + 1}`;
+    if (ws[cellAddr] && ws[cellAddr].t === 'd') {
+      ws[cellAddr].z = 'dd-mm-yy';
+    }
   }
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
   XLSX.writeFile(wb, 'payroll_sample_template.xlsx', { cellDates: true });
+}
+
+function downloadErrorReport(skippedRows) {
+  const reportRows = skippedRows.map(s => ({
+    'Row #': s.row,
+    'Proctor Email': s.email,
+    'Reason for Skip': s.reason,
+  }));
+  const ws = XLSX.utils.json_to_sheet(reportRows);
+  ws['!cols'] = [{ wch: 8 }, { wch: 35 }, { wch: 60 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Skipped Rows');
+  XLSX.writeFile(wb, 'payroll_upload_error_report.xlsx');
 }
 
 export default function FreelancerPayrollUpload() {
@@ -123,7 +133,7 @@ export default function FreelancerPayrollUpload() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Freelancer Payroll Upload</h1>
-        <p className="text-slate-500 mt-1">Upload XLSX payroll reports. Freelancers will only see their own records.</p>
+        <p className="text-slate-500 mt-1">Upload XLSX payroll reports. Skipped rows will be available as a downloadable error report.</p>
         <Button variant="outline" size="sm" onClick={downloadSample} className="mt-2 border-green-400 text-green-700 hover:bg-green-50">
           <Download className="w-4 h-4 mr-2" /> Download Sample Template
         </Button>
@@ -136,7 +146,7 @@ export default function FreelancerPayrollUpload() {
             <FileSpreadsheet className="w-12 h-12 text-indigo-400" />
             <div className="text-center">
               <p className="font-medium text-slate-700">Upload Payroll Report (XLSX)</p>
-              <p className="text-sm text-slate-500">Columns: Proctor Name, Proctor Email, Drive ID, Account ID, Client ID, Client, Role, Drive Start/End Date, Start/End Time, Driver hours, Amount</p>
+              <p className="text-sm text-slate-500">Required columns: <span className="font-semibold text-indigo-700">Proctor Email, Client Name, Role, Drive Date, Drive Hours, Amount</span></p>
             </div>
             <div className="flex items-center gap-3">
               <input
@@ -203,14 +213,20 @@ export default function FreelancerPayrollUpload() {
             {/* Skipped rows */}
             {uploadResult.skipped?.length > 0 && (
               <div className="mt-2">
-                <p className="text-sm font-medium text-yellow-800 flex items-center gap-1 mb-1">
-                  <AlertTriangle className="w-4 h-4" /> Skipped Rows
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-yellow-800 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> Skipped Rows ({uploadResult.skipped.length})
+                  </p>
+                  <Button size="sm" variant="outline" className="border-yellow-400 text-yellow-800 hover:bg-yellow-50 h-7 text-xs" onClick={() => downloadErrorReport(uploadResult.skipped)}>
+                    <Download className="w-3 h-3 mr-1" /> Download Error Report
+                  </Button>
+                </div>
                 <div className="bg-white rounded border border-yellow-200 max-h-40 overflow-y-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-yellow-50">
                       <tr>
                         <th className="px-3 py-1.5 text-left text-yellow-800">Row #</th>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Email</th>
                         <th className="px-3 py-1.5 text-left text-yellow-800">Reason</th>
                       </tr>
                     </thead>
@@ -218,6 +234,7 @@ export default function FreelancerPayrollUpload() {
                       {uploadResult.skipped.map((s, i) => (
                         <tr key={i} className="border-t border-yellow-100">
                           <td className="px-3 py-1 text-slate-600">{s.row}</td>
+                          <td className="px-3 py-1 text-slate-600">{s.email}</td>
                           <td className="px-3 py-1 text-red-600">{s.reason}</td>
                         </tr>
                       ))}
