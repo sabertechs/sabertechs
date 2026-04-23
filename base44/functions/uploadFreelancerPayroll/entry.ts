@@ -51,13 +51,27 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Helper: convert Excel serial date OR date string to YYYY-MM-DD
+      const parseExcelDate = (val) => {
+        if (!val && val !== 0) return '';
+        const num = Number(val);
+        if (!isNaN(num) && num > 1000) {
+          // Excel serial date: days since 1899-12-30
+          const excelEpoch = new Date(1899, 11, 30);
+          const d = new Date(excelEpoch.getTime() + num * 86400000);
+          return d.toISOString().split('T')[0];
+        }
+        // Try as string date
+        const d = new Date(val);
+        if (!isNaN(d)) return d.toISOString().split('T')[0];
+        return '';
+      };
+
       // Parse drive_start_date
       const rawStartDate = row['Drive Start Date'] || '';
-      let driveStartDate = '';
-      if (rawStartDate) {
-        const d = new Date(rawStartDate);
-        if (!isNaN(d)) driveStartDate = d.toISOString().split('T')[0];
-        else skippedRows.push({ row: i + 2, reason: `Invalid Drive Start Date: "${rawStartDate}"` });
+      const driveStartDate = parseExcelDate(rawStartDate);
+      if (rawStartDate && !driveStartDate) {
+        skippedRows.push({ row: i + 2, reason: `Invalid Drive Start Date: "${rawStartDate}"` });
       }
 
       // Derive project_month from drive_start_date
@@ -65,11 +79,7 @@ Deno.serve(async (req) => {
 
       // Parse drive_end_date
       const rawEndDate = row['Drive End Date'] || '';
-      let driveEndDate = '';
-      if (rawEndDate) {
-        const d = new Date(rawEndDate);
-        if (!isNaN(d)) driveEndDate = d.toISOString().split('T')[0];
-      }
+      const driveEndDate = parseExcelDate(rawEndDate);
 
       // Parse total_amount
       const rawAmount = row['Amount'] || row['Total Amount'] || row['total_amount'] || '';
@@ -100,6 +110,8 @@ Deno.serve(async (req) => {
       records.push(record);
     }
 
+    console.log(`Parsed ${records.length} valid records, ${skippedRows.length} skipped. Sample:`, JSON.stringify(records[0]));
+
     if (records.length === 0) {
       return Response.json({
         error: 'No valid records found in file.',
@@ -124,9 +136,13 @@ Deno.serve(async (req) => {
       );
       results.forEach((result, idx) => {
         if (result.status === 'fulfilled') {
-          inserted += batch[idx].length;
+          // Use actual created count from result if available, fallback to chunk length
+          const createdCount = Array.isArray(result.value) ? result.value.length : batch[idx].length;
+          inserted += createdCount;
+          console.log(`Chunk ${i + idx + 1}: requested=${batch[idx].length}, created=${createdCount}`);
         } else {
-          errors.push(`Chunk ${i + idx + 1} failed: ${result.reason?.message}`);
+          errors.push(`Chunk ${i + idx + 1} failed: ${result.reason?.message || JSON.stringify(result.reason)}`);
+          console.error(`Chunk ${i + idx + 1} error:`, result.reason);
         }
       });
     }
