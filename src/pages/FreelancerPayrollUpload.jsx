@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Trash2, FileSpreadsheet, Users, Download } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, Trash2, FileSpreadsheet, Users, Download, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -24,6 +25,9 @@ function downloadSample() {
 export default function FreelancerPayrollUpload() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [uploadResult, setUploadResult] = useState(null); // { inserted, skipped, errors, total_rows }
+  const [uploadError, setUploadError] = useState(null);
   const [file, setFile] = useState(null);
 
   const { data: records = [] } = useQuery({
@@ -44,16 +48,37 @@ export default function FreelancerPayrollUpload() {
   const handleUpload = async () => {
     if (!file) return toast.error('Please select a file first');
     setUploading(true);
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await base44.functions.invoke('uploadFreelancerPayroll', fd);
-    setUploading(false);
-    if (res.data?.success) {
-      toast.success(`Uploaded ${res.data.inserted} records successfully`);
-      setFile(null);
-      queryClient.invalidateQueries(['freelancerPayrollAll']);
-    } else {
-      toast.error(res.data?.error || 'Upload failed');
+    setProgress(10);
+    setUploadResult(null);
+    setUploadError(null);
+
+    try {
+      // Simulate progress while waiting
+      const progressTimer = setInterval(() => {
+        setProgress(p => p < 80 ? p + 5 : p);
+      }, 600);
+
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await base44.functions.invoke('uploadFreelancerPayroll', fd);
+
+      clearInterval(progressTimer);
+      setProgress(100);
+
+      if (res.data?.success) {
+        setUploadResult(res.data);
+        toast.success(`Uploaded ${res.data.inserted} of ${res.data.total_rows} records successfully`);
+        setFile(null);
+        queryClient.invalidateQueries(['freelancerPayrollAll']);
+      } else {
+        setUploadError(res.data?.error || 'Upload failed');
+        if (res.data?.skipped?.length) setUploadResult(res.data);
+      }
+    } catch (err) {
+      setUploadError(`Network or server error: ${err.message}`);
+    } finally {
+      setUploading(false);
+      setTimeout(() => setProgress(0), 2000);
     }
   };
 
@@ -91,7 +116,7 @@ export default function FreelancerPayrollUpload() {
               <input
                 type="file"
                 accept=".xlsx,.xls"
-                onChange={(e) => setFile(e.target.files[0])}
+                onChange={(e) => { setFile(e.target.files[0]); setUploadResult(null); setUploadError(null); }}
                 className="block text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:cursor-pointer"
               />
               <Button
@@ -103,9 +128,91 @@ export default function FreelancerPayrollUpload() {
                 {uploading ? 'Uploading...' : 'Upload'}
               </Button>
             </div>
+
+            {/* Progress Bar */}
+            {uploading && (
+              <div className="w-full max-w-md space-y-1">
+                <Progress value={progress} className="h-2" />
+                <p className="text-xs text-slate-500 text-center">Processing file, please wait…</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Upload Error */}
+      {uploadError && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-700">Upload Failed</p>
+                <p className="text-sm text-red-600 mt-1">{uploadError}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Result Report */}
+      {uploadResult && !uploading && (
+        <Card className={uploadResult.inserted > 0 ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <p className="font-semibold text-slate-800">Upload Report</p>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <span className="text-green-700 font-medium">✅ Inserted: {uploadResult.inserted}</span>
+              <span className="text-slate-500">📋 Total rows: {uploadResult.total_rows}</span>
+              {uploadResult.skipped?.length > 0 && (
+                <span className="text-yellow-700 font-medium">⚠️ Skipped: {uploadResult.skipped.length}</span>
+              )}
+              {uploadResult.errors?.length > 0 && (
+                <span className="text-red-700 font-medium">❌ Chunk errors: {uploadResult.errors.length}</span>
+              )}
+            </div>
+
+            {/* Skipped rows */}
+            {uploadResult.skipped?.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-yellow-800 flex items-center gap-1 mb-1">
+                  <AlertTriangle className="w-4 h-4" /> Skipped Rows
+                </p>
+                <div className="bg-white rounded border border-yellow-200 max-h-40 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-yellow-50">
+                      <tr>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Row #</th>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uploadResult.skipped.map((s, i) => (
+                        <tr key={i} className="border-t border-yellow-100">
+                          <td className="px-3 py-1 text-slate-600">{s.row}</td>
+                          <td className="px-3 py-1 text-red-600">{s.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Chunk errors */}
+            {uploadResult.errors?.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-red-800 mb-1">❌ Insert Errors</p>
+                <div className="bg-white rounded border border-red-200 p-2 text-xs text-red-600 max-h-32 overflow-y-auto space-y-1">
+                  {uploadResult.errors.map((e, i) => <p key={i}>{e}</p>)}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Uploaded Batches */}
       <Card>
