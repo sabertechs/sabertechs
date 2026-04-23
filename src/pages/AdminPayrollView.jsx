@@ -33,12 +33,18 @@ export default function AdminPayrollView() {
 
   const fetchRecords = async (month, email) => {
     setLoading(true);
-    const payload = {};
-    if (month) payload.month = month;
-    if (email.trim()) payload.freelancer_email = email.trim();
-    const res = await base44.functions.invoke('getPayrollRecords', payload);
-    setRecords(res.data?.records || []);
-    setLoading(false);
+    try {
+      const payload = {};
+      if (month) payload.month = month;
+      if (email && email.trim()) payload.freelancer_email = email.trim();
+      const res = await base44.functions.invoke('getPayrollRecords', payload);
+      setRecords(res.data?.records || []);
+    } catch (e) {
+      console.error('Failed to fetch payroll records:', e);
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

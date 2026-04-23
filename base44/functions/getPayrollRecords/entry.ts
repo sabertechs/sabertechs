@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     if (month) filterObj.project_month = month;
     if (freelancer_email) filterObj.proctor_email = freelancer_email.toLowerCase();
 
-    const records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 500);
+    const records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 500).catch(() => []);
 
     return Response.json({ records });
   } catch (error) {
