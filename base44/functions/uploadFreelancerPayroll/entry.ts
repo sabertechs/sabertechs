@@ -75,23 +75,29 @@ Deno.serve(async (req) => {
       const rawAmount = row['Amount'] || row['Total Amount'] || row['total_amount'] || '';
       const totalAmount = rawAmount !== '' ? parseFloat(rawAmount) : null;
 
-      records.push({
-        proctor_name: (row['Proctor Name'] || '').toString().trim(),
+      const driveIdRaw = row['Drive ID'] ?? row['DriveID'] ?? '';
+      const driveId = driveIdRaw !== '' ? parseInt(driveIdRaw) : null;
+
+      const record = {
         proctor_email: email,
-        drive_id: parseInt(row['Drive ID']) || 0,
-        account_id: (row['Account ID'] || row['Account ID '] || '').toString().trim(),
-        client_id: parseInt(row['Client ID']) || 0,
-        client_name: (row['Client'] || '').toString().trim(),
-        role: (row['Role'] || '').toString().trim(),
-        drive_start_date: driveStartDate,
-        start_time: (row['Start Time'] || '').toString().trim(),
-        drive_end_date: driveEndDate,
-        end_time: (row['End Time'] || '').toString().trim(),
-        driver_hours: (row['Driver hours'] || row['Driver Hours'] || '').toString().trim(),
-        total_amount: totalAmount,
-        project_month: projectMonth,
         upload_batch: batchId
-      });
+      };
+      if ((row['Proctor Name'] || '').toString().trim()) record.proctor_name = row['Proctor Name'].toString().trim();
+      if (driveId !== null && !isNaN(driveId)) record.drive_id = driveId;
+      if ((row['Account ID'] || row['Account ID '] || '').toString().trim()) record.account_id = (row['Account ID'] || row['Account ID '] || '').toString().trim();
+      const clientId = parseInt(row['Client ID']);
+      if (!isNaN(clientId)) record.client_id = clientId;
+      if ((row['Client'] || '').toString().trim()) record.client_name = row['Client'].toString().trim();
+      if ((row['Role'] || '').toString().trim()) record.role = row['Role'].toString().trim();
+      if (driveStartDate) record.drive_start_date = driveStartDate;
+      if ((row['Start Time'] || '').toString().trim()) record.start_time = row['Start Time'].toString().trim();
+      if (driveEndDate) record.drive_end_date = driveEndDate;
+      if ((row['End Time'] || '').toString().trim()) record.end_time = row['End Time'].toString().trim();
+      if ((row['Driver hours'] || row['Driver Hours'] || '').toString().trim()) record.driver_hours = (row['Driver hours'] || row['Driver Hours'] || '').toString().trim();
+      if (totalAmount !== null && !isNaN(totalAmount)) record.total_amount = totalAmount;
+      if (projectMonth) record.project_month = projectMonth;
+
+      records.push(record);
     }
 
     if (records.length === 0) {

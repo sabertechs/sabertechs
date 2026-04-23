@@ -54,8 +54,7 @@
     }
   },
   "required": [
-    "proctor_email",
-    "drive_id"
+    "proctor_email"
   ],
   "rls": {
     "read": {
