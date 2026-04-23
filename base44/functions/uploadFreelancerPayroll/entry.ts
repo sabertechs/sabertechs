@@ -108,18 +108,27 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Bulk insert in chunks of 50
+    // Bulk insert in chunks of 200, 3 parallel at a time
     let inserted = 0;
     const errors = [];
-    const chunkSize = 50;
+    const chunkSize = 200;
+    const parallelLimit = 3;
+    const chunks = [];
     for (let i = 0; i < records.length; i += chunkSize) {
-      const chunk = records.slice(i, i + chunkSize);
-      try {
-        await base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(chunk);
-        inserted += chunk.length;
-      } catch (e) {
-        errors.push(`Chunk ${Math.floor(i / chunkSize) + 1} failed: ${e.message}`);
-      }
+      chunks.push(records.slice(i, i + chunkSize));
+    }
+    for (let i = 0; i < chunks.length; i += parallelLimit) {
+      const batch = chunks.slice(i, i + parallelLimit);
+      const results = await Promise.allSettled(
+        batch.map(chunk => base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(chunk))
+      );
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          inserted += batch[idx].length;
+        } else {
+          errors.push(`Chunk ${i + idx + 1} failed: ${result.reason?.message}`);
+        }
+      });
     }
 
     return Response.json({

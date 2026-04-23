@@ -30,6 +30,8 @@ export default function AdminPayrollView() {
   const [emailFilter, setEmailFilter] = useState('');
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const fetchRecords = async (month, email) => {
     setLoading(true);
@@ -39,6 +41,7 @@ export default function AdminPayrollView() {
       if (email && email.trim()) payload.freelancer_email = email.trim();
       const res = await base44.functions.invoke('getPayrollRecords', payload);
       setRecords(res.data?.records || []);
+      setPage(1);
     } catch (e) {
       console.error('Failed to fetch payroll records:', e);
       setRecords([]);
@@ -65,6 +68,9 @@ export default function AdminPayrollView() {
   const freelancers = [...new Set(records.map(r => r.proctor_email))];
   const totalAmount = records.reduce((s, r) => s + (r.total_amount || 0), 0);
   const totalDrives = records.length;
+
+  const totalPages = Math.ceil(records.length / PAGE_SIZE);
+  const paginatedRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const selectedLabel = monthOptions.find(o => o.value === selectedMonth)?.label || selectedMonth;
 
@@ -191,41 +197,59 @@ export default function AdminPayrollView() {
           ) : records.length === 0 ? (
             <p className="text-center text-slate-500 py-12">No records found for this filter.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 px-3 text-slate-500 font-medium">Freelancer</th>
-                    <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive ID</th>
-                    <th className="text-left py-3 px-3 text-slate-500 font-medium">Client</th>
-                    <th className="text-left py-3 px-3 text-slate-500 font-medium">Date</th>
-                    <th className="text-left py-3 px-3 text-slate-500 font-medium">Hours</th>
-                    <th className="text-right py-3 px-3 text-slate-500 font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((r) => (
-                    <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="py-3 px-3">
-                        <p className="font-medium text-slate-800">{r.proctor_name}</p>
-                        <p className="text-xs text-slate-400">{r.proctor_email}</p>
-                      </td>
-                      <td className="py-3 px-3 text-slate-600">{r.drive_id}</td>
-                      <td className="py-3 px-3 text-slate-600">{r.client_name}</td>
-                      <td className="py-3 px-3 text-slate-500 whitespace-nowrap">{r.drive_start_date}</td>
-                      <td className="py-3 px-3">
-                        <span className="flex items-center gap-1 text-slate-600">
-                          <Clock className="w-3 h-3" /> {r.driver_hours || '—'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right font-semibold text-emerald-700">
-                        ₹{(r.total_amount || 0).toLocaleString('en-IN')}
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Freelancer</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive ID</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Client</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Date</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Hours</th>
+                      <th className="text-right py-3 px-3 text-slate-500 font-medium">Amount</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {paginatedRecords.map((r) => (
+                      <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 px-3">
+                          <p className="font-medium text-slate-800">{r.proctor_name}</p>
+                          <p className="text-xs text-slate-400">{r.proctor_email}</p>
+                        </td>
+                        <td className="py-3 px-3 text-slate-600">{r.drive_id}</td>
+                        <td className="py-3 px-3 text-slate-600">{r.client_name}</td>
+                        <td className="py-3 px-3 text-slate-500 whitespace-nowrap">{r.drive_start_date}</td>
+                        <td className="py-3 px-3">
+                          <span className="flex items-center gap-1 text-slate-600">
+                            <Clock className="w-3 h-3" /> {r.driver_hours || '—'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right font-semibold text-emerald-700">
+                          ₹{(r.total_amount || 0).toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                  <p className="text-sm text-slate-500">
+                    Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, records.length)} of {records.length}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-slate-700">Page {page} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
