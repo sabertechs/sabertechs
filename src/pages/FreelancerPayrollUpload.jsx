@@ -32,7 +32,10 @@ export default function FreelancerPayrollUpload() {
 
   const { data: records = [] } = useQuery({
     queryKey: ['freelancerPayrollAll'],
-    queryFn: () => base44.entities.FreelancerPayroll.list('-created_date', 200),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getPayrollRecords', {});
+      return res.data?.records || [];
+    },
   });
 
   // Group by batch

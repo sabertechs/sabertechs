@@ -10,8 +10,12 @@ Deno.serve(async (req) => {
     const { month, freelancer_email } = body;
 
     const filterObj = {};
-    if (month) filterObj.project_month = month;
-    if (freelancer_email) filterObj.proctor_email = freelancer_email.toLowerCase();
+    // Only apply month filter if no email search — email search should show all months
+    if (freelancer_email) {
+      filterObj.proctor_email = freelancer_email.toLowerCase();
+    } else if (month) {
+      filterObj.project_month = month;
+    }
 
     const records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 2000).catch(() => []);
 
