@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { 
-  MapPin, Calendar, Award, BookOpen, Briefcase, IndianRupee, Users, TrendingUp
+  MapPin, Calendar, Award, BookOpen, Briefcase, IndianRupee, Users, TrendingUp, ListTodo
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,33 @@ export default function FreelancerDashboard() {
     staleTime: 10 * 60 * 1000,
   });
 
+  // Fetch pending tasks for accepted projects (including group tasks)
+  const acceptedProjectIds = myApplications.filter(a => a.status === 'accepted').map(a => a.project_id);
+
+  const { data: allMyTasks = [] } = useQuery({
+    queryKey: ['myPendingTasks', user?.email, acceptedProjectIds.join(',')],
+    queryFn: async () => {
+      if (!acceptedProjectIds.length) return [];
+      const allTasks = await Promise.all(
+        acceptedProjectIds.map(pid => base44.entities.ProjectTask.filter({ project_id: pid }))
+      );
+      const groups = await Promise.all(
+        acceptedProjectIds.map(pid => base44.entities.ProjectGroup.filter({ project_id: pid }))
+      );
+      const allGroups = groups.flat();
+      const userGroupIds = allGroups.filter(g => g.members?.includes(user?.email)).map(g => g.id);
+      return allTasks.flat().filter(t =>
+        t.assigned_to === user?.email ||
+        (t.group_id && userGroupIds.includes(t.group_id)) ||
+        (!t.assigned_to && !t.group_id)
+      );
+    },
+    enabled: !!user?.email && acceptedProjectIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const pendingTasksCount = allMyTasks.filter(t => t.status !== 'completed').length;
+
   const hasApplied = (projectId) => {
     return myApplications.some(app => app.project_id === projectId);
   };
@@ -94,7 +121,7 @@ export default function FreelancerDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -144,6 +171,22 @@ export default function FreelancerDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        <Link to={createPageUrl("FreelancerProjects")} className="block">
+          <Card className="border-0 shadow-sm hover:shadow-md hover:border-indigo-300 border transition-all cursor-pointer">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-100 rounded-xl">
+                  <ListTodo className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-800">{pendingTasksCount}</p>
+                  <p className="text-sm text-slate-500">Pending Tasks</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link to={`${createPageUrl("FreelancerPayrollView")}?month=${encodeURIComponent(lastMonth)}`} className="block">
           <Card className="border-0 shadow-sm hover:shadow-md hover:border-emerald-300 border transition-all cursor-pointer">

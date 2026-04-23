@@ -35,6 +35,7 @@ export default function ProjectTasksTab({ projectId, project }) {
   });
 
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [importProgress, setImportProgress] = useState({ active: false, current: 0, total: 0, templateName: '' });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
@@ -78,7 +79,7 @@ export default function ProjectTasksTab({ projectId, project }) {
           title: 'New Task Assigned',
           message: `You have been assigned task: ${data.title} in project ${project.name}`,
           type: 'info',
-          link: `/ProjectDetails?id=${projectId}`
+          link: `/FreelancerProjects`
         });
       }
       // Send notification to all group members if assigned to group
@@ -91,7 +92,7 @@ export default function ProjectTasksTab({ projectId, project }) {
               title: 'New Group Task Assigned',
               message: `Your group "${grp.group_name}" has been assigned task: ${data.title} in project ${project.name}`,
               type: 'info',
-              link: `/ProjectDetails?id=${projectId}`
+              link: `/FreelancerProjects`
             })
           ));
         }
@@ -213,15 +214,20 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const handleImportTemplate = async (template) => {
     const projectStartDate = project?.start_date ? new Date(project.start_date) : new Date();
+    const total = template.tasks?.length || 0;
+    if (total === 0) return;
+
+    setImportProgress({ active: true, current: 0, total, templateName: template.template_name });
+
     let successCount = 0;
     for (const task of template.tasks) {
       const dueDate = task.due_days_offset > 0
         ? format(addDays(projectStartDate, task.due_days_offset), 'yyyy-MM-dd')
         : project?.start_date || '';
-      await createMutation.mutateAsync({
+      await base44.entities.ProjectTask.create({
         title: task.title,
         description: task.description || '',
-        task_type: task.task_type,
+        task_type: task.task_type || 'text_entry',
         priority: task.priority || 'medium',
         is_required: task.is_required ?? true,
         due_date: dueDate,
@@ -234,8 +240,12 @@ export default function ProjectTasksTab({ projectId, project }) {
         status: 'pending'
       });
       successCount++;
+      setImportProgress(prev => ({ ...prev, current: successCount }));
     }
+
+    setImportProgress({ active: false, current: 0, total: 0, templateName: '' });
     setShowTemplateDialog(false);
+    queryClient.invalidateQueries(['projectTasks']);
     toast.success(`Imported ${successCount} tasks from "${template.template_name}"`);
   };
 
@@ -474,43 +484,62 @@ export default function ProjectTasksTab({ projectId, project }) {
       </Card>
 
       {/* Template Import Dialog */}
-      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+      <Dialog open={showTemplateDialog} onOpenChange={(open) => { if (!importProgress.active) setShowTemplateDialog(open); }}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Import Tasks from Template</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            {taskTemplates.length === 0 ? (
-              <p className="text-center text-slate-500 py-8">No active templates found. Create templates in the Task Templates page.</p>
-            ) : taskTemplates.map((t) => (
-              <div key={t.id} className="border border-slate-200 rounded-lg p-4 hover:border-purple-400 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium">{t.template_name}</p>
-                    {t.project_type && <span className="text-xs text-slate-500">{t.project_type} · </span>}
-                    <span className="text-xs text-slate-500">{t.tasks?.length || 0} tasks</span>
-                    {t.description && <p className="text-sm text-slate-500 mt-1">{t.description}</p>}
-                    <div className="mt-2 space-y-1">
-                      {t.tasks?.slice(0, 4).map((task, i) => (
-                        <p key={i} className="text-xs text-slate-600">• {task.title}</p>
-                      ))}
-                      {t.tasks?.length > 4 && <p className="text-xs text-slate-400">+{t.tasks.length - 4} more...</p>}
+
+          {/* Import Progress */}
+          {importProgress.active && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-medium text-slate-700">
+                Importing from <span className="text-purple-700">"{importProgress.templateName}"</span>...
+              </p>
+              <Progress value={(importProgress.current / importProgress.total) * 100} className="h-3" />
+              <p className="text-xs text-slate-500 text-center">
+                {importProgress.current} of {importProgress.total} tasks imported
+              </p>
+            </div>
+          )}
+
+          {!importProgress.active && (
+            <div className="space-y-3 py-2">
+              {taskTemplates.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">No active templates found. Create templates in the Task Templates page.</p>
+              ) : taskTemplates.map((t) => (
+                <div key={t.id} className="border border-slate-200 rounded-lg p-4 hover:border-purple-400 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{t.template_name}</p>
+                      {t.project_type && <span className="text-xs text-slate-500">{t.project_type} · </span>}
+                      <span className="text-xs text-slate-500">{t.tasks?.length || 0} tasks</span>
+                      {t.description && <p className="text-sm text-slate-500 mt-1">{t.description}</p>}
+                      <div className="mt-2 space-y-1">
+                        {t.tasks?.slice(0, 4).map((task, i) => (
+                          <p key={i} className="text-xs text-slate-600">• {task.title}</p>
+                        ))}
+                        {t.tasks?.length > 4 && <p className="text-xs text-slate-400">+{t.tasks.length - 4} more...</p>}
+                      </div>
                     </div>
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 ml-4 flex-shrink-0"
+                      onClick={() => handleImportTemplate(t)}
+                    >
+                      Import
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 ml-4 flex-shrink-0"
-                    onClick={() => handleImportTemplate(t)}
-                  >
-                    Import
-                  </Button>
                 </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>Cancel</Button>
-          </DialogFooter>
+              ))}
+            </div>
+          )}
+
+          {!importProgress.active && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>Cancel</Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
