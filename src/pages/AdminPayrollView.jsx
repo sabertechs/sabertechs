@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,8 @@ function buildMonthOptions() {
 }
 
 export default function AdminPayrollView() {
-  const monthOptions = buildMonthOptions();
-  const currentMonthValue = monthValue(new Date());
+  const monthOptions = useMemo(() => buildMonthOptions(), []);
+  const currentMonthValue = useMemo(() => monthValue(new Date()), []);
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonthValue);
   const [emailFilter, setEmailFilter] = useState('');

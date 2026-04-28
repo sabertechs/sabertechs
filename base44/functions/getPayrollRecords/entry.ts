@@ -14,21 +14,20 @@ Deno.serve(async (req) => {
     let records = [];
 
     if (isAdmin) {
-      // Admin: fetch all, then filter in JS to avoid RLS issues
-      const allRecords = await base44.asServiceRole.entities.FreelancerPayroll.list('-drive_start_date', 5000);
-      records = allRecords;
-
+      // Build filter server-side to avoid fetching all records
+      const filterObj = {};
       if (freelancer_email && freelancer_email.trim()) {
-        records = records.filter(r => r.proctor_email === freelancer_email.trim().toLowerCase());
+        filterObj.proctor_email = freelancer_email.trim().toLowerCase();
       }
       if (month) {
-        records = records.filter(r => r.project_month === month);
+        filterObj.project_month = month;
       }
+      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 5000);
     } else {
-      // Freelancer: can only see their own records via RLS
+      // Freelancer: can only see their own records
       const filterObj = { proctor_email: user.email };
       if (month) filterObj.project_month = month;
-      records = await base44.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 2000);
+      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 2000);
     }
 
     console.log(`getPayrollRecords: user=${user.email} role=${user.role} month=${month} email=${freelancer_email} → ${records.length} records`);

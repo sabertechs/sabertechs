@@ -59,7 +59,7 @@ export default function FreelancerPayrollUpload() {
       const res = await base44.functions.invoke('getPayrollRecords', {});
       return res.data?.records || [];
     },
-    refetchInterval: 3000, // refresh every 3s so history appears after upload
+    staleTime: 30 * 1000,
   });
 
   // Group by batch

@@ -10,45 +10,43 @@ import { IndianRupee, Clock, Briefcase, Calendar, ChevronLeft, ChevronRight } fr
 export default function FreelancerPayrollView() {
   const [userEmail, setUserEmail] = useState(null);
 
-  // Read month from URL param or default to current month
+  // Use YYYY-MM format consistently (matches project_month in DB)
+  const toMonthValue = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const toMonthLabel = (val) => {
+    const [y, m] = val.split('-');
+    return new Date(+y, +m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+  };
+
   const getInitialMonth = () => {
     const params = new URLSearchParams(window.location.search);
     const m = params.get('month');
     if (m) return m;
-    const now = new Date();
-    return `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+    return toMonthValue(new Date());
   };
 
   const [selectedMonth, setSelectedMonth] = useState(getInitialMonth);
 
-  // Navigate months
   const navigateMonth = (direction) => {
-    const [monthName, year] = selectedMonth.split(' ');
-    const date = new Date(`${monthName} 1, ${year}`);
-    date.setMonth(date.getMonth() + direction);
-    setSelectedMonth(`${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`);
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + direction, 1);
+    setSelectedMonth(toMonthValue(d));
   };
 
-  const currentMonthLabel = (() => {
-    const now = new Date();
-    return `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
-  })();
+  const currentMonthValue = toMonthValue(new Date());
 
   useEffect(() => {
     base44.auth.me().then(u => setUserEmail(u?.email?.toLowerCase()));
   }, []);
 
-  // RLS on the entity ensures only own records are returned
-  const { data: allRecords = [], isLoading } = useQuery({
-    queryKey: ['myPayroll', userEmail],
-    queryFn: () => base44.entities.FreelancerPayroll.filter({ proctor_email: userEmail }, '-drive_start_date', 500),
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: ['myPayroll', userEmail, selectedMonth],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getPayrollRecords', { month: selectedMonth });
+      return res.data?.records || [];
+    },
     enabled: !!userEmail,
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Get unique months for dropdown
-  const months = [...new Set(allRecords.map(r => r.project_month).filter(Boolean))].sort().reverse();
-
-  const records = allRecords.filter(r => r.project_month === selectedMonth);
 
   const totalAmount = records.reduce((sum, r) => sum + (r.total_amount || 0), 0);
   const totalHours = records.reduce((sum, r) => {
@@ -84,16 +82,16 @@ export default function FreelancerPayrollView() {
           </Button>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-48">
-              <SelectValue />
+              <SelectValue>{toMonthLabel(selectedMonth)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {/* Show a range of months: 12 past + current */}
               {Array.from({ length: 13 }, (_, i) => {
                 const d = new Date();
+                d.setDate(1);
                 d.setMonth(d.getMonth() - (12 - i));
-                return `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+                return toMonthValue(d);
               }).map(m => (
-                <SelectItem key={m} value={m}>{m}</SelectItem>
+                <SelectItem key={m} value={m}>{toMonthLabel(m)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -101,12 +99,12 @@ export default function FreelancerPayrollView() {
             variant="outline"
             size="icon"
             onClick={() => navigateMonth(1)}
-            disabled={selectedMonth === currentMonthLabel}
+            disabled={selectedMonth === currentMonthValue}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
-          {selectedMonth !== currentMonthLabel && (
-            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => setSelectedMonth(currentMonthLabel)}>
+          {selectedMonth !== currentMonthValue && (
+            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => setSelectedMonth(currentMonthValue)}>
               Current
             </Button>
           )}
