@@ -59,6 +59,7 @@ export default function FreelancerPayrollUpload() {
       const res = await base44.functions.invoke('getPayrollRecords', {});
       return res.data?.records || [];
     },
+    refetchInterval: 3000, // refresh every 3s so history appears after upload
   });
 
   // Group by batch
@@ -71,47 +72,146 @@ export default function FreelancerPayrollUpload() {
   }, {});
   const batchList = Object.values(batches).sort((a, b) => new Date(b.created) - new Date(a.created));
 
+  const parseFileToRecords = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          resolve(rows);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const parseExcelDate = (val) => {
+    if (!val && val !== 0) return '';
+    const num = Number(val);
+    if (!isNaN(num) && num > 1000) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + num * 86400000);
+      return d.toISOString().split('T')[0];
+    }
+    const str = val.toString().trim();
+    const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+    if (dmyMatch) {
+      let [, d, m, y] = dmyMatch;
+      if (y.length === 2) y = '20' + y;
+      const dt = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+      if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+    }
+    const dt = new Date(str);
+    if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+    return '';
+  };
+
   const handleUpload = async () => {
     if (!file) return toast.error('Please select a file first');
     setUploading(true);
-    setProgress(10);
+    setProgress(5);
     setUploadResult(null);
     setUploadError(null);
 
     try {
-      // Simulate progress while waiting
-      const progressTimer = setInterval(() => {
-        setProgress(p => p < 80 ? p + 5 : p);
-      }, 600);
-
-      // Read file as base64 and send as JSON payload
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < uint8Array.length; i++) {
-        binary += String.fromCharCode(uint8Array[i]);
+      // Parse file on frontend
+      const rows = await parseFileToRecords(file);
+      if (!rows || rows.length === 0) {
+        setUploadError('The uploaded file has no data rows.');
+        return;
       }
-      const base64 = btoa(binary);
 
-      const res = await base44.functions.invoke('uploadFreelancerPayroll', {
-        file_base64: base64,
-        file_name: file.name
+      setProgress(15);
+
+      const batchId = `batch_${Date.now()}`;
+      const validRecords = [];
+      const skippedRows = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNum = i + 2;
+        const errors = [];
+
+        const email = (row['Proctor Email'] || '').toString().trim().toLowerCase();
+        if (!email) errors.push('Missing Proctor Email');
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Invalid email: "${email}"`);
+
+        const clientName = (row['Client Name'] || row['Client'] || '').toString().trim();
+        if (!clientName) errors.push('Missing Client Name');
+
+        const role = (row['Role'] || '').toString().trim();
+        if (!role) errors.push('Missing Role');
+
+        const rawDriveDate = row['Drive Date'] || row['Drive Start Date'] || '';
+        const driveDate = parseExcelDate(rawDriveDate);
+        if (!driveDate) errors.push(`Missing or invalid Drive Date: "${rawDriveDate}"`);
+
+        const driveHours = (row['Drive Hours'] || row['Driver hours'] || row['Driver Hours'] || '').toString().trim();
+        if (!driveHours) errors.push('Missing Drive Hours');
+
+        const rawAmount = row['Amount'] || row['Total Amount'] || '';
+        const amount = rawAmount !== '' ? parseFloat(rawAmount) : NaN;
+        if (isNaN(amount)) errors.push(`Missing or invalid Amount: "${rawAmount}"`);
+
+        if (errors.length > 0) {
+          skippedRows.push({ row: rowNum, email: email || '-', reason: errors.join('; ') });
+          continue;
+        }
+
+        validRecords.push({
+          proctor_email: email,
+          client_name: clientName,
+          role,
+          drive_start_date: driveDate,
+          driver_hours: driveHours,
+          total_amount: amount,
+          project_month: driveDate.substring(0, 7),
+          upload_batch: batchId,
+        });
+      }
+
+      // Send records in chunks of 100 to the backend
+      const CHUNK_SIZE = 100;
+      let inserted = 0;
+      const insertErrors = [];
+      const totalChunks = Math.ceil(validRecords.length / CHUNK_SIZE);
+
+      for (let i = 0; i < validRecords.length; i += CHUNK_SIZE) {
+        const chunk = validRecords.slice(i, i + CHUNK_SIZE);
+        const chunkIndex = Math.floor(i / CHUNK_SIZE);
+        const progressPct = 15 + Math.round((chunkIndex / totalChunks) * 80);
+        setProgress(progressPct);
+
+        try {
+          const res = await base44.functions.invoke('uploadPayrollChunk', { records: chunk });
+          inserted += res.data?.inserted || 0;
+        } catch (e) {
+          insertErrors.push(`Rows ${i + 2}-${i + chunk.length + 1}: ${e.message}`);
+        }
+      }
+
+      setProgress(100);
+      setUploadResult({
+        success: true,
+        inserted,
+        skipped: skippedRows,
+        errors: insertErrors,
+        total_rows: rows.length,
       });
 
-      clearInterval(progressTimer);
-      setProgress(100);
-
-      if (res.data?.success) {
-        setUploadResult(res.data);
-        toast.success(`Uploaded ${res.data.inserted} of ${res.data.total_rows} records successfully`);
+      if (inserted > 0) {
+        toast.success(`Uploaded ${inserted} of ${rows.length} records successfully`);
         setFile(null);
         queryClient.invalidateQueries(['freelancerPayrollAll']);
-      } else {
-        setUploadError(res.data?.error || 'Upload failed');
-        if (res.data?.skipped?.length) setUploadResult(res.data);
       }
     } catch (err) {
-      setUploadError(`Network or server error: ${err.message}`);
+      setUploadError(`Error: ${err.message}`);
     } finally {
       setUploading(false);
       setTimeout(() => setProgress(0), 2000);
