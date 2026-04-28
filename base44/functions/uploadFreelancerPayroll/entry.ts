@@ -119,21 +119,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Insert valid records in chunks
+    // Insert all records in parallel chunks for speed
     let inserted = 0;
     const insertErrors = [];
-    const chunkSize = 50;
-
+    const chunkSize = 500;
+    const chunks = [];
     for (let i = 0; i < records.length; i += chunkSize) {
-      const chunk = records.slice(i, i + chunkSize);
-      try {
-        const result = await base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(chunk);
-        console.log(`Chunk ${i}-${i+chunk.length}: inserted`, Array.isArray(result) ? result.length : result);
-        inserted += Array.isArray(result) ? result.length : chunk.length;
-      } catch (e) {
-        console.error(`Chunk ${i}-${i+chunk.length} error:`, e.message, e.stack);
-        insertErrors.push(`Rows ${i + 2}-${i + chunk.length + 1}: ${e.message}`);
-      }
+      chunks.push({ start: i, data: records.slice(i, i + chunkSize) });
+    }
+
+    const results = await Promise.all(
+      chunks.map(async ({ start, data }) => {
+        try {
+          const result = await base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(data);
+          const count = Array.isArray(result) ? result.length : data.length;
+          console.log(`Chunk ${start}-${start + data.length}: inserted ${count}`);
+          return { count, error: null };
+        } catch (e) {
+          console.error(`Chunk ${start} error:`, e.message);
+          return { count: 0, error: `Rows ${start + 2}-${start + data.length + 1}: ${e.message}` };
+        }
+      })
+    );
+
+    for (const r of results) {
+      inserted += r.count;
+      if (r.error) insertErrors.push(r.error);
     }
 
     return Response.json({
