@@ -65,14 +65,49 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const task = await base44.entities.ProjectTask.create({
+      const baseTask = {
         ...data,
         project_id: projectId,
         project_name: project.name,
         status: 'pending'
-      });
+      };
 
-      // Send notification if task is assigned to individual
+      if (data.group_id && !data.assigned_to) {
+        // Create one task per group member
+        const grp = groups.find(g => g.id === data.group_id);
+        const members = grp?.members || [];
+        if (members.length === 0) {
+          // No members yet — create single group task as fallback
+          return base44.entities.ProjectTask.create(baseTask);
+        }
+
+        // Find application info for name lookup
+        const tasks = await Promise.all(members.map(email => {
+          const app = applications.find(a => a.freelancer_email === email);
+          return base44.entities.ProjectTask.create({
+            ...baseTask,
+            assigned_to: email,
+            assigned_to_name: app?.freelancer_name || email,
+            group_id: data.group_id,
+          });
+        }));
+
+        // Notify all group members
+        await Promise.all(members.map(email =>
+          base44.entities.Notification.create({
+            recipient_email: email,
+            title: 'New Task Assigned',
+            message: `You have been assigned task: ${data.title} in project ${project.name}`,
+            type: 'info',
+            link: `/FreelancerProjects`
+          })
+        ));
+
+        return tasks;
+      }
+
+      // Individual assignment
+      const task = await base44.entities.ProjectTask.create(baseTask);
       if (data.assigned_to) {
         await base44.entities.Notification.create({
           recipient_email: data.assigned_to,
@@ -82,30 +117,15 @@ export default function ProjectTasksTab({ projectId, project }) {
           link: `/FreelancerProjects`
         });
       }
-      // Send notification to all group members if assigned to group
-      if (data.group_id) {
-        const grp = groups.find(g => g.id === data.group_id);
-        if (grp?.members?.length) {
-          await Promise.all(grp.members.map(email =>
-            base44.entities.Notification.create({
-              recipient_email: email,
-              title: 'New Group Task Assigned',
-              message: `Your group "${grp.group_name}" has been assigned task: ${data.title} in project ${project.name}`,
-              type: 'info',
-              link: `/FreelancerProjects`
-            })
-          ));
-        }
-      }
-
       return task;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries(['projectTasks']);
       setShowDialog(false);
       setShowSubTaskDialog(false);
       resetForm();
-      toast.success('Task created and notification sent');
+      const count = Array.isArray(result) ? result.length : 1;
+      toast.success(count > 1 ? `${count} tasks created (one per group member)` : 'Task created');
     }
   });
 
