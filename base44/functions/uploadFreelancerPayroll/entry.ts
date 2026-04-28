@@ -122,14 +122,16 @@ Deno.serve(async (req) => {
     // Insert valid records in chunks
     let inserted = 0;
     const insertErrors = [];
-    const chunkSize = 200;
+    const chunkSize = 50;
 
     for (let i = 0; i < records.length; i += chunkSize) {
       const chunk = records.slice(i, i + chunkSize);
       try {
         const result = await base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(chunk);
+        console.log(`Chunk ${i}-${i+chunk.length}: inserted`, Array.isArray(result) ? result.length : result);
         inserted += Array.isArray(result) ? result.length : chunk.length;
       } catch (e) {
+        console.error(`Chunk ${i}-${i+chunk.length} error:`, e.message, e.stack);
         insertErrors.push(`Rows ${i + 2}-${i + chunk.length + 1}: ${e.message}`);
       }
     }
