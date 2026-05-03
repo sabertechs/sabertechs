@@ -50,13 +50,14 @@ export default function ProjectAnalytics() {
     return projects.filter((p) => {
       if (workMode !== "all" && p.work_mode !== workMode) return false;
       if (priority !== "all" && p.priority !== priority) return false;
-      if (dateFrom) {
-        const start = parseISO(p.start_date || p.created_date);
-        if (start < parseISO(dateFrom)) return false;
-      }
-      if (dateTo) {
-        const start = parseISO(p.start_date || p.created_date);
-        if (start > parseISO(dateTo)) return false;
+      if (dateFrom || dateTo) {
+        const projectStart = p.start_date ? parseISO(p.start_date) : null;
+        const projectEnd = p.end_date ? parseISO(p.end_date) : null;
+        // Project must overlap the selected date range
+        if (dateFrom && projectEnd && projectEnd < parseISO(dateFrom)) return false;
+        if (dateTo && projectStart && projectStart > parseISO(dateTo)) return false;
+        // If project has no dates, exclude it when a date filter is active
+        if (!projectStart && !projectEnd) return false;
       }
       return true;
     });
