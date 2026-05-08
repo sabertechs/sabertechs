@@ -13,7 +13,7 @@ import JSZip from "jszip";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export default function ProjectResponsesTab({ projectId }) {
+export default function ProjectResponsesTab({ projectId, project }) {
   const queryClient = useQueryClient();
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -102,6 +102,8 @@ export default function ProjectResponsesTab({ projectId }) {
     try {
       const zip = new JSZip();
       for (const response of fileResponses) {
+        const taskName = sanitizeName(getTaskName(response.task_id)) || 'unknown_task';
+        const folder = zip.folder(taskName);
         const urls = parseUrls(response.response_value);
         for (let i = 0; i < urls.length; i++) {
           const url = urls[i];
@@ -110,16 +112,17 @@ export default function ProjectResponsesTab({ projectId }) {
           try {
             const res = await fetch(url);
             const blob = await res.blob();
-            zip.file(filename, blob);
+            folder.file(filename, blob);
           } catch {
             // skip files that fail to fetch
           }
         }
       }
       const content = await zip.generateAsync({ type: 'blob' });
+      const location = project?.location ? sanitizeName(project.location) : `project_${projectId}`;
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
-      link.download = `responses_${projectId}.zip`;
+      link.download = `${location}.zip`;
       link.click();
       URL.revokeObjectURL(link.href);
     } catch (e) {
