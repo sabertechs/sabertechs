@@ -1,0 +1,174 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "expense_type": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "description": {
+      "type": "string"
+    },
+    "receipt_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "ai_category": {
+      "type": "string",
+      "description": "AI-suggested category"
+    },
+    "ai_confidence": {
+      "type": "number",
+      "description": "AI confidence score 0-100"
+    },
+    "fraud_score": {
+      "type": "number",
+      "description": "Fraud detection score 0-100"
+    },
+    "fraud_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of fraud indicators"
+    },
+    "duplicate_check": {
+      "type": "object",
+      "properties": {
+        "is_duplicate": {
+          "type": "boolean"
+        },
+        "similar_expense_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "employee_email",
+    "expense_type",
+    "amount",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "data.employee_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "department_head"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}",
+          "data.status": "pending"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "$or": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "department_head"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}",
+          "data.status": "pending"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    }
+  }
+}
