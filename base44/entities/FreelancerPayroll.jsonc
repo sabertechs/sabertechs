@@ -38,9 +38,6 @@
     "end_time": {
       "type": "string"
     },
-    "driver_hours": {
-      "type": "string"
-    },
     "total_amount": {
       "type": "number"
     },

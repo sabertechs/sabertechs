@@ -12,8 +12,8 @@ import { format } from "date-fns";
 
 function downloadSample() {
   const SAMPLE_ROWS = [
-    { 'Proctor Email': 'john.doe@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 4), 'Drive Hours': '06:00:00', 'Amount': 500 },
-    { 'Proctor Email': 'jane.smith@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 5), 'Drive Hours': '06:00:00', 'Amount': 500 },
+    { 'Proctor Email': 'john.doe@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 4), 'Amount': 500 },
+    { 'Proctor Email': 'jane.smith@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 5), 'Amount': 500 },
   ];
 
   const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { cellDates: true });
@@ -152,9 +152,6 @@ export default function FreelancerPayrollUpload() {
         const driveDate = parseExcelDate(rawDriveDate);
         if (!driveDate) errors.push(`Missing or invalid Drive Date: "${rawDriveDate}"`);
 
-        const driveHours = (row['Drive Hours'] || row['Driver hours'] || row['Driver Hours'] || '').toString().trim();
-        if (!driveHours) errors.push('Missing Drive Hours');
-
         const rawAmount = row['Amount'] || row['Total Amount'] || '';
         const amount = rawAmount !== '' ? parseFloat(rawAmount) : NaN;
         if (isNaN(amount)) errors.push(`Missing or invalid Amount: "${rawAmount}"`);
@@ -169,7 +166,6 @@ export default function FreelancerPayrollUpload() {
           client_name: clientName,
           role,
           drive_start_date: driveDate,
-          driver_hours: driveHours,
           total_amount: amount,
           project_month: driveDate.substring(0, 7),
           upload_batch: batchId,
@@ -246,7 +242,7 @@ export default function FreelancerPayrollUpload() {
             <FileSpreadsheet className="w-12 h-12 text-indigo-400" />
             <div className="text-center">
               <p className="font-medium text-slate-700">Upload Payroll Report (XLSX)</p>
-              <p className="text-sm text-slate-500">Required columns: <span className="font-semibold text-indigo-700">Proctor Email, Client Name, Role, Drive Date, Drive Hours, Amount</span></p>
+              <p className="text-sm text-slate-500">Required columns: <span className="font-semibold text-indigo-700">Proctor Email, Client Name, Role, Drive Date, Amount</span></p>
             </div>
             <div className="flex items-center gap-3">
               <input

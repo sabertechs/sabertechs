@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { IndianRupee, Clock, Briefcase, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { IndianRupee, Briefcase, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 
 const monthLabel = (d) => `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
@@ -83,7 +83,6 @@ export default function AdminPayrollView() {
       'Role': r.role,
       'Start Date': r.drive_start_date,
       'End Date': r.drive_end_date,
-      'Hours': r.driver_hours,
       'Amount (₹)': r.total_amount,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -206,7 +205,6 @@ export default function AdminPayrollView() {
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive ID</th>
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Client</th>
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Date</th>
-                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Hours</th>
                       <th className="text-right py-3 px-3 text-slate-500 font-medium">Amount</th>
                     </tr>
                   </thead>
@@ -220,11 +218,6 @@ export default function AdminPayrollView() {
                         <td className="py-3 px-3 text-slate-600">{r.drive_id}</td>
                         <td className="py-3 px-3 text-slate-600">{r.client_name}</td>
                         <td className="py-3 px-3 text-slate-500 whitespace-nowrap">{r.drive_start_date}</td>
-                        <td className="py-3 px-3">
-                          <span className="flex items-center gap-1 text-slate-600">
-                            <Clock className="w-3 h-3" /> {r.driver_hours || '—'}
-                          </span>
-                        </td>
                         <td className="py-3 px-3 text-right font-semibold text-emerald-700">
                           ₹{(r.total_amount || 0).toLocaleString('en-IN')}
                         </td>
