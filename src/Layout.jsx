@@ -202,8 +202,8 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
       if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
-      items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
-      items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
+      if (hasAccess('payroll_upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
+      if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     } else if (userRole === 'department_head') {
@@ -244,8 +244,8 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
       if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
-      items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
-      items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
+      if (hasAccess('payroll_upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
+      if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
     } else if (userRole === 'freelancer') {
       // Freelancers have access to projects, payslips and company feed
       if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });

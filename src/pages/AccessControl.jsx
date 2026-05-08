@@ -27,6 +27,8 @@ const AVAILABLE_SECTIONS = [
   { id: 'offer_letters', name: 'Offer Letters', description: 'Create and manage offers', category: 'Management' },
   { id: 'bg_verification', name: 'Background Verification', description: 'Employee verification', category: 'Management' },
   { id: 'api_verification', name: 'API Verification', description: 'External API checks', category: 'Management' },
+  { id: 'payroll_upload', name: 'Payroll Upload', description: 'Upload freelancer payroll', category: 'Management' },
+  { id: 'payroll_records', name: 'Payroll Records', description: 'View payroll records', category: 'Management' },
   
   // Operations (Manager & Dept Head)
   { id: 'attendance', name: 'Attendance', description: 'Attendance management', category: 'Operations' },
@@ -55,7 +57,8 @@ const DEFAULT_ACCESS_BY_ROLE = {
   hr: [
     // Full system access
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters', 
-    'bg_verification', 'api_verification', 'attendance', 'payslips', 
+    'bg_verification', 'api_verification', 'payroll_upload', 'payroll_records',
+    'attendance', 'payslips', 
     'expenses', 'assets', 'settings', 'company_feed', 'policies', 
     'notifications', 'games', 'projects', 'onboarding', 'task_templates', 
     'project_analytics', 'access_control', 'module_management'
@@ -63,7 +66,8 @@ const DEFAULT_ACCESS_BY_ROLE = {
   manager: [
     // Team management + operations (NO assets/settings)
     'employees', 'freelancers', 'employee_upload', 'freelancer_upload', 'offer_letters',
-    'bg_verification', 'api_verification', 'attendance', 'payslips',
+    'bg_verification', 'api_verification', 'payroll_upload', 'payroll_records',
+    'attendance', 'payslips',
     'expenses', 'team_view', 'company_feed', 'policies', 
     'notifications', 'games', 'projects', 'onboarding', 'task_templates', 
     'project_analytics'
