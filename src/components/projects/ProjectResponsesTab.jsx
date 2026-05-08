@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, MapPin, FileText, Image as ImageIcon, Download, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, FileText, Image as ImageIcon, Download, ExternalLink, Archive } from "lucide-react";
 import { downloadFile } from "./downloadFile";
+import JSZip from "jszip";
 
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -83,6 +84,8 @@ export default function ProjectResponsesTab({ projectId }) {
     }
   };
 
+  const [zipping, setZipping] = useState(false);
+
   const sanitizeName = (name) => (name || '').replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
   const getDownloadName = (response, index, ext) => {
@@ -90,6 +93,40 @@ export default function ProjectResponsesTab({ projectId }) {
     const freelancer = sanitizeName(response.freelancer_name);
     const suffix = index > 0 ? `_${index + 1}` : '';
     return `${taskName}_${freelancer}${suffix}.${ext}`;
+  };
+
+  const downloadAllAsZip = async () => {
+    const fileResponses = responses.filter(r => r.response_type === 'image' || r.response_type === 'file');
+    if (fileResponses.length === 0) return toast.error('No files to download');
+    setZipping(true);
+    try {
+      const zip = new JSZip();
+      for (const response of fileResponses) {
+        const urls = parseUrls(response.response_value);
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          const ext = response.response_type === 'image' ? 'jpg' : (url.split('.').pop()?.split('?')[0] || 'file');
+          const filename = getDownloadName(response, i, ext);
+          try {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            zip.file(filename, blob);
+          } catch {
+            // skip files that fail to fetch
+          }
+        }
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `responses_${projectId}.zip`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (e) {
+      toast.error('Failed to create ZIP: ' + e.message);
+    } finally {
+      setZipping(false);
+    }
   };
 
   const renderResponseValue = (response) => {
@@ -189,7 +226,21 @@ export default function ProjectResponsesTab({ projectId }) {
     <>
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Task Responses</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Task Responses</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadAllAsZip}
+              disabled={zipping || responses.length === 0}
+            >
+              {zipping ? (
+                <span className="flex items-center gap-2"><Archive className="w-4 h-4 animate-pulse" />Zipping...</span>
+              ) : (
+                <span className="flex items-center gap-2"><Archive className="w-4 h-4" />Download All as ZIP</span>
+              )}
+            </Button>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
