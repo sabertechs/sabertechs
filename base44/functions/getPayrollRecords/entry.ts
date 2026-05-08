@@ -9,12 +9,22 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { month, freelancer_email } = body;
 
-    const isAdmin = user.role === 'admin' || user.role === 'hr' || user.role === 'manager' || user.role === 'department_head';
+    // Look up Employee record to get the actual role assigned in the system
+    const employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
+    const employeeRole = employees.length > 0 ? employees[0].role : null;
+
+    // Check admin access using both User role and Employee role
+    const isAdmin = user.role === 'admin'
+      || user.role === 'hr'
+      || user.role === 'manager'
+      || user.role === 'department_head'
+      || employeeRole === 'hr'
+      || employeeRole === 'manager'
+      || employeeRole === 'department_head';
 
     let records = [];
 
     if (isAdmin) {
-      // Build filter server-side to avoid fetching all records
       const filterObj = {};
       if (freelancer_email && freelancer_email.trim()) {
         filterObj.proctor_email = freelancer_email.trim().toLowerCase();
@@ -22,15 +32,15 @@ Deno.serve(async (req) => {
       if (month) {
         filterObj.project_month = month;
       }
-      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 5000);
+      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-date', 5000);
     } else {
       // Freelancer: can only see their own records
       const filterObj = { proctor_email: user.email };
       if (month) filterObj.project_month = month;
-      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-drive_start_date', 2000);
+      records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-date', 2000);
     }
 
-    console.log(`getPayrollRecords: user=${user.email} role=${user.role} month=${month} email=${freelancer_email} → ${records.length} records`);
+    console.log(`getPayrollRecords: user=${user.email} userRole=${user.role} empRole=${employeeRole} month=${month} → ${records.length} records`);
 
     return Response.json({ records });
   } catch (error) {

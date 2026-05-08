@@ -4,8 +4,21 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!user || (user.role !== 'admin' && user.role !== 'hr' && user.role !== 'manager' && user.role !== 'department_head')) {
+    // Look up Employee record to get the actual role assigned in the system
+    const employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
+    const employeeRole = employees.length > 0 ? employees[0].role : null;
+
+    const isAdmin = user.role === 'admin'
+      || user.role === 'hr'
+      || user.role === 'manager'
+      || user.role === 'department_head'
+      || employeeRole === 'hr'
+      || employeeRole === 'manager'
+      || employeeRole === 'department_head';
+
+    if (!isAdmin) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
