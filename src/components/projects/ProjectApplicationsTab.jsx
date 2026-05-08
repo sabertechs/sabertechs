@@ -6,7 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Star } from "lucide-react";
+import { CheckCircle, XCircle, Star, UserX } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -105,25 +116,63 @@ export default function ProjectApplicationsTab({ projectId, applications, status
                       {app.created_date ? format(new Date(app.created_date), 'MMM d, yyyy') : '-'}
                     </td>
                     <td className="px-4 py-4">
-                      {app.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
+                     <div className="flex gap-2">
+                       {app.status === 'pending' && (
+                         <>
+                           <Button
+                             size="sm"
+                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })}
+                             className="bg-green-600 hover:bg-green-700"
+                           >
+                             <CheckCircle className="w-4 h-4" />
+                           </Button>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
+                             className="text-red-600 hover:bg-red-50"
+                           >
+                             <XCircle className="w-4 h-4" />
+                           </Button>
+                         </>
+                       )}
+                       {app.status === 'accepted' && (
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50 border-red-200">
+                               <UserX className="w-4 h-4 mr-1" /> Unassign
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Unassign Freelancer?</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 This will remove <strong>{app.freelancer_name}</strong> from the project and mark their application as rejected. This action cannot be undone.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction
+                                 className="bg-red-600 hover:bg-red-700"
+                                 onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
+                               >
+                                 Unassign
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                       )}
+                       {app.status === 'rejected' && (
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })}
+                           className="text-green-600 hover:bg-green-50 border-green-200"
+                         >
+                           <CheckCircle className="w-4 h-4 mr-1" /> Re-assign
+                         </Button>
+                       )}
+                     </div>
                     </td>
                   </tr>
                 ))
