@@ -147,16 +147,12 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
                   <Button
                     size="sm"
                     onClick={() => setSelectedTask(task)}
-                    disabled={response?.status === 'approved'}
-                    className={response?.status === 'approved' ? 'bg-green-100 text-green-700 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'}
-                    variant={response?.status === 'approved' ? 'outline' : 'default'}
+                    className={response?.status === 'approved' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700'}
                   >
-                    {response ? (response.status === 'approved' ? 'Approved' : 'Resubmit') : (
-                      <>
-                        <Upload className="w-3 h-3 mr-1" />
-                        Submit
-                      </>
-                    )}
+                    {!response && <><Upload className="w-3 h-3 mr-1" />Submit</>}
+                    {response?.status === 'approved' && <><Upload className="w-3 h-3 mr-1" />Add More</>}
+                    {response?.status === 'submitted' && 'Resubmit'}
+                    {response?.status === 'resubmit_required' && 'Resubmit'}
                   </Button>
                 </div>
               </CardContent>

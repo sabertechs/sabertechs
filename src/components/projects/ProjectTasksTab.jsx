@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, AlertCircle, CheckCircle, Clock, GitBranch, ArrowRight, LayoutTemplate, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, AlertCircle, CheckCircle, Clock, GitBranch, ArrowRight, LayoutTemplate, ChevronDown, ChevronUp, UserMinus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { format, differenceInDays, addDays } from "date-fns";
@@ -300,8 +300,19 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const isOverdue = (dueDate) => {
     if (!dueDate) return false;
-    return new Date(dueDate) < new Date();
+    // Overdue only after end of the due date (11:59:59 PM)
+    const endOfDueDate = new Date(dueDate);
+    endOfDueDate.setHours(23, 59, 59, 999);
+    return endOfDueDate < new Date();
   };
+
+  const unassignMutation = useMutation({
+    mutationFn: ({ id }) => base44.entities.ProjectTask.update(id, { assigned_to: '', assigned_to_name: '', group_id: '' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['projectTasks']);
+      toast.success('Assignment removed');
+    }
+  });
 
   // Separate main tasks and sub-tasks
   const mainTasks = tasks.filter(t => !t.parent_task_id);
@@ -435,6 +446,17 @@ export default function ProjectTasksTab({ projectId, project }) {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
+                              {(task.assigned_to || task.group_id) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Remove assignment"
+                                  className="text-orange-500 hover:bg-orange-50"
+                                  onClick={() => unassignMutation.mutate({ id: task.id })}
+                                >
+                                  <UserMinus className="w-4 h-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"

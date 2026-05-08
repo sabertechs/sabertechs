@@ -18,9 +18,10 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   const [numberValue, setNumberValue] = useState(existingResponse?.response_value || '');
   const [uploading, setUploading] = useState(false);
   // Support multiple uploads: store as array of {url, name}
+  // For resubmit_required, start fresh so user can upload new files
   const [uploadedFiles, setUploadedFiles] = useState(() => {
     if (!existingResponse?.response_value) return [];
-    // Handle legacy single URL or new JSON array
+    if (existingResponse?.status === 'resubmit_required') return []; // start fresh on rejection
     try {
       const parsed = JSON.parse(existingResponse.response_value);
       return Array.isArray(parsed) ? parsed : [{ url: existingResponse.response_value, name: 'Existing file' }];
@@ -171,13 +172,15 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
 
   const submitMutation = useMutation({
     mutationFn: async (payload) => {
-      if (existingResponse && existingResponse.status !== 'approved') {
+      if (existingResponse && existingResponse.status === 'resubmit_required') {
+        // Update the existing rejected response
         return base44.entities.TaskResponse.update(existingResponse.id, {
           ...payload,
           status: 'submitted',
           submission_date: new Date().toISOString()
         });
       }
+      // Always create a new response for additional uploads (approved tasks can still get new submissions)
       return base44.entities.TaskResponse.create({
         task_id: task.id,
         project_id: projectId,
@@ -262,6 +265,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   };
 
   const isAlreadyApproved = existingResponse?.status === 'approved';
+  const isResubmitRequired = existingResponse?.status === 'resubmit_required';
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -287,11 +291,13 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
             </div>
           )}
 
-          {isAlreadyApproved ? (
-            <div className="text-center py-4 text-green-700 font-medium">
-              This task has been approved. No resubmission needed.
+          {isAlreadyApproved && (
+            <div className="bg-green-50 text-green-700 rounded-lg px-3 py-2 text-sm font-medium mb-2">
+              ✅ Previously approved. You can still submit additional files below.
             </div>
-          ) : (
+          )}
+
+          {true && (
             <>
               {task.task_type === 'text_entry' && (
                 <div className="space-y-2">
@@ -480,12 +486,10 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          {!isAlreadyApproved && (
-            <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
-              {submitMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              {existingResponse ? 'Resubmit' : 'Submit'}
-            </Button>
-          )}
+          <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            {submitMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            {isResubmitRequired ? 'Resubmit' : isAlreadyApproved ? 'Submit Additional' : existingResponse ? 'Resubmit' : 'Submit'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

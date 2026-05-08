@@ -46,9 +46,12 @@ export default function ProjectResponsesTab({ projectId }) {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes, taskId }) => {
       await base44.entities.TaskResponse.update(id, { status, admin_notes: notes });
-      // Auto-update task status and progress to completed when response is approved
+      // Only mark task completed when explicitly approved AND no other pending submissions exist for same task
       if (status === 'approved' && taskId) {
-        await base44.entities.ProjectTask.update(taskId, { status: 'completed', progress_percentage: 100 });
+        const pendingForTask = responses.filter(r => r.id !== id && r.task_id === taskId && r.status === 'submitted');
+        if (pendingForTask.length === 0) {
+          await base44.entities.ProjectTask.update(taskId, { status: 'completed', progress_percentage: 100 });
+        }
       }
     },
     onSuccess: () => {
