@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IndianRupee, Briefcase, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
@@ -64,26 +63,24 @@ export default function AdminPayrollView() {
 
   const handleSearch = () => fetchRecords(selectedMonth, emailFilter);
 
-  // Unique freelancers for summary
   const freelancers = [...new Set(records.map(r => r.proctor_email))];
-  const totalAmount = records.reduce((s, r) => s + (r.total_amount || 0), 0);
+  const totalPayment = records.reduce((s, r) => s + (r.payment || 0), 0);
   const totalDrives = records.length;
+  const selectedLabel = monthOptions.find(o => o.value === selectedMonth)?.label || selectedMonth;
 
   const totalPages = Math.ceil(records.length / PAGE_SIZE);
   const paginatedRecords = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const selectedLabel = monthOptions.find(o => o.value === selectedMonth)?.label || selectedMonth;
-
   const exportXLSX = () => {
     const rows = records.map(r => ({
-      'Name': r.proctor_name,
-      'Email': r.proctor_email,
-      'Drive ID': r.drive_id,
-      'Client': r.client_name,
+      'Date': r.date,
+      'Proctor Name': r.proctor_name,
+      'Mobile Number': r.mobile_number,
+      'Email ID': r.proctor_email,
+      'Client Name': r.client_name,
+      'Drive timing': r.drive_timing,
       'Role': r.role,
-      'Start Date': r.drive_start_date,
-      'End Date': r.drive_end_date,
-      'Amount (₹)': r.total_amount,
+      'Payment': r.payment,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -107,7 +104,6 @@ export default function AdminPayrollView() {
       <Card>
         <CardContent className="pt-5">
           <div className="flex flex-wrap gap-3 items-end">
-            {/* Month navigation */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} disabled={monthOptions.findIndex(o => o.value === selectedMonth) === 0}>
                 <ChevronLeft className="w-4 h-4" />
@@ -127,7 +123,6 @@ export default function AdminPayrollView() {
               </Button>
             </div>
 
-            {/* Email search */}
             <div className="flex items-center gap-2 flex-1 min-w-[220px]">
               <Input
                 placeholder="Filter by freelancer email..."
@@ -173,7 +168,7 @@ export default function AdminPayrollView() {
           <CardContent className="pt-5 flex items-center gap-3">
             <div className="p-3 bg-emerald-100 rounded-xl"><IndianRupee className="w-5 h-5 text-emerald-600" /></div>
             <div>
-              <p className="text-2xl font-bold text-slate-800">₹{totalAmount.toLocaleString('en-IN')}</p>
+              <p className="text-2xl font-bold text-slate-800">₹{totalPayment.toLocaleString('en-IN')}</p>
               <p className="text-sm text-slate-500">Total Payout — {selectedLabel}</p>
             </div>
           </CardContent>
@@ -201,25 +196,29 @@ export default function AdminPayrollView() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200">
-                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Freelancer</th>
-                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive ID</th>
-                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Client</th>
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Date</th>
-                      <th className="text-right py-3 px-3 text-slate-500 font-medium">Amount</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Proctor</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Mobile</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Client</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive Timing</th>
+                      <th className="text-left py-3 px-3 text-slate-500 font-medium">Role</th>
+                      <th className="text-right py-3 px-3 text-slate-500 font-medium">Payment</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedRecords.map((r) => (
                       <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 px-3 text-slate-500 whitespace-nowrap">{r.date}</td>
                         <td className="py-3 px-3">
                           <p className="font-medium text-slate-800">{r.proctor_name}</p>
                           <p className="text-xs text-slate-400">{r.proctor_email}</p>
                         </td>
-                        <td className="py-3 px-3 text-slate-600">{r.drive_id}</td>
+                        <td className="py-3 px-3 text-slate-600">{r.mobile_number}</td>
                         <td className="py-3 px-3 text-slate-600">{r.client_name}</td>
-                        <td className="py-3 px-3 text-slate-500 whitespace-nowrap">{r.drive_start_date}</td>
+                        <td className="py-3 px-3 text-slate-600">{r.drive_timing}</td>
+                        <td className="py-3 px-3 text-slate-600">{r.role}</td>
                         <td className="py-3 px-3 text-right font-semibold text-emerald-700">
-                          ₹{(r.total_amount || 0).toLocaleString('en-IN')}
+                          ₹{(r.payment || 0).toLocaleString('en-IN')}
                         </td>
                       </tr>
                     ))}

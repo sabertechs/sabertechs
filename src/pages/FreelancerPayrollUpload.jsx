@@ -12,20 +12,30 @@ import { format } from "date-fns";
 
 function downloadSample() {
   const SAMPLE_ROWS = [
-    { 'Proctor Email': 'john.doe@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 4), 'Amount': 500 },
-    { 'Proctor Email': 'jane.smith@gmail.com', 'Client Name': 'Sample Client Ltd', 'Role': 'Proctor', 'Drive Date': new Date(2026, 3, 5), 'Amount': 500 },
+    {
+      'Date': new Date(2026, 3, 1),
+      'Proctor Name': 'Pooja Goel',
+      'Mobile Number': '8700159920',
+      'Email ID': 'bpooja298@gmail.com',
+      'Client Name': 'Insead',
+      'Drive timing': 'General',
+      'Role': 'Proctor',
+      'Payment': 300,
+    },
   ];
 
   const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { cellDates: true });
 
-  // Format Drive Date column (D) as dd-mm-yy
+  // Format Date column (A) as dd-mmm-yy short date
   const range = XLSX.utils.decode_range(ws['!ref']);
   for (let R = range.s.r + 1; R <= range.e.r; R++) {
-    const cellAddr = `D${R + 1}`;
-    if (ws[cellAddr] && ws[cellAddr].t === 'd') {
-      ws[cellAddr].z = 'dd-mm-yy';
+    const cellAddr = `A${R + 1}`;
+    if (ws[cellAddr]) {
+      ws[cellAddr].z = 'dd-mmm-yy';
     }
   }
+
+  ws['!cols'] = [{ wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
@@ -35,7 +45,7 @@ function downloadSample() {
 function downloadErrorReport(skippedRows) {
   const reportRows = skippedRows.map(s => ({
     'Row #': s.row,
-    'Proctor Email': s.email,
+    'Email': s.email,
     'Reason for Skip': s.reason,
   }));
   const ws = XLSX.utils.json_to_sheet(reportRows);
@@ -45,11 +55,34 @@ function downloadErrorReport(skippedRows) {
   XLSX.writeFile(wb, 'payroll_upload_error_report.xlsx');
 }
 
+const parseExcelDate = (val) => {
+  if (!val && val !== 0) return '';
+  const num = Number(val);
+  if (!isNaN(num) && num > 1000) {
+    const excelEpoch = new Date(1899, 11, 30);
+    const d = new Date(excelEpoch.getTime() + num * 86400000);
+    return d.toISOString().split('T')[0];
+  }
+  const str = val.toString().trim();
+  // dd-mm-yy or dd/mm/yy
+  const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+  if (dmyMatch) {
+    let [, d, m, y] = dmyMatch;
+    if (y.length === 2) y = '20' + y;
+    const dt = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`);
+    if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+  }
+  // ISO / any parseable
+  const dt = new Date(str);
+  if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+  return '';
+};
+
 export default function FreelancerPayrollUpload() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [uploadResult, setUploadResult] = useState(null); // { inserted, skipped, errors, total_rows }
+  const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [file, setFile] = useState(null);
 
@@ -72,7 +105,7 @@ export default function FreelancerPayrollUpload() {
   }, {});
   const batchList = Object.values(batches).sort((a, b) => new Date(b.created) - new Date(a.created));
 
-  const parseFileToRecords = (file) => {
+  const parseFileToRows = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -91,27 +124,6 @@ export default function FreelancerPayrollUpload() {
     });
   };
 
-  const parseExcelDate = (val) => {
-    if (!val && val !== 0) return '';
-    const num = Number(val);
-    if (!isNaN(num) && num > 1000) {
-      const excelEpoch = new Date(1899, 11, 30);
-      const d = new Date(excelEpoch.getTime() + num * 86400000);
-      return d.toISOString().split('T')[0];
-    }
-    const str = val.toString().trim();
-    const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-    if (dmyMatch) {
-      let [, d, m, y] = dmyMatch;
-      if (y.length === 2) y = '20' + y;
-      const dt = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-      if (!isNaN(dt)) return dt.toISOString().split('T')[0];
-    }
-    const dt = new Date(str);
-    if (!isNaN(dt)) return dt.toISOString().split('T')[0];
-    return '';
-  };
-
   const handleUpload = async () => {
     if (!file) return toast.error('Please select a file first');
     setUploading(true);
@@ -120,8 +132,7 @@ export default function FreelancerPayrollUpload() {
     setUploadError(null);
 
     try {
-      // Parse file on frontend
-      const rows = await parseFileToRecords(file);
+      const rows = await parseFileToRows(file);
       if (!rows || rows.length === 0) {
         setUploadError('The uploaded file has no data rows.');
         return;
@@ -138,23 +149,23 @@ export default function FreelancerPayrollUpload() {
         const rowNum = i + 2;
         const errors = [];
 
-        const email = (row['Proctor Email'] || '').toString().trim().toLowerCase();
-        if (!email) errors.push('Missing Proctor Email');
+        const email = (row['Email ID'] || '').toString().trim().toLowerCase();
+        if (!email) errors.push('Missing Email ID');
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Invalid email: "${email}"`);
 
-        const clientName = (row['Client Name'] || row['Client'] || '').toString().trim();
-        if (!clientName) errors.push('Missing Client Name');
+        const rawDate = row['Date'] || '';
+        const date = parseExcelDate(rawDate);
+        if (!date) errors.push(`Missing or invalid Date: "${rawDate}"`);
 
+        const proctorName = (row['Proctor Name'] || '').toString().trim();
+        const mobileNumber = (row['Mobile Number'] || '').toString().trim();
+        const clientName = (row['Client Name'] || '').toString().trim();
+        const driveTiming = (row['Drive timing'] || row['Drive Timing'] || 'General').toString().trim();
         const role = (row['Role'] || '').toString().trim();
-        if (!role) errors.push('Missing Role');
 
-        const rawDriveDate = row['Drive Date'] || row['Drive Start Date'] || '';
-        const driveDate = parseExcelDate(rawDriveDate);
-        if (!driveDate) errors.push(`Missing or invalid Drive Date: "${rawDriveDate}"`);
-
-        const rawAmount = row['Amount'] || row['Total Amount'] || '';
-        const amount = rawAmount !== '' ? parseFloat(rawAmount) : NaN;
-        if (isNaN(amount)) errors.push(`Missing or invalid Amount: "${rawAmount}"`);
+        const rawPayment = row['Payment'] || '';
+        const payment = rawPayment !== '' ? parseFloat(rawPayment) : NaN;
+        if (isNaN(payment)) errors.push(`Missing or invalid Payment: "${rawPayment}"`);
 
         if (errors.length > 0) {
           skippedRows.push({ row: rowNum, email: email || '-', reason: errors.join('; ') });
@@ -162,17 +173,19 @@ export default function FreelancerPayrollUpload() {
         }
 
         validRecords.push({
+          date,
+          proctor_name: proctorName,
+          mobile_number: mobileNumber,
           proctor_email: email,
           client_name: clientName,
+          drive_timing: driveTiming,
           role,
-          drive_start_date: driveDate,
-          total_amount: amount,
-          project_month: driveDate.substring(0, 7),
+          payment,
+          project_month: date.substring(0, 7),
           upload_batch: batchId,
         });
       }
 
-      // Send records in chunks of 100 to the backend
       const CHUNK_SIZE = 100;
       let inserted = 0;
       const insertErrors = [];
@@ -181,8 +194,7 @@ export default function FreelancerPayrollUpload() {
       for (let i = 0; i < validRecords.length; i += CHUNK_SIZE) {
         const chunk = validRecords.slice(i, i + CHUNK_SIZE);
         const chunkIndex = Math.floor(i / CHUNK_SIZE);
-        const progressPct = 15 + Math.round((chunkIndex / totalChunks) * 80);
-        setProgress(progressPct);
+        setProgress(15 + Math.round((chunkIndex / totalChunks) * 80));
 
         try {
           const res = await base44.functions.invoke('uploadPayrollChunk', { records: chunk });
@@ -242,7 +254,9 @@ export default function FreelancerPayrollUpload() {
             <FileSpreadsheet className="w-12 h-12 text-indigo-400" />
             <div className="text-center">
               <p className="font-medium text-slate-700">Upload Payroll Report (XLSX)</p>
-              <p className="text-sm text-slate-500">Required columns: <span className="font-semibold text-indigo-700">Proctor Email, Client Name, Role, Drive Date, Amount</span></p>
+              <p className="text-sm text-slate-500">
+                Required columns: <span className="font-semibold text-indigo-700">Date, Proctor Name, Mobile Number, Email ID, Client Name, Drive timing, Role, Payment</span>
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <input
@@ -251,17 +265,12 @@ export default function FreelancerPayrollUpload() {
                 onChange={(e) => { setFile(e.target.files[0]); setUploadResult(null); setUploadError(null); }}
                 className="block text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:cursor-pointer"
               />
-              <Button
-                onClick={handleUpload}
-                disabled={!file || uploading}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
+              <Button onClick={handleUpload} disabled={!file || uploading} className="bg-indigo-600 hover:bg-indigo-700">
                 <Upload className="w-4 h-4 mr-2" />
                 {uploading ? 'Uploading...' : 'Upload'}
               </Button>
             </div>
 
-            {/* Progress Bar */}
             {uploading && (
               <div className="w-full max-w-md space-y-1">
                 <Progress value={progress} className="h-2" />
@@ -287,7 +296,7 @@ export default function FreelancerPayrollUpload() {
         </Card>
       )}
 
-      {/* Upload Result Report */}
+      {/* Upload Result */}
       {uploadResult && !uploading && (
         <Card className={uploadResult.inserted > 0 ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
           <CardContent className="pt-4 space-y-3">
@@ -302,11 +311,10 @@ export default function FreelancerPayrollUpload() {
                 <span className="text-yellow-700 font-medium">⚠️ Skipped: {uploadResult.skipped.length}</span>
               )}
               {uploadResult.errors?.length > 0 && (
-                <span className="text-red-700 font-medium">❌ Chunk errors: {uploadResult.errors.length}</span>
+                <span className="text-red-700 font-medium">❌ Errors: {uploadResult.errors.length}</span>
               )}
             </div>
 
-            {/* Skipped rows */}
             {uploadResult.skipped?.length > 0 && (
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">
@@ -339,21 +347,11 @@ export default function FreelancerPayrollUpload() {
                 </div>
               </div>
             )}
-
-            {/* Chunk errors */}
-            {uploadResult.errors?.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm font-medium text-red-800 mb-1">❌ Insert Errors</p>
-                <div className="bg-white rounded border border-red-200 p-2 text-xs text-red-600 max-h-32 overflow-y-auto space-y-1">
-                  {uploadResult.errors.map((e, i) => <p key={i}>{e}</p>)}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Uploaded Batches */}
+      {/* Upload History */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Upload History</CardTitle>
