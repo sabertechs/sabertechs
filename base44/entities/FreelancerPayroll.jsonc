@@ -57,9 +57,47 @@
     "proctor_email"
   ],
   "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {
-      "rule": "user_field",
-      "field": "proctor_email"
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "department_head"
+          }
+        },
+        {
+          "data.proctor_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }
