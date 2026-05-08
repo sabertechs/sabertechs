@@ -52,7 +52,12 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
     staleTime: 0
   });
 
-  const getResponse = (taskId) => responses.find(r => r.task_id === taskId);
+  // Get the latest (most recent) response for a task — avoids stale entries from earlier submissions
+  const getResponse = (taskId) => {
+    const taskResponses = responses.filter(r => r.task_id === taskId);
+    if (taskResponses.length === 0) return undefined;
+    return taskResponses.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+  };
 
   const getStatusInfo = (response) => {
     if (!response) return { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: Clock };

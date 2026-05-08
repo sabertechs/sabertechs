@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,11 +19,22 @@ export default function ProjectResponsesTab({ projectId, project }) {
   const [adminNotes, setAdminNotes] = useState('');
   const [previewResponse, setPreviewResponse] = useState(null);
 
-  const { data: responses = [] } = useQuery({
+  const { data: allResponses = [] } = useQuery({
     queryKey: ['taskResponses', projectId],
     queryFn: () => base44.entities.TaskResponse.filter({ project_id: projectId }, '-created_date'),
     enabled: !!projectId
   });
+
+  // Deduplicate: show only the latest response per (task_id + freelancer_email) pair
+  const responses = React.useMemo(() => {
+    const map = new Map();
+    const sorted = [...allResponses].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    sorted.forEach(r => {
+      const key = `${r.task_id}_${r.freelancer_email}`;
+      if (!map.has(key)) map.set(key, r);
+    });
+    return Array.from(map.values());
+  }, [allResponses]);
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],

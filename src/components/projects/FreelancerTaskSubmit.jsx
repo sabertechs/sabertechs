@@ -21,7 +21,8 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   // For resubmit_required, start fresh so user can upload new files
   const [uploadedFiles, setUploadedFiles] = useState(() => {
     if (!existingResponse?.response_value) return [];
-    if (existingResponse?.status === 'resubmit_required') return []; // start fresh on rejection
+    // Start fresh when resubmitting (rejected or needs resubmit) so user replaces files cleanly
+    if (existingResponse?.status === 'resubmit_required' || existingResponse?.status === 'submitted') return [];
     try {
       const parsed = JSON.parse(existingResponse.response_value);
       return Array.isArray(parsed) ? parsed : [{ url: existingResponse.response_value, name: 'Existing file' }];
@@ -172,15 +173,16 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
 
   const submitMutation = useMutation({
     mutationFn: async (payload) => {
-      if (existingResponse && existingResponse.status === 'resubmit_required') {
-        // Update the existing rejected response
+      if (existingResponse) {
+        // Always update the existing response record — never create duplicates
         return base44.entities.TaskResponse.update(existingResponse.id, {
           ...payload,
           status: 'submitted',
-          submission_date: new Date().toISOString()
+          submission_date: new Date().toISOString(),
+          admin_notes: '' // clear previous rejection note on resubmit
         });
       }
-      // Always create a new response for additional uploads (approved tasks can still get new submissions)
+      // No prior response exists — create a fresh one
       return base44.entities.TaskResponse.create({
         task_id: task.id,
         project_id: projectId,
@@ -297,7 +299,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
             </div>
           )}
 
-          {true && (
+          {(
             <>
               {task.task_type === 'text_entry' && (
                 <div className="space-y-2">
