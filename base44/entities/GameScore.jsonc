@@ -1,0 +1,55 @@
+{
+  "name": "GameScore",
+  "type": "object",
+  "properties": {
+    "player_email": {
+      "type": "string"
+    },
+    "player_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "reaction",
+        "puzzle",
+        "trivia"
+      ],
+      "default": "reaction"
+    },
+    "score": {
+      "type": "number"
+    },
+    "reaction_time_ms": {
+      "type": "number",
+      "description": "Average reaction time for reaction mode"
+    },
+    "duration_seconds": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "player_email",
+    "mode",
+    "score"
+  ],
+  "rls": {
+    "create": {
+      "data.player_email": "{{user.email}}"
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
