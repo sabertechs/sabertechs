@@ -1,0 +1,97 @@
+{
+  "name": "OnboardingTemplate",
+  "type": "object",
+  "properties": {
+    "template_name": {
+      "type": "string",
+      "description": "Name of the onboarding template"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this template is for"
+    },
+    "department": {
+      "type": "string",
+      "description": "Department this template is for (optional)"
+    },
+    "designation": {
+      "type": "string",
+      "description": "Designation this template is for (optional)"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "paperwork",
+              "accounts",
+              "training",
+              "equipment",
+              "orientation",
+              "other"
+            ]
+          },
+          "due_days": {
+            "type": "number",
+            "description": "Days after joining when this task is due"
+          },
+          "is_mandatory": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "List of tasks in this checklist"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "template_name",
+    "tasks"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
