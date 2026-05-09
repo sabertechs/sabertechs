@@ -1,0 +1,55 @@
+{
+  "name": "PostComment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "description": "ID of the post"
+    },
+    "commenter_email": {
+      "type": "string"
+    },
+    "commenter_name": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "is_wish": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this is a birthday/anniversary wish"
+    }
+  },
+  "required": [
+    "post_id",
+    "commenter_email",
+    "comment"
+  ],
+  "rls": {
+    "create": {
+      "data.commenter_email": "{{user.email}}"
+    },
+    "read": {},
+    "update": {
+      "data.commenter_email": "{{user.email}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.commenter_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    }
+  }
+}
