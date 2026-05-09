@@ -1,0 +1,88 @@
+{
+  "name": "EmployeeInvite",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Invited employee name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Invited employee email"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "department": {
+      "type": "string"
+    },
+    "designation": {
+      "type": "string"
+    },
+    "date_of_joining": {
+      "type": "string",
+      "format": "date"
+    },
+    "salary": {
+      "type": "number"
+    },
+    "invite_status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "completed",
+        "expired"
+      ],
+      "default": "sent",
+      "description": "Status of the invitation"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of person who sent invite"
+    },
+    "invite_sent_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
