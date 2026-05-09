@@ -896,14 +896,6 @@ export default function Freelancers() {
           <p className="text-slate-500">Manage contractual employees</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline"
-            onClick={exportToCSV}
-            className="border-green-600 text-green-600 hover:bg-green-50"
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Export All
-          </Button>
           <Button onClick={() => { resetForm(); setSelectedEmployee(null); setShowAddDialog(true); }} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Freelancer
