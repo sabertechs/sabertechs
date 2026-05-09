@@ -1,0 +1,142 @@
+{
+  "name": "ProjectTask",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Assigned to specific group (optional)"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Freelancer email assigned to this task"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "parent_task_id": {
+      "type": "string",
+      "description": "Parent task ID for sub-tasks"
+    },
+    "depends_on_task_id": {
+      "type": "string",
+      "description": "Task ID that must be completed before this one"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "file_upload",
+        "image_upload",
+        "geo_location",
+        "number_entry",
+        "text_entry"
+      ],
+      "description": "Type of task"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Task completion progress 0-100"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "blocked",
+        "archived"
+      ],
+      "default": "pending"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "project_id",
+    "title",
+    "task_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.assigned_to": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.assigned_to": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
