@@ -1,0 +1,49 @@
+{
+  "name": "Holiday",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Holiday name"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "national",
+        "regional",
+        "optional",
+        "company"
+      ],
+      "default": "national"
+    },
+    "year": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "name",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
