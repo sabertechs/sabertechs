@@ -1,0 +1,114 @@
+{
+  "name": "ScheduledNotification",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message content"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "all",
+        "department",
+        "designation",
+        "specific"
+      ],
+      "default": "all",
+      "description": "Who to send notification to"
+    },
+    "target_value": {
+      "type": "string",
+      "description": "Department name, designation, or specific email"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "info",
+        "alert",
+        "success",
+        "warning",
+        "announcement"
+      ],
+      "default": "info"
+    },
+    "send_email": {
+      "type": "boolean",
+      "default": false
+    },
+    "send_in_app": {
+      "type": "boolean",
+      "default": true
+    },
+    "link_url": {
+      "type": "string",
+      "description": "Optional link to include"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional small image URL"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to send the notification"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "sent",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title",
+    "message",
+    "target_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.target_type": "specific",
+          "data.target_value": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
