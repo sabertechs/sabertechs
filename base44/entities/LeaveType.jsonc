@@ -1,0 +1,56 @@
+{
+  "name": "LeaveType",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Leave type name"
+    },
+    "code": {
+      "type": "string",
+      "description": "Short code for leave type"
+    },
+    "days_allowed": {
+      "type": "number",
+      "description": "Number of days allowed per year"
+    },
+    "is_paid": {
+      "type": "boolean",
+      "default": true
+    },
+    "carry_forward": {
+      "type": "boolean",
+      "default": false
+    },
+    "max_carry_forward_days": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "days_allowed"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
