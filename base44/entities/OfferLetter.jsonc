@@ -1,0 +1,85 @@
+{
+  "name": "OfferLetter",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "designation": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "salary": {
+      "type": "number"
+    },
+    "joining_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "offer_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "accepted",
+        "rejected"
+      ],
+      "default": "draft"
+    },
+    "letter_url": {
+      "type": "string"
+    },
+    "terms": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "employee_email",
+    "employee_name",
+    "designation",
+    "salary"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
