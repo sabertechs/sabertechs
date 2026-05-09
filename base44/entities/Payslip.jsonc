@@ -1,0 +1,99 @@
+{
+  "name": "Payslip",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "month": {
+      "type": "string"
+    },
+    "year": {
+      "type": "number"
+    },
+    "basic_salary": {
+      "type": "number"
+    },
+    "hra": {
+      "type": "number"
+    },
+    "da": {
+      "type": "number"
+    },
+    "other_allowances": {
+      "type": "number"
+    },
+    "gross_salary": {
+      "type": "number"
+    },
+    "pf_deduction": {
+      "type": "number"
+    },
+    "tax_deduction": {
+      "type": "number"
+    },
+    "other_deductions": {
+      "type": "number"
+    },
+    "net_salary": {
+      "type": "number"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid"
+      ],
+      "default": "pending"
+    },
+    "payslip_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "employee_email",
+    "month",
+    "year",
+    "net_salary"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
