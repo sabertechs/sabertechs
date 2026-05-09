@@ -1,0 +1,116 @@
+{
+  "name": "TaskResponse",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "freelancer_email": {
+      "type": "string"
+    },
+    "freelancer_name": {
+      "type": "string"
+    },
+    "response_type": {
+      "type": "string",
+      "enum": [
+        "file",
+        "image",
+        "location",
+        "number",
+        "text"
+      ]
+    },
+    "response_value": {
+      "type": "string",
+      "description": "File URL, text, number, or coordinates"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "approved",
+        "resubmit_required"
+      ],
+      "default": "submitted"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "submission_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "task_id",
+    "project_id",
+    "freelancer_email",
+    "response_type"
+  ],
+  "rls": {
+    "create": {
+      "data.freelancer_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.freelancer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.freelancer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.freelancer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}
