@@ -1,0 +1,56 @@
+{
+  "name": "DeviceToken",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user"
+    },
+    "device_token": {
+      "type": "string",
+      "description": "FCM device token"
+    },
+    "device_type": {
+      "type": "string",
+      "enum": [
+        "android",
+        "ios",
+        "web"
+      ],
+      "description": "Type of device"
+    },
+    "device_name": {
+      "type": "string",
+      "description": "Device model/name"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this token is active"
+    },
+    "last_used": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this device received notification"
+    }
+  },
+  "required": [
+    "user_email",
+    "device_token",
+    "device_type"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "data.user_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_email": "{{user.email}}"
+    }
+  }
+}
