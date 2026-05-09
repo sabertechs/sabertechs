@@ -1,0 +1,84 @@
+{
+  "name": "TestResult",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string",
+      "description": "Email of the employee who took the test"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "test_id": {
+      "type": "string",
+      "description": "Reference to the test taken"
+    },
+    "test_title": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number",
+      "description": "Score obtained"
+    },
+    "total_marks": {
+      "type": "number",
+      "description": "Total possible marks"
+    },
+    "percentage": {
+      "type": "number"
+    },
+    "time_taken_seconds": {
+      "type": "number",
+      "description": "Time taken to complete test"
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "Whether the test was passed"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "User's answers"
+    }
+  },
+  "required": [
+    "employee_email",
+    "test_id",
+    "score",
+    "total_marks"
+  ],
+  "rls": {
+    "create": {
+      "data.employee_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
