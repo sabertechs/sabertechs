@@ -1,0 +1,65 @@
+{
+  "name": "GameSettings",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "description": "Unique setting identifier"
+    },
+    "game_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "tokens_per_day": {
+      "type": "number",
+      "default": 10
+    },
+    "max_consecutive_plays": {
+      "type": "number",
+      "default": 5
+    },
+    "cooldown_minutes": {
+      "type": "number",
+      "default": 30
+    },
+    "office_hours_only": {
+      "type": "boolean",
+      "default": false
+    },
+    "office_start_hour": {
+      "type": "number",
+      "default": 9
+    },
+    "office_end_hour": {
+      "type": "number",
+      "default": 18
+    },
+    "disabled_departments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "setting_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
