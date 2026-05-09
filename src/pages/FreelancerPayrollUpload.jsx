@@ -146,9 +146,12 @@ export default function FreelancerPayrollUpload() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          // Do NOT use cellDates:true — it converts plain "yyyy-mm-dd" strings into
+          // UTC Date objects, which then get shifted back 1 day for IST (UTC+5:30).
+          // Instead read raw and let parseExcelDate handle all formats.
+          const workbook = XLSX.read(data, { type: 'array', cellDates: false });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
           resolve(rows);
         } catch (err) {
           reject(err);
