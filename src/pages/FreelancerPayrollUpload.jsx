@@ -12,31 +12,16 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 function downloadSample() {
-  const SAMPLE_ROWS = [
-    {
-      'Date': new Date(2026, 3, 1),
-      'Proctor Name': 'Pooja Goel',
-      'Mobile Number': '8700159920',
-      'Email ID': 'bpooja298@gmail.com',
-      'Client Name': 'Insead',
-      'Drive timing': 'General',
-      'Role': 'Proctor',
-      'Payment': 300,
-    },
-  ];
-
-  // Use plain string date in YYYY-MM-DD format — avoids any timezone/Excel serial number issues
-  const SAMPLE_ROWS_SAFE = SAMPLE_ROWS.map(r => ({
-    ...r,
-    'Date': '2026-04-01',
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS_SAFE);
-  ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  XLSX.writeFile(wb, 'payroll_sample_template.xlsx');
+  const headers = ['Date', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
+  const sampleRow = ['2026-04-01', 'Pooja Goel', '8700159920', 'bpooja298@gmail.com', 'Insead', 'General', 'Proctor', '300'];
+  const csvContent = [headers.join(','), sampleRow.join(',')].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'payroll_sample_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function downloadErrorReport(skippedRows) {
@@ -143,22 +128,53 @@ export default function FreelancerPayrollUpload() {
   const parseFileToRows = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          // Do NOT use cellDates:true — it converts plain "yyyy-mm-dd" strings into
-          // UTC Date objects, which then get shifted back 1 day for IST (UTC+5:30).
-          // Instead read raw and let parseExcelDate handle all formats.
-          const workbook = XLSX.read(data, { type: 'array', cellDates: false });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
-          resolve(rows);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+
+      if (isCSV) {
+        reader.onload = (e) => {
+          try {
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length < 2) return resolve([]);
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const rows = lines.slice(1).map(line => {
+              // Handle quoted fields with commas inside
+              const values = [];
+              let current = '';
+              let inQuotes = false;
+              for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') { inQuotes = !inQuotes; }
+                else if (ch === ',' && !inQuotes) { values.push(current.trim()); current = ''; }
+                else { current += ch; }
+              }
+              values.push(current.trim());
+              const row = {};
+              headers.forEach((h, i) => { row[h] = values[i] !== undefined ? values[i] : ''; });
+              return row;
+            });
+            resolve(rows);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsText(file);
+      } else {
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
+            resolve(rows);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      }
     });
   };
 
@@ -297,7 +313,7 @@ export default function FreelancerPayrollUpload() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Freelancer Payroll Upload</h1>
-        <p className="text-slate-500 mt-1">Upload XLSX payroll reports. Skipped rows will be available as a downloadable error report.</p>
+        <p className="text-slate-500 mt-1">Upload CSV or XLSX payroll reports. Skipped rows will be available as a downloadable error report.</p>
         <Button variant="outline" size="sm" onClick={downloadSample} className="mt-2 border-green-400 text-green-700 hover:bg-green-50">
           <Download className="w-4 h-4 mr-2" /> Download Sample Template
         </Button>
@@ -309,7 +325,7 @@ export default function FreelancerPayrollUpload() {
           <div className="flex flex-col items-center gap-4">
             <FileSpreadsheet className="w-12 h-12 text-indigo-400" />
             <div className="text-center">
-              <p className="font-medium text-slate-700">Upload Payroll Report (XLSX)</p>
+              <p className="font-medium text-slate-700">Upload Payroll Report (CSV or XLSX)</p>
               <p className="text-sm text-slate-500">
                 Required columns: <span className="font-semibold text-indigo-700">Date, Proctor Name, Mobile Number, Email ID, Client Name, Drive timing, Role, Payment</span>
               </p>
@@ -317,7 +333,7 @@ export default function FreelancerPayrollUpload() {
             <div className="flex items-center gap-3">
               <input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 onChange={(e) => { setFile(e.target.files[0]); setUploadResult(null); setUploadError(null); }}
                 className="block text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:cursor-pointer"
               />
