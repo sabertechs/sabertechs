@@ -1,0 +1,138 @@
+{
+  "name": "AssetRequest",
+  "type": "object",
+  "properties": {
+    "requester_email": {
+      "type": "string"
+    },
+    "requester_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "asset_category": {
+      "type": "string",
+      "enum": [
+        "laptop",
+        "desktop",
+        "mobile",
+        "tablet",
+        "monitor",
+        "printer",
+        "furniture",
+        "software",
+        "networking",
+        "other"
+      ]
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "new",
+        "replacement",
+        "repair"
+      ],
+      "default": "new"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "fulfilled"
+      ],
+      "default": "pending"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "assigned_asset_id": {
+      "type": "string",
+      "description": "Asset assigned after approval"
+    },
+    "rejection_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "requester_email",
+    "asset_category",
+    "request_type"
+  ],
+  "rls": {
+    "create": {
+      "data.requester_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.requester_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.requester_email": "{{user.email}}",
+          "data.status": "pending"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.requester_email": "{{user.email}}",
+          "data.status": "pending"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    }
+  }
+}
