@@ -1,0 +1,135 @@
+{
+  "name": "Attendance",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string"
+    },
+    "employee_email": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "check_in": {
+      "type": "string"
+    },
+    "check_out": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent",
+        "half_day",
+        "leave",
+        "holiday",
+        "pending"
+      ],
+      "default": "present"
+    },
+    "working_hours": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "marked_by": {
+      "type": "string",
+      "description": "Email of the person who marked the attendance"
+    },
+    "marked_by_role": {
+      "type": "string",
+      "enum": [
+        "self",
+        "supervisor"
+      ],
+      "default": "self",
+      "description": "Whether marked by employee or supervisor"
+    },
+    "supervisor_note": {
+      "type": "string",
+      "description": "Note added by supervisor when marking attendance"
+    }
+  },
+  "required": [
+    "employee_email",
+    "date",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.marked_by": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    }
+  }
+}
