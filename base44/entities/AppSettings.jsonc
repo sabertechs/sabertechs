@@ -1,0 +1,45 @@
+{
+  "name": "AppSettings",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "description": "Unique key for the setting"
+    },
+    "setting_value": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of setting values"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "setting_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
