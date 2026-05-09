@@ -1,0 +1,66 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_email": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "info",
+        "approval",
+        "deadline",
+        "alert",
+        "success"
+      ]
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "link": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "title",
+    "message",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.recipient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "read": {
+      "data.recipient_email": "{{user.email}}"
+    },
+    "update": {
+      "data.recipient_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.recipient_email": "{{user.email}}"
+    }
+  }
+}
