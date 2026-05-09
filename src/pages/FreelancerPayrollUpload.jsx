@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Upload, Trash2, FileSpreadsheet, Users, Download, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -55,26 +56,61 @@ function downloadErrorReport(skippedRows) {
   XLSX.writeFile(wb, 'payroll_upload_error_report.xlsx');
 }
 
+// Safely format a date as YYYY-MM-DD WITHOUT using toISOString()
+// toISOString() converts to UTC which can shift date back 1 day for IST (UTC+5:30)
+const toLocalDateString = (d) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const parseExcelDate = (val) => {
   if (!val && val !== 0) return '';
-  const num = Number(val);
-  if (!isNaN(num) && num > 1000) {
-    const excelEpoch = new Date(1899, 11, 30);
-    const d = new Date(excelEpoch.getTime() + num * 86400000);
-    return d.toISOString().split('T')[0];
+
+  // If XLSX gave us a real JS Date object (when cellDates:true is used)
+  if (val instanceof Date) {
+    if (isNaN(val)) return '';
+    return toLocalDateString(val);
   }
+
+  const num = Number(val);
+  // Excel serial number — reconstruct using local date parts to avoid UTC shift
+  if (!isNaN(num) && num > 1000) {
+    const excelEpoch = new Date(1899, 11, 30); // Dec 30 1899 in local time
+    const ms = excelEpoch.getTime() + num * 86400000;
+    const d = new Date(ms);
+    return toLocalDateString(d);
+  }
+
   const str = val.toString().trim();
+
+  // dd-mmm-yy  e.g. "01-Apr-26"
+  const dMonYMatch = str.match(/^(\d{1,2})[-\/]([A-Za-z]{3})[-\/](\d{2,4})$/);
+  if (dMonYMatch) {
+    let [, day, mon, yr] = dMonYMatch;
+    if (yr.length === 2) yr = '20' + yr;
+    const dt = new Date(`${day} ${mon} ${yr}`);
+    if (!isNaN(dt)) return toLocalDateString(dt);
+  }
+
   // dd-mm-yy or dd/mm/yy
   const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
   if (dmyMatch) {
     let [, d, m, y] = dmyMatch;
     if (y.length === 2) y = '20' + y;
-    const dt = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`);
-    if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+    // Build as local date (NOT via ISO string which assumes UTC)
+    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+    if (!isNaN(dt)) return toLocalDateString(dt);
   }
-  // ISO / any parseable
-  const dt = new Date(str);
-  if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+
+  // yyyy-mm-dd (already ISO-like — parse parts directly)
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const dt = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+    if (!isNaN(dt)) return toLocalDateString(dt);
+  }
+
   return '';
 };
 
@@ -85,6 +121,9 @@ export default function FreelancerPayrollUpload() {
   const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [file, setFile] = useState(null);
+  const [confirmDeleteBatch, setConfirmDeleteBatch] = useState(null); // batch object to confirm
+  const [deleteProgress, setDeleteProgress] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: records = [] } = useQuery({
     queryKey: ['freelancerPayrollAll'],
@@ -111,9 +150,9 @@ export default function FreelancerPayrollUpload() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
           resolve(rows);
         } catch (err) {
           reject(err);
@@ -226,16 +265,34 @@ export default function FreelancerPayrollUpload() {
     }
   };
 
-  const deleteBatchMutation = useMutation({
-    mutationFn: async (batchId) => {
-      const toDelete = records.filter(r => r.upload_batch === batchId);
-      await Promise.all(toDelete.map(r => base44.entities.FreelancerPayroll.delete(r.id)));
-    },
-    onSuccess: () => {
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteBatch) return;
+    const batchId = confirmDeleteBatch.batch;
+    setDeleting(true);
+    setDeleteProgress(5);
+    try {
+      // Fetch all records for this batch directly from entity to ensure we have IDs
+      const toDelete = await base44.entities.FreelancerPayroll.filter({ upload_batch: batchId });
+      if (toDelete.length === 0) {
+        toast.error('No records found for this batch');
+        return;
+      }
+      let deleted = 0;
+      for (let i = 0; i < toDelete.length; i++) {
+        await base44.entities.FreelancerPayroll.delete(toDelete[i].id);
+        deleted++;
+        setDeleteProgress(Math.round((deleted / toDelete.length) * 100));
+      }
       queryClient.invalidateQueries(['freelancerPayrollAll']);
-      toast.success('Batch deleted');
+      toast.success(`Deleted ${deleted} records from batch`);
+    } catch (e) {
+      toast.error('Delete failed: ' + e.message);
+    } finally {
+      setDeleting(false);
+      setDeleteProgress(0);
+      setConfirmDeleteBatch(null);
     }
-  });
+  };
 
   return (
     <div className="space-y-6">
@@ -382,7 +439,7 @@ export default function FreelancerPayrollUpload() {
                     variant="ghost"
                     size="sm"
                     className="text-red-500 hover:bg-red-50"
-                    onClick={() => deleteBatchMutation.mutate(b.batch)}
+                    onClick={() => setConfirmDeleteBatch(b)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -392,6 +449,41 @@ export default function FreelancerPayrollUpload() {
           )}
         </CardContent>
       </Card>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!confirmDeleteBatch} onOpenChange={() => { if (!deleting) setConfirmDeleteBatch(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Delete Batch
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all <strong>{confirmDeleteBatch?.count} records</strong> from batch <strong>{confirmDeleteBatch?.batch}</strong>?
+              {confirmDeleteBatch?.month && <> (Month: <strong>{confirmDeleteBatch.month}</strong>)</>}
+              <br /><span className="text-red-600 font-medium">This action cannot be undone.</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleting && (
+            <div className="space-y-2 py-2">
+              <Progress value={deleteProgress} className="h-2" />
+              <p className="text-xs text-slate-500 text-center">Deleting records… {deleteProgress}%</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteBatch(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting...' : 'Yes, Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
