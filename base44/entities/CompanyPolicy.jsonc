@@ -1,0 +1,65 @@
+{
+  "name": "CompanyPolicy",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Policy title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the policy"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "hr",
+        "it",
+        "finance",
+        "operations",
+        "compliance",
+        "safety",
+        "general"
+      ],
+      "default": "general"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL to the policy document"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version number"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title",
+    "file_url"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
