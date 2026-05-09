@@ -1,0 +1,109 @@
+{
+  "name": "GamePlayer",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string",
+      "description": "Reference to employee"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "tokens_left": {
+      "type": "number",
+      "default": 10
+    },
+    "last_token_regen": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_score": {
+      "type": "number",
+      "default": 0
+    },
+    "games_played": {
+      "type": "number",
+      "default": 0
+    },
+    "best_reaction_time": {
+      "type": "number",
+      "description": "Best reaction time in ms"
+    },
+    "consecutive_plays": {
+      "type": "number",
+      "default": 0
+    },
+    "last_play_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cooldown_until": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "employee_email"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
