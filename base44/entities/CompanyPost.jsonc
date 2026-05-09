@@ -1,0 +1,108 @@
+{
+  "name": "CompanyPost",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Post title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Post content/description"
+    },
+    "post_type": {
+      "type": "string",
+      "enum": [
+        "update",
+        "opening",
+        "celebration",
+        "birthday",
+        "anniversary"
+      ],
+      "default": "update"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image for the post"
+    },
+    "employee_email": {
+      "type": "string",
+      "description": "Related employee email (for birthday/anniversary)"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Related employee name"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title",
+    "post_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    }
+  }
+}
