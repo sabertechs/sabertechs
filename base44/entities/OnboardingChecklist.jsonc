@@ -1,0 +1,126 @@
+{
+  "name": "OnboardingChecklist",
+  "type": "object",
+  "properties": {
+    "employee_email": {
+      "type": "string",
+      "description": "Employee this checklist is assigned to"
+    },
+    "employee_name": {
+      "type": "string"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Reference to OnboardingTemplate"
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "assigned_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when checklist was assigned"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "is_mandatory": {
+            "type": "boolean"
+          },
+          "is_completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "completed_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "progress_percentage": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed"
+      ],
+      "default": "in_progress"
+    }
+  },
+  "required": [
+    "employee_email",
+    "template_id",
+    "tasks"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.employee_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
