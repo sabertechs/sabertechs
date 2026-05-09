@@ -1,0 +1,360 @@
+{
+  "name": "Employee",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "Unique employee identifier"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full name of employee"
+    },
+    "father_name": {
+      "type": "string",
+      "description": "Father's name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other"
+      ]
+    },
+    "address": {
+      "type": "string"
+    },
+    "locality": {
+      "type": "string",
+      "description": "Locality or area"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "pincode": {
+      "type": "string"
+    },
+    "aadhaar_number": {
+      "type": "string"
+    },
+    "pan_number": {
+      "type": "string"
+    },
+    "aadhaar_document": {
+      "type": "string",
+      "description": "URL to Aadhaar document"
+    },
+    "pan_document": {
+      "type": "string",
+      "description": "URL to PAN document"
+    },
+    "education_certificates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs to education certificates"
+    },
+    "department": {
+      "type": "string"
+    },
+    "designation": {
+      "type": "string"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "permanent",
+        "contractual"
+      ],
+      "default": "permanent",
+      "description": "Type of employment - permanent or contractual"
+    },
+    "contract_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date for contractual employees"
+    },
+    "work_type": {
+      "type": "string",
+      "enum": [
+        "online",
+        "center_based",
+        "both"
+      ],
+      "description": "For freelancers: type of work they can do"
+    },
+    "date_of_joining": {
+      "type": "string",
+      "format": "date"
+    },
+    "salary": {
+      "type": "number"
+    },
+    "salary_components": {
+      "type": "object",
+      "properties": {
+        "basic": {
+          "type": "number",
+          "description": "Basic salary component"
+        },
+        "hra": {
+          "type": "number",
+          "description": "House Rent Allowance"
+        },
+        "da": {
+          "type": "number",
+          "description": "Dearness Allowance"
+        },
+        "medical": {
+          "type": "number",
+          "description": "Medical Allowance"
+        },
+        "transport": {
+          "type": "number",
+          "description": "Transport Allowance"
+        },
+        "special": {
+          "type": "number",
+          "description": "Special Allowance"
+        },
+        "other": {
+          "type": "number",
+          "description": "Other Allowances"
+        }
+      },
+      "description": "Breakdown of salary components"
+    },
+    "deductions": {
+      "type": "object",
+      "properties": {
+        "pf": {
+          "type": "number",
+          "description": "Provident Fund (% of basic)"
+        },
+        "esi": {
+          "type": "number",
+          "description": "ESI (% of gross)"
+        },
+        "pt": {
+          "type": "number",
+          "description": "Professional Tax"
+        },
+        "tds": {
+          "type": "number",
+          "description": "Tax Deducted at Source (% of gross)"
+        }
+      },
+      "description": "Standard deductions"
+    },
+    "reporting_to": {
+      "type": "string",
+      "description": "Email of reporting manager"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "employee",
+        "freelancer",
+        "department_head",
+        "manager",
+        "hr"
+      ],
+      "default": "employee"
+    },
+    "section_access": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of section IDs the user can access"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "inactive",
+        "terminated"
+      ],
+      "default": "pending"
+    },
+    "bg_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "document_review_status": {
+      "type": "object",
+      "properties": {
+        "aadhaar_document": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "default": "pending"
+        },
+        "pan_document": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "default": "pending"
+        },
+        "education_certificates": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "default": "pending"
+        },
+        "profile_photo": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "default": "pending"
+        }
+      },
+      "description": "Individual document review statuses"
+    },
+    "document_rejection_reasons": {
+      "type": "object",
+      "properties": {
+        "aadhaar_document": {
+          "type": "string"
+        },
+        "pan_document": {
+          "type": "string"
+        },
+        "education_certificates": {
+          "type": "string"
+        },
+        "profile_photo": {
+          "type": "string"
+        }
+      },
+      "description": "Rejection reasons for each document type"
+    },
+    "offer_letter_url": {
+      "type": "string"
+    },
+    "profile_photo": {
+      "type": "string"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "Bank name for salary credit"
+    },
+    "bank_account_number": {
+      "type": "string",
+      "description": "Bank account number"
+    },
+    "bank_ifsc": {
+      "type": "string",
+      "description": "Bank IFSC code"
+    },
+    "bank_branch": {
+      "type": "string",
+      "description": "Bank branch name"
+    },
+    "account_holder_name": {
+      "type": "string",
+      "description": "Name as per bank account"
+    },
+    "onboarding_token": {
+      "type": "string",
+      "description": "Unique token for employee onboarding link"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "phone"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "department_head"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
