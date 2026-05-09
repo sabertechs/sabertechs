@@ -1,0 +1,98 @@
+{
+  "name": "TaskTemplate",
+  "type": "object",
+  "properties": {
+    "template_name": {
+      "type": "string",
+      "description": "Name of the task template set"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this template is for"
+    },
+    "project_type": {
+      "type": "string",
+      "description": "Type of project this is for (e.g., Mock Day, Survey, Audit)"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "task_type": {
+            "type": "string",
+            "enum": [
+              "file_upload",
+              "image_upload",
+              "geo_location",
+              "number_entry",
+              "text_entry"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ]
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "due_days_offset": {
+            "type": "number",
+            "description": "Days after project start date when task is due"
+          }
+        }
+      },
+      "description": "List of task definitions in this template"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "template_name",
+    "tasks"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
