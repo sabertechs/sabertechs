@@ -1024,15 +1024,6 @@ export default function Freelancers() {
                   Update Status
                 </Button>
                 <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={exportToCSV}
-                  className="border-green-300 text-green-700 hover:bg-green-100"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-1" />
-                  Export CSV
-                </Button>
-                <Button 
                   onClick={downloadBulkZip} 
                   disabled={downloading}
                   size="sm"
