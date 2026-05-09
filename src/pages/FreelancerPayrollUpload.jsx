@@ -25,22 +25,18 @@ function downloadSample() {
     },
   ];
 
-  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { cellDates: true });
+  // Use plain string date in YYYY-MM-DD format — avoids any timezone/Excel serial number issues
+  const SAMPLE_ROWS_SAFE = SAMPLE_ROWS.map(r => ({
+    ...r,
+    'Date': '2026-04-01',
+  }));
 
-  // Format Date column (A) as dd-mmm-yy short date
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let R = range.s.r + 1; R <= range.e.r; R++) {
-    const cellAddr = `A${R + 1}`;
-    if (ws[cellAddr]) {
-      ws[cellAddr].z = 'dd-mmm-yy';
-    }
-  }
-
-  ws['!cols'] = [{ wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
+  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS_SAFE);
+  ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  XLSX.writeFile(wb, 'payroll_sample_template.xlsx', { cellDates: true });
+  XLSX.writeFile(wb, 'payroll_sample_template.xlsx');
 }
 
 function downloadErrorReport(skippedRows) {
