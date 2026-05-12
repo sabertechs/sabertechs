@@ -334,16 +334,22 @@ export default function AccessControl() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1 max-w-xs">
-                        {(emp.section_access || DEFAULT_ACCESS_BY_ROLE[emp.role] || []).slice(0, 3).map(section => (
-                          <Badge key={section} variant="outline" className="text-xs">
-                            {section.replace('_', ' ')}
-                          </Badge>
-                        ))}
-                        {(emp.section_access || DEFAULT_ACCESS_BY_ROLE[emp.role] || []).length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{(emp.section_access || DEFAULT_ACCESS_BY_ROLE[emp.role] || []).length - 3} more
-                          </Badge>
-                        )}
+                        {(() => {
+                          const access = (emp.section_access && emp.section_access.length > 0)
+                            ? emp.section_access
+                            : (DEFAULT_ACCESS_BY_ROLE[emp.role] || []);
+                          return <>
+                            {access.slice(0, 3).map(section => (
+                              <Badge key={section} variant="outline" className="text-xs">
+                                {section.replace('_', ' ')}
+                              </Badge>
+                            ))}
+                            {access.length > 3 && (
+                              <Badge variant="outline" className="text-xs">+{access.length - 3} more</Badge>
+                            )}
+                            {access.length === 0 && <span className="text-xs text-slate-400">No access</span>}
+                          </>;
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
