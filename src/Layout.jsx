@@ -138,7 +138,8 @@ export default function Layout({ children, currentPageName }) {
       return null;
     },
     enabled: !!user?.email,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,  // module settings rarely change
+    gcTime: 60 * 60 * 1000,
   });
 
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);

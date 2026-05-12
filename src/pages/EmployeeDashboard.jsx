@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { queryClientInstance } from "@/lib/query-client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from "date-fns";
 import {
   Clock,
   FileText,
@@ -23,32 +24,36 @@ import CompanyFeed from "@/components/feed/CompanyFeed";
 import OnboardingChecklistCard from "@/components/onboarding/OnboardingChecklistCard";
 
 export default function EmployeeDashboard() {
-  const [user, setUser] = useState(null);
-  const [employee, setEmployee] = useState(null);
+  const currentMonth = new Date();
+  const currentMonthStr = format(currentMonth, 'yyyy-MM');
 
-  const fetchEmployee = async () => {
-    const userData = await base44.auth.me();
-    setUser(userData);
-    const employees = await base44.entities.Employee.filter({ email: userData.email });
-    if (employees.length > 0) setEmployee(employees[0]);
-  };
+  // Cache user + employee together in one query
+  const { data: authData } = useQuery({
+    queryKey: ['auth-me'],
+    queryFn: () => base44.auth.me(),
+    staleTime: 15 * 60 * 1000,
+  });
+  const user = authData || null;
 
-  useEffect(() => {
-    fetchEmployee();
-  }, []);
-
-  const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance', user?.email],
-    queryFn: () => base44.entities.Attendance.filter({ employee_email: user?.email }),
+  const { data: employeeList = [] } = useQuery({
+    queryKey: ['employee-self', user?.email],
+    queryFn: () => base44.entities.Employee.filter({ email: user?.email }),
     enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
+  });
+  const employee = employeeList[0] || null;
+
+  // Limit attendance to current month only — much smaller payload
+  const { data: attendance = [] } = useQuery({
+    queryKey: ['attendance-month', user?.email, currentMonthStr],
+    queryFn: () => base44.entities.Attendance.filter({ employee_email: user?.email, date: { $gte: `${currentMonthStr}-01`, $lte: `${currentMonthStr}-31` } }),
+    enabled: !!user?.email,
   });
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ['expenses', user?.email],
+    queryKey: ['expenses-recent', user?.email],
     queryFn: () => base44.entities.Expense.filter({ employee_email: user?.email }, '-created_date', 5),
     enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
   });
 
   const { data: onboardingChecklists = [] } = useQuery({
@@ -58,22 +63,26 @@ export default function EmployeeDashboard() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const currentMonth = new Date();
-  const daysInMonth = eachDayOfInterval({
+  const daysInMonth = useMemo(() => eachDayOfInterval({
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth)
-  });
+  }), [currentMonthStr]);
 
-  const getAttendanceForDay = (date) => {
-    return attendance.find(a => a.date === format(date, 'yyyy-MM-dd'));
-  };
+  // Build a lookup map for O(1) access instead of .find() per day
+  const attendanceMap = useMemo(() => {
+    const map = {};
+    attendance.forEach(a => { map[a.date] = a; });
+    return map;
+  }, [attendance]);
 
-  const stats = {
+  const getAttendanceForDay = (date) => attendanceMap[format(date, 'yyyy-MM-dd')];
+
+  const stats = useMemo(() => ({
     presentDays: attendance.filter(a => a.status === 'present').length,
     absentDays: attendance.filter(a => a.status === 'absent').length,
     leaveDays: attendance.filter(a => a.status === 'leave').length,
     pendingExpenses: expenses.filter(e => e.status === 'pending').length
-  };
+  }), [attendance, expenses]);
 
   return (
     <div className="space-y-6">
@@ -235,7 +244,7 @@ export default function EmployeeDashboard() {
 
       {/* My Profile Section */}
       {employee && (
-        <EditProfileSection employee={employee} onUpdate={fetchEmployee} />
+        <EditProfileSection employee={employee} onUpdate={() => queryClientInstance.invalidateQueries({ queryKey: ['employee-self', user?.email] })} />
       )}
 
       {/* Recent Expenses */}
