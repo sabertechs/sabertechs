@@ -157,6 +157,17 @@ export default function AccessControl() {
     }
   };
 
+  const handleBulkResetRole = async (role) => {
+    const roleEmployees = employees.filter(e => e.role === role);
+    if (roleEmployees.length === 0) { toast.error(`No ${role}s found`); return; }
+    const defaultAccess = DEFAULT_ACCESS_BY_ROLE[role] || [];
+    setSaving(true);
+    await Promise.all(roleEmployees.map(e => base44.entities.Employee.update(e.id, { section_access: defaultAccess })));
+    queryClient.invalidateQueries(['employees']);
+    setSaving(false);
+    toast.success(`Reset access for all ${roleEmployees.length} ${role.replace('_', ' ')}s`);
+  };
+
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
                          emp.email?.toLowerCase().includes(search.toLowerCase());
@@ -178,6 +189,21 @@ export default function AccessControl() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Access Control</h2>
           <p className="text-slate-500">Manage user roles and section permissions</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {['freelancer', 'employee', 'department_head', 'manager', 'hr'].map(role => (
+            <Button
+              key={role}
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => handleBulkResetRole(role)}
+              className="text-xs"
+            >
+              {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Users className="w-3 h-3 mr-1" />}
+              Reset all {role.replace('_', ' ')}s
+            </Button>
+          ))}
         </div>
       </div>
 
