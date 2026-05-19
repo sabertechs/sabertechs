@@ -1,0 +1,49 @@
+{
+  "name": "Requisition",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "e.g. BITS Bangalore June 2026"
+    },
+    "drive_linked": {
+      "type": "string",
+      "description": "Project ID"
+    },
+    "drive_name": {
+      "type": "string",
+      "description": "Project name (denormalized)"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "Invigilator",
+        "Centre Supervisor",
+        "Online Proctor"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "target_count": {
+      "type": "number",
+      "default": 0
+    },
+    "confirmed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Closed"
+      ],
+      "default": "Open"
+    }
+  },
+  "required": [
+    "title",
+    "role"
+  ]
+}

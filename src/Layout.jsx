@@ -28,7 +28,11 @@ import {
   Package,
   Gamepad2,
   Briefcase,
-  ClipboardList
+  ClipboardList,
+  UserSearch,
+  KanbanSquare,
+  BarChart2,
+  FileStack
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +50,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedSections, setExpandedSections] = useState({ hrAdmin: true });
+  const [expandedSections, setExpandedSections] = useState({ hrAdmin: true, recruitment: false });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -207,6 +211,21 @@ export default function Layout({ children, currentPageName }) {
       if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
+      // Recruitment section
+      items.push({
+        name: "Recruitment",
+        icon: UserSearch,
+        isSection: true,
+        sectionId: "recruitment",
+        children: [
+          { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
+          { name: "Candidates", icon: Users, page: "Candidates" },
+          { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
+          { name: "Requisitions", icon: FileStack, page: "Requisitions" },
+          { name: "Team", icon: UserSearch, page: "RecruitTeam" },
+          { name: "Reports", icon: BarChart2, page: "RecruitReports" },
+        ]
+      });
     } else if (userRole === 'department_head') {
       // HR Admin Section for dept heads
       if (isModuleEnabled('hr_admin')) {
@@ -247,6 +266,20 @@ export default function Layout({ children, currentPageName }) {
       if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
       if (hasAccess('payroll_upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
       if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
+      items.push({
+        name: "Recruitment",
+        icon: UserSearch,
+        isSection: true,
+        sectionId: "recruitment",
+        children: [
+          { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
+          { name: "Candidates", icon: Users, page: "Candidates" },
+          { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
+          { name: "Requisitions", icon: FileStack, page: "Requisitions" },
+          { name: "Team", icon: UserSearch, page: "RecruitTeam" },
+          { name: "Reports", icon: BarChart2, page: "RecruitReports" },
+        ]
+      });
     } else if (userRole === 'freelancer') {
       // Freelancers have access to projects, payslips and company feed
       if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });

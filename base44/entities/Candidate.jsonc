@@ -1,0 +1,171 @@
+{
+  "name": "Candidate",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Full name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone / WhatsApp number"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "city": {
+      "type": "string"
+    },
+    "vertical": {
+      "type": "string",
+      "enum": [
+        "Invigilator",
+        "Centre Supervisor",
+        "Online Proctor"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "Naukri",
+        "Indeed",
+        "WhatsApp",
+        "Reference",
+        "Other"
+      ]
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of assigned team member"
+    },
+    "drive_linked": {
+      "type": "string",
+      "description": "Project ID of linked drive"
+    },
+    "drive_name": {
+      "type": "string",
+      "description": "Project name of linked drive (denormalized)"
+    },
+    "pipeline_status": {
+      "type": "string",
+      "enum": [
+        "Sourced",
+        "Called-Interested",
+        "Called-No Answer",
+        "Called-Not Interested",
+        "Form Filled",
+        "Ops Confirmed",
+        "Test Passed",
+        "Test Failed",
+        "Training Attended",
+        "BGV Initiated",
+        "Drive Ready"
+      ],
+      "default": "Sourced"
+    },
+    "call_notes": {
+      "type": "string"
+    },
+    "callback_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "callback_time": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Other"
+      ]
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "qualification": {
+      "type": "string",
+      "enum": [
+        "Graduate",
+        "Post Graduate",
+        "PhD",
+        "Other"
+      ]
+    },
+    "current_occupation": {
+      "type": "string"
+    },
+    "experience_years": {
+      "type": "number"
+    },
+    "aadhar_number": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "worked_as_invigilator_before": {
+      "type": "boolean",
+      "default": false
+    },
+    "available_on_drive_date": {
+      "type": "boolean",
+      "default": false
+    },
+    "heard_from": {
+      "type": "string",
+      "enum": [
+        "Naukri",
+        "WhatsApp",
+        "Reference",
+        "Other"
+      ]
+    },
+    "id_proof_uploaded": {
+      "type": "boolean",
+      "default": false
+    },
+    "address_proof_uploaded": {
+      "type": "boolean",
+      "default": false
+    },
+    "photo_uploaded": {
+      "type": "boolean",
+      "default": false
+    },
+    "resume_uploaded": {
+      "type": "boolean",
+      "default": false
+    },
+    "activity_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "from_status": {
+            "type": "string"
+          },
+          "to_status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "full_name",
+    "phone"
+  ]
+}
