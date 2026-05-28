@@ -23,7 +23,7 @@ export default function AssignChecklistDialog({ employee }) {
       const template = templates.find(t => t.id === templateId);
       const assignedDate = new Date().toISOString().split('T')[0];
       
-      const tasksWithDates = template.tasks.map(task => ({
+      const tasksWithDates = (template.tasks || []).map(task => ({
         ...task,
         due_date: addDays(new Date(employee.date_of_joining || assignedDate), task.due_days).toISOString().split('T')[0],
         is_completed: false,
