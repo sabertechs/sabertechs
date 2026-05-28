@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
+import { getEffectivePermissions } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -150,12 +151,12 @@ export default function Layout({ children, currentPageName }) {
 
   const getNavItems = useCallback(() => {
     const items = [];
-    const sectionAccess = employeeData?.section_access || [];
-    const hasAccess = (sectionId) => sectionAccess.length === 0 || sectionAccess.includes(sectionId);
     const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
+    const perms = getEffectivePermissions(employeeData);
+    const can = (permission) => userRole === 'admin' || perms.includes(permission);
 
     // Dashboard based on role
-    if (userRole === 'hr' || userRole === 'manager') {
+    if (userRole === 'hr' || userRole === 'manager' || userRole === 'admin') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
     } else if (userRole === 'department_head') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" });
@@ -165,153 +166,103 @@ export default function Layout({ children, currentPageName }) {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
     }
 
-    // Role-based module access
-    if (userRole === 'hr' || userRole === 'manager') {
-      // HR Admin Section - grouped employee-related modules
-      if (isModuleEnabled('hr_admin')) {
-        const hrAdminItems = [];
-        if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-        hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-        if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-        if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-        if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
-        
-        if (hrAdminItems.length > 0) {
-          items.push({ 
-            name: "HR Admin", 
-            icon: Users, 
-            isSection: true, 
-            sectionId: "hrAdmin",
-            children: hrAdminItems 
-          });
-        }
-      }
-      
-      // Freelancer modules at top level
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-      
-      // Other modules at top level
-      if (hasAccess('attendance') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
-      if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
-      if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
-      if (hasAccess('api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
-      if (hasAccess('api_verification')) items.push({ name: "Bulk PAN Verify", icon: ShieldCheck, page: "BulkPANVerification" });
-      if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-      if (hasAccess('assets') && isModuleEnabled('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
-      if (hasAccess('company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-      if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
-      if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-      if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
-      if (hasAccess('settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
-      if (hasAccess('payroll_upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
-      if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
-      if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
-      items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
-      // Recruitment section
-      items.push({
-        name: "Recruitment",
-        icon: UserSearch,
-        isSection: true,
-        sectionId: "recruitment",
-        children: [
-          { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
-          { name: "Candidates", icon: Users, page: "Candidates" },
-          { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
-          { name: "Requisitions", icon: FileStack, page: "Requisitions" },
-          { name: "Team", icon: UserSearch, page: "RecruitTeam" },
-          { name: "Reports", icon: BarChart2, page: "RecruitReports" },
-        ]
-      });
-    } else if (userRole === 'department_head') {
-      // HR Admin Section for dept heads
-      if (isModuleEnabled('hr_admin')) {
-        const hrAdminItems = [];
-        if (hasAccess('employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-        hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
-        if (hasAccess('employee_upload')) hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
-        if (hasAccess('offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-        if (hasAccess('onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
-        
-        if (hrAdminItems.length > 0) {
-          items.push({ 
-            name: "HR Admin", 
-            icon: Users, 
-            isSection: true, 
-            sectionId: "hrAdmin",
-            children: hrAdminItems 
-          });
-        }
-      }
-      
-      // Freelancer modules at top level
-      if (hasAccess('freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-      if (hasAccess('freelancer_upload') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-      
-      if (hasAccess('attendance') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
-      if (hasAccess('payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
-      if (hasAccess('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
-      if (hasAccess('api_verification')) items.push({ name: "Bulk PAN Verify", icon: ShieldCheck, page: "BulkPANVerification" });
-      if (hasAccess('expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-      if (hasAccess('company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-      if (hasAccess('policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
-      if (hasAccess('notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-      if (hasAccess('games') && isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
-      if (hasAccess('projects') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
-      if (isModuleEnabled('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
-      if (hasAccess('payroll_upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
-      if (hasAccess('payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
-      items.push({
-        name: "Recruitment",
-        icon: UserSearch,
-        isSection: true,
-        sectionId: "recruitment",
-        children: [
-          { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
-          { name: "Candidates", icon: Users, page: "Candidates" },
-          { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
-          { name: "Requisitions", icon: FileStack, page: "Requisitions" },
-          { name: "Team", icon: UserSearch, page: "RecruitTeam" },
-          { name: "Reports", icon: BarChart2, page: "RecruitReports" },
-        ]
-      });
-    } else if (userRole === 'freelancer') {
-      // Freelancers have access to projects, payslips and company feed
-      if (isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
+    // Freelancer self-service
+    if (userRole === 'freelancer') {
+      if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
       if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-    } else {
-      // Regular employees
-      if (true) {
-        // Permanent employees - show pages based on section_access or defaults
-        if ((sectionAccess.includes('attendance') || sectionAccess.length === 0) && isModuleEnabled('attendance')) {
-          items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
-        }
-        if (sectionAccess.includes('payslips') || sectionAccess.length === 0) {
-          items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
-        }
-        if (sectionAccess.includes('expenses') || sectionAccess.length === 0) {
-          items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
-        }
-        if (sectionAccess.includes('team_view')) {
-          items.push({ name: "My Team", icon: Users, page: "TeamView" });
-        }
-        // All permanent employees can access policies, assets, and games
-        items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
-        if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
-        if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-        if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-      }
+      return items;
     }
 
+    // Regular employee self-service
+    if (userRole === 'employee') {
+      if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
+      items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+      if (can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+      if (can('view_team')) items.push({ name: "My Team", icon: Users, page: "TeamView" });
+      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+      if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
+      if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+      if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+      // Employees with extra permissions get extra items
+      if (can('view_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+      if (can('manage_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+      if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+      if (can('view_recruitment')) {
+        items.push({
+          name: "Recruitment", icon: UserSearch, isSection: true, sectionId: "recruitment",
+          children: [
+            { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
+            { name: "Candidates", icon: Users, page: "Candidates" },
+            { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
+          ]
+        });
+      }
+      return items;
+    }
+
+    // --- HR / Manager / Dept Head / Admin --- permission-driven nav ---
+
+    // HR Admin section
+    const hrAdminItems = [];
+    if (can('view_employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+    if (can('manage_employees')) {
+      hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
+      hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
+    }
+    if (can('view_offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+    if (can('manage_onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+    if (hrAdminItems.length > 0) {
+      items.push({ name: "HR Admin", icon: Users, isSection: true, sectionId: "hrAdmin", children: hrAdminItems });
+    }
+
+    // Freelancer management
+    if (can('view_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+    if (can('manage_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+    if (can('upload_payroll')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
+    if (can('view_payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
+
+    // Operations
+    if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+    if (can('view_all_payslips') || can('manage_payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
+    if (can('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
+    if (can('api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
+    if (can('bulk_pan_verify')) items.push({ name: "Bulk PAN Verify", icon: ShieldCheck, page: "BulkPANVerification" });
+    if (can('approve_expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
+    if (can('manage_assets') && isModuleEnabled('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
+
+    // Projects
+    if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+    if (can('manage_task_templates') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
+    if (can('view_project_analytics') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
+
+    // Communication
+    if (can('manage_company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+    if (can('manage_policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
+    if (can('manage_notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
+    if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+
+    // Recruitment section
+    if (can('view_recruitment')) {
+      const recruitItems = [
+        { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
+        { name: "Candidates", icon: Users, page: "Candidates" },
+        { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
+        { name: "Requisitions", icon: FileStack, page: "Requisitions" },
+        { name: "Reports", icon: BarChart2, page: "RecruitReports" },
+      ];
+      if (can('manage_recruitment')) recruitItems.push({ name: "Team", icon: UserSearch, page: "RecruitTeam" });
+      items.push({ name: "Recruitment", icon: UserSearch, isSection: true, sectionId: "recruitment", children: recruitItems });
+    }
+
+    // System
+    if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
+    if (can('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+    if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
+
     return items;
-  }, [userRole, employeeData?.section_access, employeeData?.employment_type, moduleSettings]);
+  }, [userRole, employeeData, moduleSettings]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 
