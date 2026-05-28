@@ -74,6 +74,12 @@
           "user_condition": {
             "role": "hr"
           }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
@@ -93,7 +99,10 @@
           }
         },
         {
-          "data.marked_by": "{{user.email}}"
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
@@ -111,25 +120,19 @@
           "user_condition": {
             "role": "hr"
           }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "data.employee_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "hr"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

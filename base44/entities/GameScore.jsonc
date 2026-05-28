@@ -40,7 +40,14 @@
     "create": {
       "data.player_email": "{{user.email}}"
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "data.player_email": "{{user.email}}"
+        },
+        {}
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "admin"
