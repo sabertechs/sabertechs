@@ -102,7 +102,14 @@ Deno.serve(async (req) => {
     }
 
     // 2. Send invite email to the new employee
-    const registrationUrl = `${Deno.env.get('APP_URL') || 'https://app.base44.com'}/Registration`;
+    // Generate/use onboarding token for direct tokenized link
+    let onboardingToken = employee.onboarding_token;
+    if (!onboardingToken) {
+      onboardingToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      await base44.asServiceRole.entities.Employee.update(employee.id, { onboarding_token: onboardingToken });
+    }
+    const appUrl = Deno.env.get('APP_URL') || 'https://app.base44.com';
+    const registrationUrl = `${appUrl}/EmployeeOnboarding?token=${onboardingToken}`;
 
     const emailBody = `
 Dear ${employee.full_name},

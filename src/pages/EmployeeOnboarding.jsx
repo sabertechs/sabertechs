@@ -43,7 +43,11 @@ export default function EmployeeOnboarding() {
   });
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    // Support both regular query params and hash-based routing (?token= after #)
+    const searchFromHash = window.location.hash.includes('?') 
+      ? window.location.hash.split('?')[1] 
+      : window.location.search.slice(1);
+    const urlParams = new URLSearchParams(searchFromHash);
     const onboardingToken = urlParams.get('token');
     
     if (!onboardingToken) {
