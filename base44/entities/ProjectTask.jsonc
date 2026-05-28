@@ -96,11 +96,6 @@
           "user_condition": {
             "role": "manager"
           }
-        },
-        {
-          "user_condition": {
-            "role": "department_head"
-          }
         }
       ]
     },
@@ -117,16 +112,6 @@
         {
           "user_condition": {
             "role": "manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "department_head"
-          }
-        },
-        {
-          "data.group_id": {
-            "$in": "{{user.data.member_of_groups}}"
           }
         }
       ]
@@ -145,37 +130,13 @@
           "user_condition": {
             "role": "manager"
           }
-        },
-        {
-          "user_condition": {
-            "role": "department_head"
-          }
-        },
-        {
-          "data.group_id": {
-            "$in": "{{user.data.member_of_groups}}"
-          }
         }
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "department_head"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

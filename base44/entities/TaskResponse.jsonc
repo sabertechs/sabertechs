@@ -81,12 +81,7 @@
     "update": {
       "$or": [
         {
-          "data.freelancer_email": "{{user.email}}",
-          "data.status": {
-            "$nin": [
-              "approved"
-            ]
-          }
+          "data.freelancer_email": "{{user.email}}"
         },
         {
           "user_condition": {

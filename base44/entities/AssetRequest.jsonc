@@ -95,12 +95,6 @@
           "user_condition": {
             "role": "hr"
           }
-        },
-        {
-          "data.department": "{{user.data.department}}",
-          "user_condition": {
-            "role": "manager"
-          }
         }
       ]
     },
@@ -118,12 +112,6 @@
         {
           "user_condition": {
             "role": "hr"
-          }
-        },
-        {
-          "data.department": "{{user.data.department}}",
-          "user_condition": {
-            "role": "manager"
           }
         }
       ]

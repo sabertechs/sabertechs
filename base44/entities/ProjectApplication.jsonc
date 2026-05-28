@@ -69,16 +69,15 @@
           "user_condition": {
             "role": "manager"
           }
-        },
-        {
-          "data.project_id": {
-            "$in": "{{user.data.managed_projects}}"
-          }
         }
       ]
     },
     "update": {
       "$or": [
+        {
+          "data.freelancer_email": "{{user.email}}",
+          "data.status": "pending"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -87,11 +86,6 @@
         {
           "user_condition": {
             "role": "manager"
-          }
-        },
-        {
-          "data.project_id": {
-            "$in": "{{user.data.managed_projects}}"
           }
         }
       ]
@@ -99,6 +93,10 @@
     "delete": {
       "$or": [
         {
+          "data.freelancer_email": "{{user.email}}",
+          "data.status": "pending"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -106,11 +104,6 @@
         {
           "user_condition": {
             "role": "manager"
-          }
-        },
-        {
-          "data.project_id": {
-            "$in": "{{user.data.managed_projects}}"
           }
         }
       ]

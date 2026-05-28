@@ -47,7 +47,11 @@
     "read": {
       "$or": [
         {
-          "data.members": "{{user.email}}"
+          "data.members": {
+            "$in": [
+              "{{user.email}}"
+            ]
+          }
         },
         {
           "user_condition": {
@@ -76,18 +80,9 @@
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "manager"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

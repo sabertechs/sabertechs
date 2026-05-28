@@ -301,18 +301,9 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "hr"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "read": {
       "$or": [
@@ -330,7 +321,16 @@
           }
         },
         {
-          "data.reporting_to": "{{user.email}}"
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "data.department": "{{user.data.department}}",
+          "user_condition": {
+            "role": "department_head"
+          }
         }
       ]
     },
@@ -352,18 +352,9 @@
       ]
     },
     "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "hr"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }
