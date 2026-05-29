@@ -22,10 +22,12 @@ export default function FreelancerProjects() {
     fetchUser();
   }, []);
 
-  const { data: projects = [] } = useQuery({
+  const { data: allProjects = [] } = useQuery({
     queryKey: ['projects'],
-    queryFn: () => base44.entities.Project.filter({ status: 'open' }, '-created_date'),
+    queryFn: () => base44.entities.Project.list('-created_date'),
   });
+
+  const projects = allProjects.filter(p => p.status === 'open');
 
   const { data: myApplications = [] } = useQuery({
     queryKey: ['myApplications', user?.email],
@@ -33,9 +35,14 @@ export default function FreelancerProjects() {
     enabled: !!user?.email,
   });
 
+  const activeStatuses = ['open', 'in_progress'];
   const acceptedProjectIds = myApplications
     .filter(a => a.status === 'accepted')
-    .map(a => a.project_id);
+    .map(a => a.project_id)
+    .filter(id => {
+      const project = allProjects.find(p => p.id === id);
+      return project && activeStatuses.includes(project.status);
+    });
 
   const applyMutation = useMutation({
     mutationFn: async (project) => {
