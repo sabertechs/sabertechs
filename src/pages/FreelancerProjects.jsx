@@ -35,13 +35,12 @@ export default function FreelancerProjects() {
     enabled: !!user?.email,
   });
 
-  const activeStatuses = ['open', 'in_progress'];
   const acceptedProjectIds = myApplications
     .filter(a => a.status === 'accepted')
     .map(a => a.project_id)
     .filter(id => {
       const project = allProjects.find(p => p.id === id);
-      return project && activeStatuses.includes(project.status);
+      return project && project.status === 'open';
     });
 
   const applyMutation = useMutation({
