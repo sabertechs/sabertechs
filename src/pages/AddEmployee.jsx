@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Check, Loader2, UserPlus, Link as LinkIcon } from "lucide-react";
 
+const DEFAULT_DEPARTMENTS = [
+  { id: "admin", name: "Admin" },
+  { id: "quality_analyst", name: "Quality Analyst" },
+  { id: "cashifty", name: "Cashifty" },
+  { id: "mettl_operations", name: "Mettl operations" },
+  { id: "mettl", name: "Mettl" },
+  { id: "proctoring", name: "Proctoring" },
+];
+
 export default function AddEmployee() {
+  const { data: appSettings = [] } = useQuery({
+    queryKey: ['appSettings'],
+    queryFn: () => base44.entities.AppSettings.list(),
+  });
+
+  const getSetting = (key, defaultValue) => {
+    const setting = appSettings.find(s => s.setting_key === key);
+    return setting?.setting_value || defaultValue;
+  };
+
+  const departments = getSetting('departments', DEFAULT_DEPARTMENTS);
+  const designations = getSetting('designations', []);
+
   const [loading, setLoading] = useState(false);
   const [onboardingLink, setOnboardingLink] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -181,20 +204,32 @@ export default function AddEmployee() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Department *</Label>
-                  <Input 
-                    value={formData.department} 
-                    onChange={(e) => setFormData({...formData, department: e.target.value})} 
-                    className={errors.department ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  />
+                  <Select value={formData.department} onValueChange={(v) => setFormData({...formData, department: v})}>
+                    <SelectTrigger className={errors.department ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(d => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.department && <p className="text-xs text-red-600">{errors.department}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Designation *</Label>
-                  <Input 
-                    value={formData.designation} 
-                    onChange={(e) => setFormData({...formData, designation: e.target.value})} 
-                    className={errors.designation ? "border-red-500 focus-visible:ring-red-500" : ""}
-                  />
+                  <Select value={formData.designation} onValueChange={(v) => setFormData({...formData, designation: v})}>
+                    <SelectTrigger className={errors.designation ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select designation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {designations.length > 0 ? designations.map(d => (
+                        <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+                      )) : (
+                        <SelectItem value="_none" disabled>No designations configured</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                   {errors.designation && <p className="text-xs text-red-600">{errors.designation}</p>}
                 </div>
               </div>
