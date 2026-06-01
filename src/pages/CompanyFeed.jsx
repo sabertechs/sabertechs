@@ -72,19 +72,23 @@ export default function CompanyFeedPage() {
   const { data: posts = [] } = useQuery({
     queryKey: ['companyPosts'],
     queryFn: () => base44.entities.CompanyPost.list('-created_date'),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: allComments = [] } = useQuery({
     queryKey: ['postComments'],
     queryFn: () => base44.entities.PostComment.list('-created_date'),
+    staleTime: 5 * 60 * 1000,
   });
+
+  const isHR = employee?.role === 'hr' || employee?.role === 'manager' || employee?.role === 'department_head' || user?.role === 'admin';
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.filter({ status: 'active' }),
+    enabled: isHR,
+    staleTime: 10 * 60 * 1000,
   });
-
-  const isHR = employee?.role === 'hr' || employee?.role === 'manager' || employee?.role === 'department_head' || user?.role === 'admin';
 
   // Auto-generate birthday and anniversary posts
   React.useEffect(() => {
