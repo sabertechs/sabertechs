@@ -1,0 +1,146 @@
+{
+  "name": "Asset",
+  "type": "object",
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Unique asset ID (auto-generated)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Asset name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "laptop",
+        "desktop",
+        "mobile",
+        "tablet",
+        "monitor",
+        "printer",
+        "furniture",
+        "software",
+        "networking",
+        "other"
+      ],
+      "description": "Asset category"
+    },
+    "serial_number": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Asset image"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "purchase_cost": {
+      "type": "number"
+    },
+    "vendor_name": {
+      "type": "string"
+    },
+    "vendor_contact": {
+      "type": "string"
+    },
+    "warranty_months": {
+      "type": "number",
+      "description": "Warranty period in months"
+    },
+    "warranty_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "assigned",
+        "in_repair",
+        "retired",
+        "lost"
+      ],
+      "default": "available"
+    },
+    "location": {
+      "type": "string"
+    },
+    "assigned_to_email": {
+      "type": "string"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "assigned_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "depreciation_method": {
+      "type": "string",
+      "enum": [
+        "straight_line",
+        "reducing_balance"
+      ],
+      "default": "straight_line"
+    },
+    "useful_life_years": {
+      "type": "number",
+      "default": 5
+    },
+    "salvage_value": {
+      "type": "number",
+      "default": 0
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Invoice, warranty card URLs"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.assigned_to_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

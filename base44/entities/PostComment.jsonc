@@ -25,31 +25,5 @@
     "post_id",
     "commenter_email",
     "comment"
-  ],
-  "rls": {
-    "create": {
-      "data.commenter_email": "{{user.email}}"
-    },
-    "read": {},
-    "update": {
-      "data.commenter_email": "{{user.email}}"
-    },
-    "delete": {
-      "$or": [
-        {
-          "data.commenter_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "hr"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }

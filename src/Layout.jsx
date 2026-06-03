@@ -29,11 +29,7 @@ import {
   Package,
   Gamepad2,
   Briefcase,
-  ClipboardList,
-  UserSearch,
-  KanbanSquare,
-  BarChart2,
-  FileStack
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +47,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [employeeData, setEmployeeData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedSections, setExpandedSections] = useState({ hrAdmin: true, recruitment: false });
+  const [expandedSections, setExpandedSections] = useState({ hrAdmin: true });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -189,16 +185,6 @@ export default function Layout({ children, currentPageName }) {
       if (can('view_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
       if (can('manage_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
       if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-      if (can('view_recruitment')) {
-        items.push({
-          name: "Recruitment", icon: UserSearch, isSection: true, sectionId: "recruitment",
-          children: [
-            { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
-            { name: "Candidates", icon: Users, page: "Candidates" },
-            { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
-          ]
-        });
-      }
       return items;
     }
 
@@ -242,19 +228,6 @@ export default function Layout({ children, currentPageName }) {
     if (can('manage_policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
     if (can('manage_notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
     if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-
-    // Recruitment section
-    if (can('view_recruitment')) {
-      const recruitItems = [
-        { name: "Dashboard", icon: LayoutDashboard, page: "RecruitDashboard" },
-        { name: "Candidates", icon: Users, page: "Candidates" },
-        { name: "Pipeline", icon: KanbanSquare, page: "Pipeline" },
-        { name: "Requisitions", icon: FileStack, page: "Requisitions" },
-        { name: "Reports", icon: BarChart2, page: "RecruitReports" },
-      ];
-      if (can('manage_recruitment')) recruitItems.push({ name: "Team", icon: UserSearch, page: "RecruitTeam" });
-      items.push({ name: "Recruitment", icon: UserSearch, isSection: true, sectionId: "recruitment", children: recruitItems });
-    }
 
     // System
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });

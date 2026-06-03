@@ -35,21 +35,5 @@
     "player_email",
     "mode",
     "score"
-  ],
-  "rls": {
-    "create": {
-      "data.player_email": "{{user.email}}"
-    },
-    "read": {},
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  ]
 }

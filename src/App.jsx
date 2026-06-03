@@ -2,13 +2,7 @@ import './App.css'
 import FreelancerPayrollUpload from './pages/FreelancerPayrollUpload';
 import FreelancerPayrollView from './pages/FreelancerPayrollView';
 import AdminPayrollView from './pages/AdminPayrollView';
-import RecruitDashboard from './pages/RecruitDashboard';
-import Candidates from './pages/Candidates';
-import Pipeline from './pages/Pipeline';
-import Requisitions from './pages/Requisitions';
-import RecruitTeam from './pages/RecruitTeam';
-import RecruitReports from './pages/RecruitReports';
-import CandidateApply from './pages/CandidateApply';
+
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -73,13 +67,7 @@ const AuthenticatedApp = () => {
       <Route path="/FreelancerPayrollUpload" element={<LayoutWrapper currentPageName="FreelancerPayrollUpload"><FreelancerPayrollUpload /></LayoutWrapper>} />
       <Route path="/FreelancerPayrollView" element={<LayoutWrapper currentPageName="FreelancerPayrollView"><FreelancerPayrollView /></LayoutWrapper>} />
       <Route path="/AdminPayrollView" element={<LayoutWrapper currentPageName="AdminPayrollView"><AdminPayrollView /></LayoutWrapper>} />
-      <Route path="/RecruitDashboard" element={<LayoutWrapper currentPageName="RecruitDashboard"><RecruitDashboard /></LayoutWrapper>} />
-      <Route path="/Candidates" element={<LayoutWrapper currentPageName="Candidates"><Candidates /></LayoutWrapper>} />
-      <Route path="/Pipeline" element={<LayoutWrapper currentPageName="Pipeline"><Pipeline /></LayoutWrapper>} />
-      <Route path="/Requisitions" element={<LayoutWrapper currentPageName="Requisitions"><Requisitions /></LayoutWrapper>} />
-      <Route path="/RecruitTeam" element={<LayoutWrapper currentPageName="RecruitTeam"><RecruitTeam /></LayoutWrapper>} />
-      <Route path="/RecruitReports" element={<LayoutWrapper currentPageName="RecruitReports"><RecruitReports /></LayoutWrapper>} />
-      <Route path="/apply" element={<CandidateApply />} />
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
