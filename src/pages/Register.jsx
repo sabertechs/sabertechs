@@ -70,6 +70,10 @@ export default function Register() {
     base44.auth.loginWithProvider("google", "/");
   };
 
+  const handleMicrosoft = () => {
+    base44.auth.loginWithProvider("microsoft", "/");
+  };
+
   if (showOtp) {
     return (
       <AuthLayout
@@ -140,11 +144,25 @@ export default function Register() {
     >
       <Button
         variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
+        className="w-full h-12 text-sm font-medium mb-3"
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
+      </Button>
+
+      <Button
+        variant="outline"
+        className="w-full h-12 text-sm font-medium mb-6"
+        onClick={handleMicrosoft}
+      >
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#f25022" d="M1 1h10v10H1z" />
+          <path fill="#00a4ef" d="M13 1h10v10H13z" />
+          <path fill="#7fba00" d="M1 13h10v10H1z" />
+          <path fill="#ffb900" d="M13 13h10v10H13z" />
+        </svg>
+        Continue with Microsoft
       </Button>
 
       <div className="relative mb-6">

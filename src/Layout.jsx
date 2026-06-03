@@ -54,13 +54,7 @@ export default function Layout({ children, currentPageName }) {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          // Allow Registration page without authentication
-          if (currentPageName === "Registration") {
-            setLoading(false);
-            return;
-          }
-          // For other pages, redirect to login
-          base44.auth.redirectToLogin(window.location.href);
+          setLoading(false);
           return;
         }
         
@@ -108,9 +102,6 @@ export default function Layout({ children, currentPageName }) {
         setLoading(false);
       } catch (error) {
         console.log("User not logged in");
-        if (currentPageName !== "Registration" && currentPageName !== "Login") {
-          base44.auth.redirectToLogin(window.location.href);
-        }
         setLoading(false);
       }
     };
