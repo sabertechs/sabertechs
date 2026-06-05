@@ -298,5 +298,87 @@
     "full_name",
     "email",
     "phone"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.reporting_to": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "data.department": "{{user.data.department}}"
+            },
+            {
+              "$or": [
+                {
+                  "user_condition": {
+                    "role": "manager"
+                  }
+                },
+                {
+                  "user_condition": {
+                    "role": "department_head"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "hr"
+          }
+        },
+        {
+          "data.reporting_to": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
