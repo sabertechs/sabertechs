@@ -110,15 +110,18 @@ export const DEFAULT_PERMISSIONS_BY_ROLE = {
 
 /**
  * Get the effective permissions for an employee.
- * If they have section_access set, that is their complete permission list.
- * Otherwise we use the role defaults.
+ * Always starts with the role's default permissions, then merges in any
+ * additional permissions granted via section_access (Access Control).
+ * This means section_access ADDS to role defaults, never replaces them.
  */
 export function getEffectivePermissions(employee) {
   if (!employee) return [];
+  const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || DEFAULT_PERMISSIONS_BY_ROLE.employee;
   if (employee.section_access && employee.section_access.length > 0) {
-    return employee.section_access;
+    // Merge role defaults + individually granted permissions (deduplicated)
+    return [...new Set([...roleDefaults, ...employee.section_access])];
   }
-  return DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || DEFAULT_PERMISSIONS_BY_ROLE.employee;
+  return roleDefaults;
 }
 
 /**
