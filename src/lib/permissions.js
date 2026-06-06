@@ -110,18 +110,21 @@ export const DEFAULT_PERMISSIONS_BY_ROLE = {
 
 /**
  * Get the effective permissions for an employee.
- * Always starts with the role's default permissions, then merges in any
- * additional permissions granted via section_access (Access Control).
- * This means section_access ADDS to role defaults, never replaces them.
+ * Always starts with the role's default permissions.
+ * section_access stores only the DELTA:
+ *   - "perm_key"  → extra permission added beyond role defaults
+ *   - "!perm_key" → role default permission explicitly removed
  */
 export function getEffectivePermissions(employee) {
   if (!employee) return [];
   const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || DEFAULT_PERMISSIONS_BY_ROLE.employee;
-  if (employee.section_access && employee.section_access.length > 0) {
-    // Merge role defaults + individually granted permissions (deduplicated)
-    return [...new Set([...roleDefaults, ...employee.section_access])];
+  if (!employee.section_access || employee.section_access.length === 0) {
+    return roleDefaults;
   }
-  return roleDefaults;
+  const extras = employee.section_access.filter(p => !p.startsWith('!'));
+  const removed = employee.section_access.filter(p => p.startsWith('!')).map(p => p.slice(1));
+  const merged = [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
+  return merged;
 }
 
 /**

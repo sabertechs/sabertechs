@@ -55,10 +55,11 @@ export default function AccessControl() {
 
   const handleEditAccess = (employee) => {
     setSelectedEmployee(employee);
-    // Load their custom permissions or fall back to role defaults
-    const perms = (employee.section_access && employee.section_access.length > 0)
-      ? employee.section_access
-      : (DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || []);
+    // Compute effective permissions using role defaults + delta from section_access
+    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || [];
+    const extras = (employee.section_access || []).filter(p => !p.startsWith('!'));
+    const removed = (employee.section_access || []).filter(p => p.startsWith('!')).map(p => p.slice(1));
+    const perms = [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
     setSelectedPerms(perms);
     // Expand all modules by default in dialog
     const expanded = {};
@@ -70,12 +71,21 @@ export default function AccessControl() {
   const handleSave = async () => {
     if (!selectedEmployee) return;
     setSaving(true);
-    await updateMutation.mutateAsync({ id: selectedEmployee.id, data: { section_access: selectedPerms } });
+    // Only store permissions that differ from role defaults:
+    // - extras: permissions added beyond role defaults
+    // - removed: role defaults explicitly removed (stored as negations prefixed with "!")
+    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[selectedEmployee.role] || [];
+    const extras = selectedPerms.filter(p => !roleDefaults.includes(p));
+    const removed = roleDefaults.filter(p => !selectedPerms.includes(p)).map(p => `!${p}`);
+    // If no delta, save empty array so role defaults apply cleanly
+    const toSave = [...extras, ...removed];
+    await updateMutation.mutateAsync({ id: selectedEmployee.id, data: { section_access: toSave } });
     setSaving(false);
   };
 
   const handleResetToRoleDefault = () => {
     if (!selectedEmployee) return;
+    // Reset to pure role defaults — saving this will clear section_access
     setSelectedPerms(DEFAULT_PERMISSIONS_BY_ROLE[selectedEmployee.role] || []);
     toast.info('Reset to role defaults — click Save to apply');
   };
@@ -122,8 +132,11 @@ export default function AccessControl() {
   });
 
   const getEffectivePerms = (emp) => {
-    if (emp.section_access && emp.section_access.length > 0) return emp.section_access;
-    return DEFAULT_PERMISSIONS_BY_ROLE[emp.role] || [];
+    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[emp.role] || [];
+    if (!emp.section_access || emp.section_access.length === 0) return roleDefaults;
+    const extras = emp.section_access.filter(p => !p.startsWith('!'));
+    const removed = emp.section_access.filter(p => p.startsWith('!')).map(p => p.slice(1));
+    return [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
   };
 
   const isCustomized = (emp) => emp.section_access && emp.section_access.length > 0;
