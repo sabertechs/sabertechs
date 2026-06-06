@@ -187,7 +187,7 @@ export default function UserAccessOverview() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees-access-overview"],
-    queryFn: () => base44.entities.Employee.list("-created_date", 200),
+    queryFn: () => base44.entities.Employee.list(),
   });
 
   const allPermKeys = Object.keys(PERMISSIONS);
