@@ -50,6 +50,11 @@
           "user_condition": {
             "role": "hr"
           }
+        },
+        {
+          "user_condition": {
+            "data.role": "hr"
+          }
         }
       ]
     },
@@ -69,6 +74,11 @@
         {
           "user_condition": {
             "role": "hr"
+          }
+        },
+        {
+          "user_condition": {
+            "data.role": "hr"
           }
         }
       ]
