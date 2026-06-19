@@ -75,6 +75,11 @@
           "user_condition": {
             "role": "hr"
           }
+        },
+        {
+          "user_condition": {
+            "data.role": "hr"
+          }
         }
       ]
     },
@@ -92,12 +97,27 @@
         },
         {
           "user_condition": {
+            "data.role": "hr"
+          }
+        },
+        {
+          "user_condition": {
             "role": "manager"
           }
         },
         {
           "user_condition": {
+            "data.role": "manager"
+          }
+        },
+        {
+          "user_condition": {
             "role": "department_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.role": "department_head"
           }
         }
       ]
@@ -113,6 +133,11 @@
           "user_condition": {
             "role": "hr"
           }
+        },
+        {
+          "user_condition": {
+            "data.role": "hr"
+          }
         }
       ]
     },
@@ -126,6 +151,11 @@
         {
           "user_condition": {
             "role": "hr"
+          }
+        },
+        {
+          "user_condition": {
+            "data.role": "hr"
           }
         }
       ]
