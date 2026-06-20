@@ -29,7 +29,8 @@ import {
   Package,
   Gamepad2,
   Briefcase,
-  ClipboardList
+  ClipboardList,
+  BarChart2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -219,6 +220,11 @@ export default function Layout({ children, currentPageName }) {
     if (can('manage_policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
     if (can('manage_notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
     if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+
+    // Reports
+    if (userRole === 'admin' || userRole === 'hr' || userRole === 'manager') {
+      items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
+    }
 
     // System
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
