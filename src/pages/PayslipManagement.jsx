@@ -305,32 +305,35 @@ export default function PayslipManagement() {
     doc.text(`Pay Period: ${monthName} ${year}`, midX + 5, y + 25);
     y += empBoxH + 8;
 
+    const fmtAmt = (n) => `Rs. ${Number(n).toLocaleString('en-IN')}`;
+    const amtX = rightX - 3; // safe right edge for text
+
     // ── Helper: draw a table section ──
     const drawTableHeader = (label, r, g, b) => {
       doc.setFillColor(r, g, b);
       doc.rect(margin, y, pageW - margin * 2, rowH, 'F');
       doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
       doc.text(label, margin + 5, y + 6.8);
-      doc.text('Amount ( \u20B9)', rightX, y + 6.8, { align: 'right' });
+      doc.text('Amount (Rs.)', amtX, y + 6.8, { align: 'right' });
       y += rowH;
     };
     const drawRow = (label, amount, bgR, bgG, bgB) => {
       doc.setFillColor(bgR, bgG, bgB);
       doc.rect(margin, y, pageW - margin * 2, rowH, 'F');
-      doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.2);
-      doc.line(margin, y + rowH, rightX, y + rowH);
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
+      doc.line(margin, y + rowH, amtX + 3, y + rowH);
       doc.setTextColor(40, 40, 40); doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
       doc.text(label, margin + 5, y + 6.8);
-      doc.text(`\u20B9 ${Number(amount).toLocaleString('en-IN')}`, rightX, y + 6.8, { align: 'right' });
+      doc.text(fmtAmt(amount), amtX, y + 6.8, { align: 'right' });
       y += rowH;
     };
     const drawSubtotalRow = (label, amount, r, g, b, tr, tg, tb) => {
       doc.setFillColor(r, g, b);
-      doc.rect(margin, y, pageW - margin * 2, rowH + 1, 'F');
+      doc.rect(margin, y, pageW - margin * 2, rowH + 2, 'F');
       doc.setTextColor(tr, tg, tb); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text(label, margin + 5, y + 7.2);
-      doc.text(`\u20B9 ${Number(amount).toLocaleString('en-IN')}`, rightX, y + 7.2, { align: 'right' });
-      y += rowH + 1;
+      doc.text(label, margin + 5, y + 7.5);
+      doc.text(fmtAmt(amount), amtX, y + 7.5, { align: 'right' });
+      y += rowH + 2;
     };
 
     // ── 4. EARNINGS TABLE ──
@@ -358,7 +361,7 @@ export default function PayslipManagement() {
     doc.rect(margin, y, pageW - margin * 2, netH, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
     doc.text('NET PAY', margin + 6, y + 9.5);
-    doc.text(`\u20B9 ${Number(net_salary).toLocaleString('en-IN')}`, rightX, y + 9.5, { align: 'right' });
+    doc.text(fmtAmt(net_salary), amtX, y + 9.5, { align: 'right' });
     y += netH + 12;
 
     // ── 7. FOOTER ──
