@@ -186,20 +186,28 @@ Deno.serve(async (req) => {
         doc.setFont('helvetica', 'italic');
         doc.text('This is a system-generated payslip and does not require a signature.', pageW / 2, y, { align: 'center' });
 
-        // Convert PDF to base64
-        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        // Convert PDF to Uint8Array for upload
+        const pdfArrayBuffer = doc.output('arraybuffer');
+        const pdfUint8 = new Uint8Array(pdfArrayBuffer);
 
-        // ---- Send Email with PDF attachment ----
+        // Upload PDF to storage and get a public URL
+        const fileName = `Payslip_${employee_name?.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`;
+        const pdfBlob = new Blob([pdfUint8], { type: 'application/pdf' });
+        const { file_url: pdfUrl } = await base44.asServiceRole.integrations.Core.UploadFile({ file: pdfBlob });
+
+        // ---- Send Email with PDF download link ----
         const emailBody = `
 Dear ${employee_name || 'Employee'},
 
-Please find your salary slip for ${monthName} ${year} attached to this email.
+Your salary slip for ${monthName} ${year} is ready. Please download it using the link below:
+
+  Download Payslip: ${pdfUrl}
 
 Summary:
-  Gross Salary   : ₹${Number(gross_salary).toLocaleString('en-IN')}
+  Gross Salary    : ₹${Number(gross_salary).toLocaleString('en-IN')}
   Total Deductions: ₹${Number(totalDeductions).toLocaleString('en-IN')}
-  Net Pay        : ₹${Number(net_salary).toLocaleString('en-IN')}
-  Payment Status : ${payment_status.charAt(0).toUpperCase() + payment_status.slice(1)}
+  Net Pay         : ₹${Number(net_salary).toLocaleString('en-IN')}
+  Payment Status  : ${payment_status.charAt(0).toUpperCase() + payment_status.slice(1)}
 
 If you have any questions about your payslip, please contact HR.
 
@@ -211,14 +219,6 @@ SaberTechs HR Team
             to: employee_email,
             subject: `Your Salary Slip for ${monthName} ${year} - SaberTechs`,
             body: emailBody,
-            attachments: [
-                {
-                    filename: `Payslip_${employee_name?.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`,
-                    content: pdfBase64,
-                    encoding: 'base64',
-                    contentType: 'application/pdf',
-                }
-            ]
         });
 
         return Response.json({
