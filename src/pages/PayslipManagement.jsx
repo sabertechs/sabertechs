@@ -239,83 +239,107 @@ export default function PayslipManagement() {
     toast.success('Payroll data downloaded');
   };
 
-  const downloadPayslipPDF = (payslip) => {
+  const downloadPayslipPDF = async (payslip) => {
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const monthName = monthNames[parseInt(payslip.month, 10) - 1] || payslip.month;
     const { employee_name, employee_email, employee_id, year,
       basic_salary = 0, hra = 0, da = 0, other_allowances = 0,
       gross_salary = 0, pf_deduction = 0, tax_deduction = 0, other_deductions = 0,
-      net_salary = 0, payment_status = 'pending' } = payslip;
+      net_salary = 0 } = payslip;
     const totalDeductions = pf_deduction + tax_deduction + other_deductions;
+
+    // Load company logo as base64
+    const logoUrl = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6925679300b99789588899b7/ab1b508e1_image002.jpg';
+    let logoBase64 = null;
+    try {
+      const res = await fetch(logoUrl);
+      const buf = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+      logoBase64 = 'data:image/jpeg;base64,' + btoa(bin);
+    } catch (_) {}
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageW = 210; const margin = 15; const col1 = margin; const col2 = pageW / 2 + 5;
     let y = 0;
 
-    doc.setFillColor(79, 70, 229); doc.rect(0, 0, pageW, 38, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(20); doc.setFont('helvetica', 'bold');
-    doc.text('SALARY SLIP', pageW / 2, 16, { align: 'center' });
-    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-    doc.text(`${monthName} ${year}`, pageW / 2, 25, { align: 'center' });
-    doc.setFontSize(9); doc.text('SaberTechs', pageW / 2, 33, { align: 'center' });
+    // Logo header
+    if (logoBase64) {
+      doc.addImage(logoBase64, 'JPEG', 0, 0, pageW, 28);
+      y = 30;
+    } else {
+      doc.setFillColor(79, 70, 229); doc.rect(0, 0, pageW, 18, 'F');
+      doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+      doc.text('SaberTechs', pageW/2, 12, {align:'center'});
+      y = 22;
+    }
 
-    y = 46;
-    doc.setFillColor(245, 247, 250); doc.roundedRect(margin, y, pageW - margin * 2, 30, 3, 3, 'F');
-    doc.setTextColor(30, 30, 30); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-    doc.text('Employee Details', col1 + 4, y + 8);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-    doc.text(`Name: ${employee_name || '-'}`, col1 + 4, y + 16);
-    doc.text(`Email: ${employee_email}`, col1 + 4, y + 22);
-    if (employee_id) doc.text(`Employee ID: ${employee_id}`, col2, y + 16);
-    doc.text(`Pay Period: ${monthName} ${year}`, col2, y + 22);
+    // Title bar
+    doc.setFillColor(79, 70, 229); doc.rect(0, y, pageW, 20, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
+    doc.text('SALARY SLIP', pageW/2, y+10, {align:'center'});
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text(`${monthName} ${year}`, pageW/2, y+17, {align:'center'});
+    y += 26;
 
-    y = 84;
-    doc.setFillColor(79, 70, 229); doc.rect(margin, y, pageW - margin * 2, 8, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-    doc.text('EARNINGS', col1 + 4, y + 5.5);
-    doc.text('Amount (₹)', pageW - margin - 4, y + 5.5, { align: 'right' });
+    // Employee info box
+    doc.setDrawColor(220,220,220); doc.setFillColor(248,249,252);
+    doc.roundedRect(margin, y, pageW-margin*2, 32, 3, 3, 'FD');
+    doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text('Employee Details', col1+5, y+8);
+    doc.setDrawColor(79,70,229); doc.setLineWidth(0.5); doc.line(col1+5, y+10, col1+45, y+10);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(60,60,60);
+    doc.text(`Name: ${employee_name || '-'}`, col1+5, y+18);
+    doc.text(`Email: ${employee_email}`, col1+5, y+25);
+    if (employee_id) doc.text(`Employee ID: ${employee_id}`, col2, y+18);
+    doc.text(`Pay Period: ${monthName} ${year}`, col2, y+25);
+    y += 38;
 
-    y += 10; doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    // Earnings
+    doc.setFillColor(79,70,229); doc.rect(margin, y, pageW-margin*2, 9, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text('EARNINGS', col1+5, y+6); doc.text('Amount (₹)', pageW-margin-4, y+6, {align:'right'});
+    y += 10;
+    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
     [['Basic Salary', basic_salary], ['House Rent Allowance (HRA)', hra], ['Dearness Allowance (DA)', da], ['Other Allowances', other_allowances]].forEach(([label, amount], i) => {
-      if (i % 2 === 0) { doc.setFillColor(249, 250, 251); doc.rect(margin, y - 4, pageW - margin * 2, 8, 'F'); }
-      doc.text(label, col1 + 4, y + 0.5);
-      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW - margin - 4, y + 0.5, { align: 'right' });
+      if (i%2===0) { doc.setFillColor(249,250,251); doc.rect(margin, y-3, pageW-margin*2, 8, 'F'); }
+      doc.text(label, col1+5, y+2.5);
+      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW-margin-4, y+2.5, {align:'right'});
       y += 8;
     });
-
-    doc.setFillColor(224, 231, 255); doc.rect(margin, y, pageW - margin * 2, 9, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 48, 163);
-    doc.text('Gross Salary', col1 + 4, y + 6);
-    doc.text(`₹ ${Number(gross_salary).toLocaleString('en-IN')}`, pageW - margin - 4, y + 6, { align: 'right' });
-
+    doc.setFillColor(224,231,255); doc.rect(margin, y, pageW-margin*2, 10, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(55,48,163);
+    doc.text('Gross Salary', col1+5, y+6.5);
+    doc.text(`₹ ${Number(gross_salary).toLocaleString('en-IN')}`, pageW-margin-4, y+6.5, {align:'right'});
     y += 16;
-    doc.setFillColor(220, 38, 38); doc.rect(margin, y, pageW - margin * 2, 8, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-    doc.text('DEDUCTIONS', col1 + 4, y + 5.5);
-    doc.text('Amount (₹)', pageW - margin - 4, y + 5.5, { align: 'right' });
 
-    y += 10; doc.setTextColor(30, 30, 30); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    // Deductions
+    doc.setFillColor(220,38,38); doc.rect(margin, y, pageW-margin*2, 9, 'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('DEDUCTIONS', col1+5, y+6); doc.text('Amount (₹)', pageW-margin-4, y+6, {align:'right'});
+    y += 10;
+    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
     [['Provident Fund (PF)', pf_deduction], ['Tax Deduction (TDS + PT)', tax_deduction], ['ESI / Other Deductions', other_deductions]].forEach(([label, amount], i) => {
-      if (i % 2 === 0) { doc.setFillColor(255, 249, 249); doc.rect(margin, y - 4, pageW - margin * 2, 8, 'F'); }
-      doc.text(label, col1 + 4, y + 0.5);
-      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW - margin - 4, y + 0.5, { align: 'right' });
+      if (i%2===0) { doc.setFillColor(255,249,249); doc.rect(margin, y-3, pageW-margin*2, 8, 'F'); }
+      doc.text(label, col1+5, y+2.5);
+      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW-margin-4, y+2.5, {align:'right'});
       y += 8;
     });
-
-    doc.setFillColor(254, 226, 226); doc.rect(margin, y, pageW - margin * 2, 9, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(153, 27, 27);
-    doc.text('Total Deductions', col1 + 4, y + 6);
-    doc.text(`₹ ${Number(totalDeductions).toLocaleString('en-IN')}`, pageW - margin - 4, y + 6, { align: 'right' });
-
+    doc.setFillColor(254,226,226); doc.rect(margin, y, pageW-margin*2, 10, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(153,27,27);
+    doc.text('Total Deductions', col1+5, y+6.5);
+    doc.text(`₹ ${Number(totalDeductions).toLocaleString('en-IN')}`, pageW-margin-4, y+6.5, {align:'right'});
     y += 16;
-    doc.setFillColor(22, 163, 74); doc.rect(margin, y, pageW - margin * 2, 14, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
-    doc.text('NET PAY', col1 + 6, y + 9);
-    doc.text(`₹ ${Number(net_salary).toLocaleString('en-IN')}`, pageW - margin - 4, y + 9, { align: 'right' });
 
-    y += 22;
-    doc.setFontSize(8); doc.setTextColor(120, 120, 120); doc.setFont('helvetica', 'italic');
-    doc.text('This is a system-generated payslip and does not require a signature.', pageW / 2, y, { align: 'center' });
+    // Net Pay
+    doc.setFillColor(22,163,74); doc.rect(margin, y, pageW-margin*2, 16, 'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('NET PAY', col1+6, y+10);
+    doc.text(`₹ ${Number(net_salary).toLocaleString('en-IN')}`, pageW-margin-4, y+10, {align:'right'});
+    y += 24;
+
+    doc.setFontSize(8); doc.setTextColor(150,150,150); doc.setFont('helvetica','italic');
+    doc.text('This is a system-generated payslip and does not require a signature.', pageW/2, y, {align:'center'});
 
     doc.save(`Payslip_${employee_name?.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`);
   };
