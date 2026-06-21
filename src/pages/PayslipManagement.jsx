@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Plus, Search, Download, Send, Edit, Trash2, FileText, Zap, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
-import { getPayslipEmail } from "@/components/email/EmailTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -240,7 +239,18 @@ export default function PayslipManagement() {
   };
 
   const sendPayslipNotification = async (payslip) => {
-    // Send in-app notification
+    // Check if notification already sent for this payslip period to avoid duplicates
+    const existing = await base44.entities.Notification.filter({
+      recipient_email: payslip.employee_email,
+      title: 'Payslip Available',
+    });
+    const alreadySent = existing.some(n => n.message?.includes(`${payslip.month} ${payslip.year}`));
+    if (alreadySent) {
+      toast.info('Notification already sent for this payslip');
+      return;
+    }
+
+    // Send in-app notification only (email/PDF is handled by the automation on payslip create)
     await base44.entities.Notification.create({
       recipient_email: payslip.employee_email,
       title: 'Payslip Available',
@@ -248,19 +258,7 @@ export default function PayslipManagement() {
       type: 'info'
     });
 
-    // Send professional email
-    const emailBody = getPayslipEmail({
-      recipientName: payslip.employee_name,
-      month: payslip.month,
-      year: payslip.year,
-      netSalary: payslip.net_salary
-    });
-    
-    await base44.integrations.Core.SendEmail({
-      to: payslip.employee_email,
-      subject: `💰 Payslip for ${payslip.month} ${payslip.year} - SaberTechs`,
-      body: emailBody
-    });
+    toast.success(`Notification sent to ${payslip.employee_name}`);
   };
 
   const filteredPayslips = payslips.filter(p => {
