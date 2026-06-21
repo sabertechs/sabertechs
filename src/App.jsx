@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Register from './pages/Register';
+import LoginRedirect from './pages/LoginRedirect';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       {/* Public auth routes */}
+      <Route path="/login" element={<LoginRedirect />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
