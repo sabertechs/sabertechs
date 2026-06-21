@@ -260,86 +260,110 @@ export default function PayslipManagement() {
     } catch (_) {}
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const pageW = 210; const margin = 15; const col1 = margin; const col2 = pageW / 2 + 5;
+    const pageW = 210;
+    const margin = 15;
+    const rightX = pageW - margin;
+    const rowH = 10;
     let y = 0;
 
-    // Logo header
+    // ── 1. LOGO (full width header image) ──
     if (logoBase64) {
-      doc.addImage(logoBase64, 'JPEG', 0, 0, pageW, 28);
-      y = 30;
+      doc.addImage(logoBase64, 'JPEG', 0, 0, pageW, 30);
+      y = 32;
     } else {
-      doc.setFillColor(79, 70, 229); doc.rect(0, 0, pageW, 18, 'F');
-      doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-      doc.text('SaberTechs', pageW/2, 12, {align:'center'});
-      y = 22;
+      doc.setFillColor(63, 81, 181);
+      doc.rect(0, 0, pageW, 22, 'F');
+      doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
+      doc.text('SaberTechs', pageW/2, 14, {align:'center'});
+      y = 26;
     }
 
-    // Title bar
-    doc.setFillColor(79, 70, 229); doc.rect(0, y, pageW, 20, 'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
-    doc.text('SALARY SLIP', pageW/2, y+10, {align:'center'});
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text(`${monthName} ${year}`, pageW/2, y+17, {align:'center'});
-    y += 26;
+    // ── 2. TITLE SECTION (white background, centered) ──
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, y, pageW, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+    doc.text('SALARY SLIP', pageW / 2, y + 10, { align: 'center' });
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text(`${monthName} ${year}`, pageW / 2, y + 17, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text('SaberTechs', pageW / 2, y + 21, { align: 'center' });
+    y += 28;
 
-    // Employee info box
-    doc.setDrawColor(220,220,220); doc.setFillColor(248,249,252);
-    doc.roundedRect(margin, y, pageW-margin*2, 32, 3, 3, 'FD');
-    doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('Employee Details', col1+5, y+8);
-    doc.setDrawColor(79,70,229); doc.setLineWidth(0.5); doc.line(col1+5, y+10, col1+45, y+10);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(60,60,60);
-    doc.text(`Name: ${employee_name || '-'}`, col1+5, y+18);
-    doc.text(`Email: ${employee_email}`, col1+5, y+25);
-    if (employee_id) doc.text(`Employee ID: ${employee_id}`, col2, y+18);
-    doc.text(`Pay Period: ${monthName} ${year}`, col2, y+25);
-    y += 38;
+    // ── 3. EMPLOYEE DETAILS BOX ──
+    const empBoxH = 32;
+    doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.3);
+    doc.setFillColor(252, 252, 253);
+    doc.roundedRect(margin, y, pageW - margin * 2, empBoxH, 2, 2, 'FD');
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(30,30,30);
+    doc.text('Employee Details', margin + 5, y + 8);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(50,50,50);
+    const midX = pageW / 2;
+    doc.text(`Name: ${employee_name || '-'}`, margin + 5, y + 17);
+    doc.text(`Email: ${employee_email || '-'}`, margin + 5, y + 25);
+    doc.text(`Employee ID: ${employee_id || '-'}`, midX + 5, y + 17);
+    doc.text(`Pay Period: ${monthName} ${year}`, midX + 5, y + 25);
+    y += empBoxH + 8;
 
-    // Earnings
-    doc.setFillColor(79,70,229); doc.rect(margin, y, pageW-margin*2, 9, 'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('EARNINGS', col1+5, y+6); doc.text('Amount (₹)', pageW-margin-4, y+6, {align:'right'});
-    y += 10;
-    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    [['Basic Salary', basic_salary], ['House Rent Allowance (HRA)', hra], ['Dearness Allowance (DA)', da], ['Other Allowances', other_allowances]].forEach(([label, amount], i) => {
-      if (i%2===0) { doc.setFillColor(249,250,251); doc.rect(margin, y-3, pageW-margin*2, 8, 'F'); }
-      doc.text(label, col1+5, y+2.5);
-      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW-margin-4, y+2.5, {align:'right'});
-      y += 8;
-    });
-    doc.setFillColor(224,231,255); doc.rect(margin, y, pageW-margin*2, 10, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(55,48,163);
-    doc.text('Gross Salary', col1+5, y+6.5);
-    doc.text(`₹ ${Number(gross_salary).toLocaleString('en-IN')}`, pageW-margin-4, y+6.5, {align:'right'});
-    y += 16;
+    // ── Helper: draw a table section ──
+    const drawTableHeader = (label, r, g, b) => {
+      doc.setFillColor(r, g, b);
+      doc.rect(margin, y, pageW - margin * 2, rowH, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(label, margin + 5, y + 6.8);
+      doc.text('Amount ( \u20B9)', rightX, y + 6.8, { align: 'right' });
+      y += rowH;
+    };
+    const drawRow = (label, amount, bgR, bgG, bgB) => {
+      doc.setFillColor(bgR, bgG, bgB);
+      doc.rect(margin, y, pageW - margin * 2, rowH, 'F');
+      doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.2);
+      doc.line(margin, y + rowH, rightX, y + rowH);
+      doc.setTextColor(40, 40, 40); doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+      doc.text(label, margin + 5, y + 6.8);
+      doc.text(`\u20B9 ${Number(amount).toLocaleString('en-IN')}`, rightX, y + 6.8, { align: 'right' });
+      y += rowH;
+    };
+    const drawSubtotalRow = (label, amount, r, g, b, tr, tg, tb) => {
+      doc.setFillColor(r, g, b);
+      doc.rect(margin, y, pageW - margin * 2, rowH + 1, 'F');
+      doc.setTextColor(tr, tg, tb); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(label, margin + 5, y + 7.2);
+      doc.text(`\u20B9 ${Number(amount).toLocaleString('en-IN')}`, rightX, y + 7.2, { align: 'right' });
+      y += rowH + 1;
+    };
 
-    // Deductions
-    doc.setFillColor(220,38,38); doc.rect(margin, y, pageW-margin*2, 9, 'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text('DEDUCTIONS', col1+5, y+6); doc.text('Amount (₹)', pageW-margin-4, y+6, {align:'right'});
-    y += 10;
-    doc.setTextColor(40,40,40); doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    [['Provident Fund (PF)', pf_deduction], ['Tax Deduction (TDS + PT)', tax_deduction], ['ESI / Other Deductions', other_deductions]].forEach(([label, amount], i) => {
-      if (i%2===0) { doc.setFillColor(255,249,249); doc.rect(margin, y-3, pageW-margin*2, 8, 'F'); }
-      doc.text(label, col1+5, y+2.5);
-      doc.text(`₹ ${Number(amount).toLocaleString('en-IN')}`, pageW-margin-4, y+2.5, {align:'right'});
-      y += 8;
-    });
-    doc.setFillColor(254,226,226); doc.rect(margin, y, pageW-margin*2, 10, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(153,27,27);
-    doc.text('Total Deductions', col1+5, y+6.5);
-    doc.text(`₹ ${Number(totalDeductions).toLocaleString('en-IN')}`, pageW-margin-4, y+6.5, {align:'right'});
-    y += 16;
+    // ── 4. EARNINGS TABLE ──
+    drawTableHeader('EARNINGS', 79, 70, 229);
+    drawRow('Basic Salary', basic_salary, 255, 255, 255);
+    drawRow('House Rent Allowance (HRA)', hra, 249, 249, 255);
+    drawRow('Dearness Allowance (DA)', da, 255, 255, 255);
+    drawRow('Other Allowances', other_allowances, 249, 249, 255);
+    y += 2;
+    drawSubtotalRow('Gross Salary', gross_salary, 232, 234, 255, 55, 48, 163);
+    y += 8;
 
-    // Net Pay
-    doc.setFillColor(22,163,74); doc.rect(margin, y, pageW-margin*2, 16, 'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
-    doc.text('NET PAY', col1+6, y+10);
-    doc.text(`₹ ${Number(net_salary).toLocaleString('en-IN')}`, pageW-margin-4, y+10, {align:'right'});
-    y += 24;
+    // ── 5. DEDUCTIONS TABLE ──
+    drawTableHeader('DEDUCTIONS', 220, 38, 38);
+    drawRow('Provident Fund (PF)', pf_deduction, 255, 255, 255);
+    drawRow('Tax Deduction (TDS + PT)', tax_deduction, 255, 249, 249);
+    drawRow('ESI / Other Deductions', other_deductions, 255, 255, 255);
+    y += 2;
+    drawSubtotalRow('Total Deductions', totalDeductions, 255, 235, 235, 153, 27, 27);
+    y += 8;
 
-    doc.setFontSize(8); doc.setTextColor(150,150,150); doc.setFont('helvetica','italic');
-    doc.text('This is a system-generated payslip and does not require a signature.', pageW/2, y, {align:'center'});
+    // ── 6. NET PAY BAR ──
+    const netH = 14;
+    doc.setFillColor(34, 139, 34);
+    doc.rect(margin, y, pageW - margin * 2, netH, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('NET PAY', margin + 6, y + 9.5);
+    doc.text(`\u20B9 ${Number(net_salary).toLocaleString('en-IN')}`, rightX, y + 9.5, { align: 'right' });
+    y += netH + 12;
+
+    // ── 7. FOOTER ──
+    doc.setFontSize(8); doc.setTextColor(130, 130, 130); doc.setFont('helvetica', 'italic');
+    doc.text('This is a system-generated payslip and does not require a signature.', pageW / 2, y, { align: 'center' });
 
     doc.save(`Payslip_${employee_name?.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`);
   };
