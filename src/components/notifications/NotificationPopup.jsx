@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Bell, Info, AlertTriangle, CheckCircle, AlertCircle, Megaphone } from "lucide-react";
+import { X, Info, AlertTriangle, CheckCircle, AlertCircle, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,13 +16,12 @@ const typeConfig = {
 
 export default function NotificationPopup({ userEmail }) {
   const [popupNotification, setPopupNotification] = useState(null);
-  const [seenIds, setSeenIds] = useState(new Set());
-  const audioRef = useRef(null);
+  // Use a ref so it never causes effect re-runs
+  const seenIdsRef = useRef(new Set());
 
   useEffect(() => {
     if (!userEmail) return;
 
-    // Check for new notifications every 30 seconds
     const checkNotifications = async () => {
       let notifications;
       try {
@@ -32,52 +31,50 @@ export default function NotificationPopup({ userEmail }) {
           5
         );
       } catch (e) {
-        return; // Silently ignore network errors
+        return;
       }
 
-      // Find the newest notification that we haven't shown yet
-      const newNotification = notifications.find(n => !seenIds.has(n.id));
-      
-      if (newNotification) {
-        setPopupNotification(newNotification);
-        setSeenIds(prev => new Set([...prev, newNotification.id]));
-        
-        // Play notification sound
-        playNotificationSound();
-        
-        // Auto-dismiss after 10 seconds
-        setTimeout(() => {
-          setPopupNotification(prev => prev?.id === newNotification.id ? null : prev);
-        }, 10000);
+      // Find the newest one we haven't shown yet
+      const newNotification = notifications.find(n => !seenIdsRef.current.has(n.id));
+      if (!newNotification) return;
+
+      // Mark as seen immediately so it never re-appears
+      seenIdsRef.current.add(newNotification.id);
+
+      // Mark as read in DB right away to prevent repeat across sessions/reloads
+      try {
+        await base44.entities.Notification.update(newNotification.id, { is_read: true });
+      } catch (e) {
+        // continue showing popup even if update fails
       }
+
+      setPopupNotification(newNotification);
+      playNotificationSound();
+
+      // Auto-dismiss after 10 seconds
+      setTimeout(() => {
+        setPopupNotification(prev => prev?.id === newNotification.id ? null : prev);
+      }, 10000);
     };
 
     checkNotifications();
     const interval = setInterval(checkNotifications, 30000);
-    
     return () => clearInterval(interval);
-  }, [userEmail, seenIds]);
+  }, [userEmail]); // ← removed seenIds from deps — use ref instead
 
   const playNotificationSound = () => {
-    // Create a simple notification beep using Web Audio API
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
-      
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
-      
-      // Second beep
       setTimeout(() => {
         const osc2 = audioContext.createOscillator();
         const gain2 = audioContext.createGain();
@@ -90,15 +87,10 @@ export default function NotificationPopup({ userEmail }) {
         osc2.start(audioContext.currentTime);
         osc2.stop(audioContext.currentTime + 0.3);
       }, 150);
-    } catch (e) {
-      console.log("Audio not supported");
-    }
+    } catch (e) { /* audio not supported */ }
   };
 
-  const handleDismiss = async () => {
-    if (popupNotification) {
-      await base44.entities.Notification.update(popupNotification.id, { is_read: true });
-    }
+  const handleDismiss = () => {
     setPopupNotification(null);
   };
 
@@ -115,15 +107,12 @@ export default function NotificationPopup({ userEmail }) {
           className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4"
         >
           <div className={`${config.bgColor} border-2 border-white rounded-2xl shadow-2xl overflow-hidden`}>
-            {/* Colored top bar */}
             <div className={`${config.color} h-1.5`} />
-            
             <div className="p-4">
               <div className="flex items-start gap-3">
                 <div className={`${config.color} p-2 rounded-xl flex-shrink-0`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className={`font-semibold ${config.textColor}`}>
@@ -139,14 +128,13 @@ export default function NotificationPopup({ userEmail }) {
                   <p className="text-sm text-slate-600 mt-1 line-clamp-2">
                     {popupNotification.message}
                   </p>
-                  
                   <div className="flex items-center gap-2 mt-3">
                     <Button
                       size="sm"
                       onClick={handleDismiss}
                       className={`${config.color} hover:opacity-90 text-white text-xs px-3 py-1 h-7`}
                     >
-                      Mark as Read
+                      Dismiss
                     </Button>
                     {popupNotification.link && (
                       <Button
