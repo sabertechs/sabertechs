@@ -7,7 +7,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  *   - section_access (custom permission overrides)
  *
  * Triggered by entity automation on Employee create/update,
- * or called directly with { employee_email, employee_role } for manual/bulk sync.
+ * or called directly with { employee_email } for manual/bulk/self-healing sync.
+ *
+ * Security: on direct calls, the role/department/section_access are read
+ * from the Employee entity — never trusted from the request body — to
+ * prevent role escalation.
  */
 Deno.serve(async (req) => {
     try {
@@ -22,12 +26,19 @@ Deno.serve(async (req) => {
             role = body.data.role;
             department = body.data.department;
             section_access = body.data.section_access;
-        } else {
-            // Direct or bulk call
+        } else if (body.employee_email) {
+            // Direct call — look up Employee entity for security
             email = body.employee_email;
-            role = body.employee_role;
-            department = body.department;
-            section_access = body.section_access;
+            const employees = await base44.asServiceRole.entities.Employee.filter({ email });
+            if (employees.length === 0) {
+                return Response.json({ message: 'No employee record found for this email', email });
+            }
+            const emp = employees[0];
+            role = emp.role;
+            department = emp.department;
+            section_access = emp.section_access;
+        } else {
+            return Response.json({ error: 'Missing employee email' }, { status: 400 });
         }
 
         if (!email) {
@@ -62,7 +73,7 @@ Deno.serve(async (req) => {
         const currentData = user.data || {};
         const needsDeptSync = department !== undefined && currentData.department !== department;
         const needsAccessSync = section_access !== undefined &&
-            JSON.stringify(currentData.section_access) !== JSON.stringify(section_access);
+            JSON.stringify(currentData.section_access || []) !== JSON.stringify(section_access || []);
 
         if (needsDeptSync || needsAccessSync) {
             updates.data = {

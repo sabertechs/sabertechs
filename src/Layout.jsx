@@ -76,7 +76,30 @@ export default function Layout({ children, currentPageName }) {
           }
           
           setEmployeeData(emp);
-          
+
+          // Self-healing: sync role/department to platform user if stale.
+          // Fixes the race condition where an Employee record is created before
+          // the platform User account exists (invite not yet accepted) — the
+          // entity automation fires but finds no User to sync to. When the user
+          // later logs in, this detects the drift and re-syncs automatically.
+          if (userData.role !== 'admin' && emp.status === 'active') {
+            const userDept = userData.data?.department;
+            const userSectionAccess = userData.data?.section_access || [];
+            const empSectionAccess = emp.section_access || [];
+            const needsSync = userData.role !== emp.role ||
+              userDept !== emp.department ||
+              JSON.stringify(userSectionAccess) !== JSON.stringify(empSectionAccess);
+
+            if (needsSync && !sessionStorage.getItem('role_sync_attempted')) {
+              sessionStorage.setItem('role_sync_attempted', 'true');
+              base44.functions.invoke('syncEmployeeRole', { employee_email: emp.email })
+                .then(() => window.location.reload())
+                .catch(err => console.error('Role sync failed:', err));
+            } else if (!needsSync) {
+              sessionStorage.removeItem('role_sync_attempted');
+            }
+          }
+
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
             if (emp.role === 'hr' || emp.role === 'manager') {
