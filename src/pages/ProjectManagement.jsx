@@ -265,13 +265,18 @@ export default function ProjectManagement() {
             onClick={async () => {
               setExporting(true);
               setExportResult(null);
-              const res = await base44.functions.invoke('exportProjectsToDrive');
-              setExporting(false);
-              if (res.data?.success) {
-                setExportResult(res.data);
-                toast.success('Exported to Google Drive!');
-              } else {
-                toast.error(res.data?.error || 'Export failed');
+              try {
+                const res = await base44.functions.invoke('exportProjectsToDrive');
+                if (res.data?.success) {
+                  setExportResult(res.data);
+                  toast.success('Exported to Google Drive!');
+                } else {
+                  toast.error(res.data?.error || 'Export failed');
+                }
+              } catch (err) {
+                toast.error(err?.response?.data?.error || err?.message || 'Export failed — check if Google Drive is connected');
+              } finally {
+                setExporting(false);
               }
             }}
             disabled={exporting}
