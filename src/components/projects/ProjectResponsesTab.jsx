@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, MapPin, FileText, Image as ImageIcon, Download, ExternalLink, Archive } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, FileText, Image as ImageIcon, Download, ExternalLink, Archive, FolderOpen } from "lucide-react";
 import { downloadFile } from "./downloadFile";
 import JSZip from "jszip";
 
@@ -96,6 +96,26 @@ export default function ProjectResponsesTab({ projectId, project }) {
   };
 
   const [zipping, setZipping] = useState(false);
+  const [openingFolder, setOpeningFolder] = useState(false);
+
+  const openDriveFolder = async () => {
+    setOpeningFolder(true);
+    try {
+      const res = await base44.functions.invoke('getProjectDriveFolder', {
+        project_id: projectId,
+        project_name: project?.name,
+      });
+      if (res.data?.folder_url) {
+        window.open(res.data.folder_url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error(res.data?.error || 'Could not open Drive folder');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || err?.message || 'Could not open Drive folder');
+    } finally {
+      setOpeningFolder(false);
+    }
+  };
 
   const sanitizeName = (name) => (name || '').replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
@@ -242,18 +262,33 @@ export default function ProjectResponsesTab({ projectId, project }) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Task Responses</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={downloadAllAsZip}
-              disabled={zipping || responses.length === 0}
-            >
-              {zipping ? (
-                <span className="flex items-center gap-2"><Archive className="w-4 h-4 animate-pulse" />Zipping...</span>
-              ) : (
-                <span className="flex items-center gap-2"><Archive className="w-4 h-4" />Download All as ZIP</span>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadAllAsZip}
+                disabled={zipping || responses.length === 0}
+              >
+                {zipping ? (
+                  <span className="flex items-center gap-2"><Archive className="w-4 h-4 animate-pulse" />Zipping...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><Archive className="w-4 h-4" />Download All as ZIP</span>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openDriveFolder}
+                disabled={openingFolder}
+                className="border-green-600 text-green-700 hover:bg-green-50"
+              >
+                {openingFolder ? (
+                  <span className="flex items-center gap-2"><FolderOpen className="w-4 h-4 animate-pulse" />Opening...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><FolderOpen className="w-4 h-4" />View on Drive</span>
+                )}
+              </Button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">

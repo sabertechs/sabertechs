@@ -159,6 +159,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
       setUploadedFiles(prev => [...prev, { url: file_url, name: file.name }]);
       setUploading(false);
       toast.success('Photo captured and uploaded!');
+      uploadToDrive(file_url, file.name);
       cameraStream.getTracks().forEach(t => t.stop());
       setCameraStream(null);
       setCameraActive(false);
@@ -211,8 +212,20 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     setUploadedFiles(prev => [...prev, ...results]);
     setUploading(false);
     toast.success(`${results.length} file(s) uploaded!`);
+    results.forEach(({ url, name }) => uploadToDrive(url, name));
     // Reset input so same file can be re-added if needed
     e.target.value = '';
+  };
+
+  // Sync uploaded file to Google Drive (non-blocking, silent fail)
+  const uploadToDrive = (fileUrl, fileName) => {
+    base44.functions.invoke('uploadTaskFileToDrive', {
+      file_url: fileUrl,
+      project_id: projectId,
+      freelancer_name: userName,
+      task_title: task.title,
+      file_name: fileName,
+    }).catch(() => {});
   };
 
   const removeFile = (index) => {
