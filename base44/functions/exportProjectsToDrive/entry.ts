@@ -157,8 +157,8 @@ Deno.serve(async (req) => {
     const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     const folderName = 'SaberTechs Project Exports';
 
-    // Parse optional folder_id from the already-parsed body
-    const { folder_id } = body;
+    // Parse optional folder_id from request body
+    let { folder_id } = await req.json().catch(() => ({}));
 
     // If no folder_id provided, find or create the shared folder
     if (!folder_id) {
