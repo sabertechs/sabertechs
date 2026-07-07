@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, MapPin, FileText, Image as ImageIcon, Download, ExternalLink, Archive, FolderOpen } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, FileText, Image as ImageIcon, Download, ExternalLink, Archive, FolderOpen, RefreshCw } from "lucide-react";
 import { downloadFile } from "./downloadFile";
 import JSZip from "jszip";
 
@@ -97,6 +97,24 @@ export default function ProjectResponsesTab({ projectId, project }) {
 
   const [zipping, setZipping] = useState(false);
   const [openingFolder, setOpeningFolder] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncOldFiles = async () => {
+    setSyncing(true);
+    try {
+      const res = await base44.functions.invoke('backfillResponsesToDrive', { project_id: projectId });
+      const d = res.data;
+      if (d?.success) {
+        toast.success(`Synced ${d.uploaded} of ${d.total_files} file(s) to Drive${d.failed ? ` (${d.failed} failed)` : ''}`);
+      } else {
+        toast.error(d?.error || 'Sync failed');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || err?.message || 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const openDriveFolder = async () => {
     setOpeningFolder(true);
@@ -273,6 +291,20 @@ export default function ProjectResponsesTab({ projectId, project }) {
                   <span className="flex items-center gap-2"><Archive className="w-4 h-4 animate-pulse" />Zipping...</span>
                 ) : (
                   <span className="flex items-center gap-2"><Archive className="w-4 h-4" />Download All as ZIP</span>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={syncOldFiles}
+                disabled={syncing}
+                className="border-blue-600 text-blue-700 hover:bg-blue-50"
+                title="Copy all previously submitted files to Google Drive"
+              >
+                {syncing ? (
+                  <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" />Syncing...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4" />Sync Old Files</span>
                 )}
               </Button>
               <Button
