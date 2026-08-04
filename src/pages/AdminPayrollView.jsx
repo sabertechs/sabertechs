@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IndianRupee, Briefcase, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import PayrollRecordActions from "@/components/payroll/PayrollRecordActions";
 
 const monthLabel = (d) => `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
 const monthValue = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -62,6 +63,14 @@ export default function AdminPayrollView() {
   };
 
   const handleSearch = () => fetchRecords(selectedMonth, emailFilter);
+
+  const handleRecordUpdated = (updated) => {
+    setRecords(prev => prev.map(r => (r.id === updated.id ? { ...r, ...updated } : r)));
+  };
+
+  const handleRecordDeleted = (id) => {
+    setRecords(prev => prev.filter(r => r.id !== id));
+  };
 
   const freelancers = [...new Set(records.map(r => r.proctor_email))];
   const totalPayment = records.reduce((s, r) => s + (r.payment || 0), 0);
@@ -203,6 +212,7 @@ export default function AdminPayrollView() {
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Drive Timing</th>
                       <th className="text-left py-3 px-3 text-slate-500 font-medium">Role</th>
                       <th className="text-right py-3 px-3 text-slate-500 font-medium">Payment</th>
+                      <th className="text-right py-3 px-3 text-slate-500 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -219,6 +229,9 @@ export default function AdminPayrollView() {
                         <td className="py-3 px-3 text-slate-600">{r.role}</td>
                         <td className="py-3 px-3 text-right font-semibold text-emerald-700">
                           ₹{(r.payment || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3 px-3">
+                          <PayrollRecordActions record={r} onUpdated={handleRecordUpdated} onDeleted={handleRecordDeleted} />
                         </td>
                       </tr>
                     ))}
