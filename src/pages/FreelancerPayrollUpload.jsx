@@ -56,12 +56,17 @@ const parseExcelDate = (val) => {
   }
 
   const num = Number(val);
-  // Excel serial number — reconstruct using local date parts to avoid UTC shift
+  // Excel serial number — days since 1899-12-30
+  // MUST use UTC (not local) for both epoch and date parts, otherwise
+  // timezone offsets (e.g. IST +5:30) shift the date forward by 1 day,
+  // causing month-boundary errors like July 31 → August 1.
   if (!isNaN(num) && num > 1000) {
-    const excelEpoch = new Date(1899, 11, 30); // Dec 30 1899 in local time
-    const ms = excelEpoch.getTime() + num * 86400000;
+    const ms = Date.UTC(1899, 11, 30) + Math.round(num) * 86400000;
     const d = new Date(ms);
-    return toLocalDateString(d);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   const str = val.toString().trim();
