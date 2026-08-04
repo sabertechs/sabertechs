@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 function downloadSample() {
-  const headers = ['Date', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
+  const headers = ['Date (YYYY-MM-DD)', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
   const sampleRow = ['2026-04-01', 'Pooja Goel', '8700159920', 'bpooja298@gmail.com', 'Insead', 'General', 'Proctor', '300'];
   const csvContent = [headers.join(','), sampleRow.join(',')].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -212,9 +212,10 @@ export default function FreelancerPayrollUpload() {
         if (!email) errors.push('Missing Email ID');
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Invalid email: "${email}"`);
 
-        const rawDate = row['Date'] || '';
+        const rawDate = row['Date (YYYY-MM-DD)'] || row['Date'] || '';
         const date = parseExcelDate(rawDate);
         if (!date) errors.push(`Missing or invalid Date: "${rawDate}"`);
+        else console.log(`Payroll import row ${rowNum}: raw date="${rawDate}" -> parsed date="${date}" (month="${date.substring(0, 7)}")`);
 
         const proctorName = (row['Proctor Name'] || '').toString().trim();
         const mobileNumber = (row['Mobile Number'] || '').toString().trim();
@@ -333,6 +334,9 @@ export default function FreelancerPayrollUpload() {
               <p className="font-medium text-slate-700">Upload Payroll Report (CSV or XLSX)</p>
               <p className="text-sm text-slate-500">
                 Required columns: <span className="font-semibold text-indigo-700">Date, Proctor Name, Mobile Number, Email ID, Client Name, Drive timing, Role, Payment</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Date column must be in <span className="font-semibold">YYYY-MM-DD</span> format (e.g. 2026-07-31). DD-MM-YYYY and DD/MM/YYYY are also accepted.
               </p>
             </div>
             <div className="flex items-center gap-3">

@@ -29,6 +29,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No records provided' }, { status: 400 });
     }
 
+    // Log the exact date + project_month used for each record in this chunk, for traceability
+    console.log(`uploadPayrollChunk: dates in this chunk: ${records.map(r => `${r.proctor_email}=${r.date}(${r.project_month})`).join(', ')}`);
+
     const result = await base44.asServiceRole.entities.FreelancerPayroll.bulkCreate(records);
     const count = Array.isArray(result) ? result.length : records.length;
     console.log(`uploadPayrollChunk: inserted ${count} of ${records.length}`);
