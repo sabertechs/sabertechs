@@ -99,35 +99,17 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
-          "user_condition": {
-            "data.role": "hr"
-          }
-        },
-        {
-          "data.department": "{{user.data.department}}",
-          "$or": [
+          "$and": [
             {
-              "user_condition": {
-                "role": "manager"
-              }
+              "data.department": "{{user.data.department}}"
             },
             {
               "user_condition": {
-                "data.role": "manager"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "department_head"
-              }
-            },
-            {
-              "user_condition": {
-                "data.role": "department_head"
+                "data.designation": "senior_manager"
               }
             }
           ]
@@ -137,8 +119,14 @@
     "update": {
       "$or": [
         {
-          "data.employee_email": "{{user.email}}",
-          "data.status": "pending"
+          "$and": [
+            {
+              "data.employee_email": "{{user.email}}"
+            },
+            {
+              "data.status": "pending"
+            }
+          ]
         },
         {
           "user_condition": {
@@ -147,35 +135,17 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
-          "user_condition": {
-            "data.role": "hr"
-          }
-        },
-        {
-          "data.department": "{{user.data.department}}",
-          "$or": [
+          "$and": [
             {
-              "user_condition": {
-                "role": "manager"
-              }
+              "data.department": "{{user.data.department}}"
             },
             {
               "user_condition": {
-                "data.role": "manager"
-              }
-            },
-            {
-              "user_condition": {
-                "role": "department_head"
-              }
-            },
-            {
-              "user_condition": {
-                "data.role": "department_head"
+                "data.designation": "senior_manager"
               }
             }
           ]
@@ -185,8 +155,14 @@
     "delete": {
       "$or": [
         {
-          "data.employee_email": "{{user.email}}",
-          "data.status": "pending"
+          "$and": [
+            {
+              "data.employee_email": "{{user.email}}"
+            },
+            {
+              "data.status": "pending"
+            }
+          ]
         },
         {
           "user_condition": {
@@ -195,12 +171,7 @@
         },
         {
           "user_condition": {
-            "role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
