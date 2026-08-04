@@ -63,17 +63,12 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
           "user_condition": {
-            "role": "manager"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "department_head"
+            "data.designation": "senior_manager"
           }
         },
         {
