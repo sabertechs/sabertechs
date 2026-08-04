@@ -16,20 +16,33 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PERMISSIONS, DEFAULT_PERMISSIONS_BY_ROLE, getPermissionModules } from "@/lib/permissions";
+import { PERMISSIONS, DEFAULT_PERMISSIONS_BY_DESIGNATION, getPermissionModules, getDesignationLevel } from "@/lib/permissions";
 
-const roleColors = {
-  hr: 'bg-blue-100 text-blue-700',
-  manager: 'bg-purple-100 text-purple-700',
-  department_head: 'bg-amber-100 text-amber-700',
-  employee: 'bg-green-100 text-green-700',
-  freelancer: 'bg-pink-100 text-pink-700',
+const DESIGNATION_OPTIONS = [
+  { value: "hr_head", label: "HR Head", level: "hr" },
+  { value: "senior_manager", label: "Senior Manager", level: "manager" },
+  { value: "proctor", label: "Proctor", level: "freelancer" },
+  { value: "employee", label: "Standard Employee", level: "employee" },
+];
+
+const levelColors = {
+  hr: "bg-blue-100 text-blue-700",
+  manager: "bg-purple-100 text-purple-700",
+  freelancer: "bg-pink-100 text-pink-700",
+  employee: "bg-green-100 text-green-700",
+};
+
+const levelLabels = {
+  hr: "HR",
+  manager: "Manager",
+  freelancer: "Freelancer",
+  employee: "Employee",
 };
 
 export default function AccessControl() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedPerms, setSelectedPerms] = useState([]);
@@ -53,15 +66,19 @@ export default function AccessControl() {
     }
   });
 
+  const getLevel = (emp) => {
+    if (emp.role === 'admin') return 'hr';
+    return getDesignationLevel(emp.designation);
+  };
+
   const handleEditAccess = (employee) => {
     setSelectedEmployee(employee);
-    // Compute effective permissions using role defaults + delta from section_access
-    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || [];
+    const level = getLevel(employee);
+    const defaults = DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || [];
     const extras = (employee.section_access || []).filter(p => !p.startsWith('!'));
     const removed = (employee.section_access || []).filter(p => p.startsWith('!')).map(p => p.slice(1));
-    const perms = [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
+    const perms = [...new Set([...defaults, ...extras])].filter(p => !removed.includes(p));
     setSelectedPerms(perms);
-    // Expand all modules by default in dialog
     const expanded = {};
     Object.keys(permissionModules).forEach(m => expanded[m] = true);
     setExpandedModules(expanded);
@@ -71,33 +88,30 @@ export default function AccessControl() {
   const handleSave = async () => {
     if (!selectedEmployee) return;
     setSaving(true);
-    // Only store permissions that differ from role defaults:
-    // - extras: permissions added beyond role defaults
-    // - removed: role defaults explicitly removed (stored as negations prefixed with "!")
-    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[selectedEmployee.role] || [];
-    const extras = selectedPerms.filter(p => !roleDefaults.includes(p));
-    const removed = roleDefaults.filter(p => !selectedPerms.includes(p)).map(p => `!${p}`);
-    // If no delta, save empty array so role defaults apply cleanly
+    const level = getLevel(selectedEmployee);
+    const defaults = DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || [];
+    const extras = selectedPerms.filter(p => !defaults.includes(p));
+    const removed = defaults.filter(p => !selectedPerms.includes(p)).map(p => `!${p}`);
     const toSave = [...extras, ...removed];
     await updateMutation.mutateAsync({ id: selectedEmployee.id, data: { section_access: toSave } });
     setSaving(false);
   };
 
-  const handleResetToRoleDefault = () => {
+  const handleResetToDefault = () => {
     if (!selectedEmployee) return;
-    // Reset to pure role defaults — saving this will clear section_access
-    setSelectedPerms(DEFAULT_PERMISSIONS_BY_ROLE[selectedEmployee.role] || []);
-    toast.info('Reset to role defaults — click Save to apply');
+    const level = getLevel(selectedEmployee);
+    setSelectedPerms(DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || []);
+    toast.info('Reset to designation defaults — click Save to apply');
   };
 
   const handleClearAll = () => setSelectedPerms([]);
   const handleSelectAll = () => setSelectedPerms(Object.keys(PERMISSIONS));
 
-  const handleRoleChange = async (empId, newRole) => {
-    // When role changes, clear section_access so they inherit new role defaults
-    await base44.entities.Employee.update(empId, { role: newRole, section_access: [] });
+  const handleDesignationChange = async (empId, newDesignation) => {
+    const actualDesignation = newDesignation === 'employee' ? '' : newDesignation;
+    await base44.entities.Employee.update(empId, { designation: actualDesignation, section_access: [] });
     queryClient.invalidateQueries(['employees-access']);
-    toast.success(`Role updated — will use ${newRole} default permissions`);
+    toast.success(`Designation updated — permissions reset to defaults`);
   };
 
   const togglePerm = (key) => {
@@ -114,84 +128,81 @@ export default function AccessControl() {
     }
   };
 
-  const handleBulkReset = async (role) => {
-    const roleEmps = employees.filter(e => e.role === role);
-    if (!roleEmps.length) { toast.error(`No ${role}s found`); return; }
+  const handleBulkReset = async (level) => {
+    const levelEmps = employees.filter(e => getLevel(e) === level);
+    if (!levelEmps.length) { toast.error(`No ${levelLabels[level]}s found`); return; }
     setSaving(true);
-    await Promise.all(roleEmps.map(e => base44.entities.Employee.update(e.id, { section_access: [] })));
+    await Promise.all(levelEmps.map(e => base44.entities.Employee.update(e.id, { section_access: [] })));
     queryClient.invalidateQueries(['employees-access']);
     setSaving(false);
-    toast.success(`Cleared custom permissions for ${roleEmps.length} ${role.replace('_', ' ')}(s) — they now use role defaults`);
+    toast.success(`Cleared custom permissions for ${levelEmps.length} ${levelLabels[level]}(s)`);
   };
 
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       emp.email?.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === "all" || emp.role === roleFilter;
-    return matchesSearch && matchesRole;
+    const matchesLevel = levelFilter === "all" || getLevel(emp) === levelFilter;
+    return matchesSearch && matchesLevel;
   });
 
   const getEffectivePerms = (emp) => {
-    const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[emp.role] || [];
-    if (!emp.section_access || emp.section_access.length === 0) return roleDefaults;
+    const level = getLevel(emp);
+    const defaults = DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || [];
+    if (!emp.section_access || emp.section_access.length === 0) return defaults;
     const extras = emp.section_access.filter(p => !p.startsWith('!'));
     const removed = emp.section_access.filter(p => p.startsWith('!')).map(p => p.slice(1));
-    return [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
+    return [...new Set([...defaults, ...extras])].filter(p => !removed.includes(p));
   };
 
   const isCustomized = (emp) => emp.section_access && emp.section_access.length > 0;
 
-  // In the dialog, diff against role defaults
-  const roleDefaultPerms = selectedEmployee ? (DEFAULT_PERMISSIONS_BY_ROLE[selectedEmployee.role] || []) : [];
-  const addedPerms = selectedPerms.filter(p => !roleDefaultPerms.includes(p));
-  const removedPerms = roleDefaultPerms.filter(p => !selectedPerms.includes(p));
+  const selectedLevel = selectedEmployee ? getLevel(selectedEmployee) : 'employee';
+  const levelDefaultPerms = DEFAULT_PERMISSIONS_BY_DESIGNATION[selectedLevel] || [];
+  const addedPerms = selectedPerms.filter(p => !levelDefaultPerms.includes(p));
+  const removedPerms = levelDefaultPerms.filter(p => !selectedPerms.includes(p));
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Access Control</h2>
-          <p className="text-slate-500">Manage roles and granular permissions per employee</p>
+          <p className="text-slate-500">Manage permissions by designation</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {['hr', 'manager', 'department_head', 'employee', 'freelancer'].map(role => (
-            <Button key={role} variant="outline" size="sm" disabled={saving} onClick={() => handleBulkReset(role)} className="text-xs">
+          {['hr', 'manager', 'freelancer', 'employee'].map(level => (
+            <Button key={level} variant="outline" size="sm" disabled={saving} onClick={() => handleBulkReset(level)} className="text-xs">
               <RotateCcw className="w-3 h-3 mr-1" />
-              Reset {role.replace('_', ' ')}s
+              Reset {levelLabels[level]}s
             </Button>
           ))}
         </div>
       </div>
 
-      {/* How it works */}
       <Card className="border-0 shadow-sm bg-gradient-to-r from-indigo-50 to-purple-50">
         <CardContent className="pt-5 pb-5">
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-slate-700 space-y-1">
               <p className="font-semibold text-slate-800">How permissions work</p>
-              <p>Every employee inherits their <strong>role's default permissions</strong>. You can override any individual with a custom permission set. Custom permissions completely replace the role defaults for that person.</p>
-              <p className="text-slate-500">Example: An "Employee" who manages freelancers → give them <em>view_freelancers</em> + <em>manage_projects</em> without making them a full Manager.</p>
+              <p>Permissions are driven by <strong>designation</strong>. Set an employee's designation to change their base access level, then fine-tune with individual permission overrides.</p>
+              <p className="text-slate-500">HR Head = full access · Senior Manager = team management · Proctor = freelancer access · Standard Employee = self-service only</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {['hr', 'manager', 'department_head', 'employee', 'freelancer'].map(role => (
-          <Card key={role} className="border-0 shadow-sm">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {['hr', 'manager', 'freelancer', 'employee'].map(level => (
+          <Card key={level} className="border-0 shadow-sm">
             <CardContent className="pt-5 pb-4">
-              <p className="text-2xl font-bold text-slate-800">{employees.filter(e => e.role === role).length}</p>
-              <p className="text-xs text-slate-500 capitalize mt-0.5">{role.replace('_', ' ')}s</p>
-              <p className="text-xs text-indigo-500 mt-1">{employees.filter(e => e.role === role && isCustomized(e)).length} customized</p>
+              <p className="text-2xl font-bold text-slate-800">{employees.filter(e => getLevel(e) === level).length}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{levelLabels[level]}s</p>
+              <p className="text-xs text-indigo-500 mt-1">{employees.filter(e => getLevel(e) === level && isCustomized(e)).length} customized</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Filters */}
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-5">
           <div className="flex flex-col md:flex-row gap-3">
@@ -199,24 +210,22 @@ export default function AccessControl() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input placeholder="Search employees..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select value={levelFilter} onValueChange={setLevelFilter}>
               <SelectTrigger className="w-full md:w-44">
-                <SelectValue placeholder="Filter by role" />
+                <SelectValue placeholder="Filter by level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="hr">HR</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="department_head">Department Head</SelectItem>
-                <SelectItem value="employee">Employee</SelectItem>
                 <SelectItem value="freelancer">Freelancer</SelectItem>
+                <SelectItem value="employee">Employee</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Employee Table */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -224,8 +233,8 @@ export default function AccessControl() {
               <thead className="bg-slate-50">
                 <tr>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Employee</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Change Role</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Designation</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Change Designation</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Permissions</th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
                 </tr>
@@ -233,6 +242,7 @@ export default function AccessControl() {
               <tbody>
                 {filteredEmployees.map(emp => {
                   const perms = getEffectivePerms(emp);
+                  const level = getLevel(emp);
                   const customized = isCustomized(emp);
                   return (
                     <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
@@ -250,23 +260,24 @@ export default function AccessControl() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Badge className={roleColors[emp.role] || roleColors.employee}>
-                            {(emp.role || 'employee').replace('_', ' ')}
+                          <Badge className={levelColors[level]}>
+                            {levelLabels[level]}
                           </Badge>
                           {customized && <Badge variant="outline" className="text-xs text-indigo-600 border-indigo-300">custom</Badge>}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Select value={emp.role || 'employee'} onValueChange={val => handleRoleChange(emp.id, val)}>
-                          <SelectTrigger className="w-40 h-8 text-sm">
+                        <Select 
+                          value={emp.designation || 'employee'} 
+                          onValueChange={val => handleDesignationChange(emp.id, val)}
+                        >
+                          <SelectTrigger className="w-44 h-8 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="employee">Employee</SelectItem>
-                            <SelectItem value="freelancer">Freelancer</SelectItem>
-                            <SelectItem value="department_head">Department Head</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="hr">HR</SelectItem>
+                            {DESIGNATION_OPTIONS.map(opt => (
+                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </td>
@@ -293,7 +304,6 @@ export default function AccessControl() {
         </CardContent>
       </Card>
 
-      {/* Edit Permissions Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -305,7 +315,6 @@ export default function AccessControl() {
 
           {selectedEmployee && (
             <div className="space-y-5">
-              {/* Employee info */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
                 {selectedEmployee.profile_photo
                   ? <img src={selectedEmployee.profile_photo} alt="" className="w-11 h-11 rounded-full object-cover" />
@@ -313,42 +322,39 @@ export default function AccessControl() {
                 }
                 <div className="flex-1">
                   <p className="font-semibold text-slate-800">{selectedEmployee.full_name}</p>
-                  <p className="text-sm text-slate-500">{selectedEmployee.email} · {selectedEmployee.designation}</p>
+                  <p className="text-sm text-slate-500">{selectedEmployee.email} · {selectedEmployee.designation || 'Standard Employee'}</p>
                 </div>
-                <Badge className={roleColors[selectedEmployee.role]}>
-                  {(selectedEmployee.role || 'employee').replace('_', ' ')}
+                <Badge className={levelColors[selectedLevel]}>
+                  {levelLabels[selectedLevel]}
                 </Badge>
               </div>
 
-              {/* Diff summary */}
               {(addedPerms.length > 0 || removedPerms.length > 0) && (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {addedPerms.length > 0 && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="font-medium text-green-700 mb-1">+ Added vs role default</p>
+                      <p className="font-medium text-green-700 mb-1">+ Added vs default</p>
                       {addedPerms.map(p => <p key={p} className="text-green-600 text-xs">{PERMISSIONS[p]?.label || p}</p>)}
                     </div>
                   )}
                   {removedPerms.length > 0 && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="font-medium text-red-700 mb-1">− Removed vs role default</p>
+                      <p className="font-medium text-red-700 mb-1">− Removed vs default</p>
                       {removedPerms.map(p => <p key={p} className="text-red-600 text-xs">{PERMISSIONS[p]?.label || p}</p>)}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Quick actions */}
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={handleResetToRoleDefault}>
-                  <RotateCcw className="w-3 h-3 mr-1" /> Reset to {selectedEmployee.role} defaults
+                <Button variant="outline" size="sm" onClick={handleResetToDefault}>
+                  <RotateCcw className="w-3 h-3 mr-1" /> Reset to {levelLabels[selectedLevel]} defaults
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleSelectAll}>All</Button>
                 <Button variant="outline" size="sm" onClick={handleClearAll}>None</Button>
                 <span className="ml-auto text-sm text-slate-500 self-center">{selectedPerms.length} selected</span>
               </div>
 
-              {/* Permission modules */}
               <div className="space-y-3">
                 {Object.entries(permissionModules).map(([moduleName, modulePerms]) => {
                   const isExpanded = expandedModules[moduleName];
@@ -376,7 +382,7 @@ export default function AccessControl() {
                       {isExpanded && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-4">
                           {modulePerms.map(perm => {
-                            const isInDefault = roleDefaultPerms.includes(perm.key);
+                            const isInDefault = levelDefaultPerms.includes(perm.key);
                             const isSelected = selectedPerms.includes(perm.key);
                             return (
                               <div

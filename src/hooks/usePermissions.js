@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getEffectivePermissions } from '@/lib/permissions';
+import { getEffectivePermissions, getDesignationLevel } from '@/lib/permissions';
 
 /**
  * Hook that returns permission-checking utilities for the current user.
- * 
+ *
  * Usage:
- *   const { can, permissions, isAdmin, loading } = usePermissions();
+ *   const { can, permissions, isAdmin, designationLevel, loading } = usePermissions();
  *   if (can('view_all_payslips')) { ... }
  */
 export function usePermissions() {
@@ -23,8 +23,7 @@ export function usePermissions() {
         if (employees.length > 0) {
           setEmployee(employees[0]);
         } else if (user?.role === 'admin') {
-          // Platform admins get full access
-          setEmployee({ role: 'hr', section_access: [] });
+          setEmployee({ role: 'admin', designation: 'hr_head', section_access: [] });
         }
       } catch (e) {
         // Not logged in
@@ -36,13 +35,16 @@ export function usePermissions() {
   }, []);
 
   const permissions = useMemo(() => getEffectivePermissions(employee), [employee]);
-
   const isAdmin = userRole === 'admin';
+  const designationLevel = useMemo(() => {
+    if (isAdmin) return 'hr';
+    return getDesignationLevel(employee?.designation);
+  }, [employee?.designation, isAdmin]);
 
   const can = useMemo(() => (permission) => {
-    if (isAdmin) return true; // platform admins bypass all checks
+    if (isAdmin) return true;
     return permissions.includes(permission);
   }, [permissions, isAdmin]);
 
-  return { can, permissions, employee, isAdmin, loading };
+  return { can, permissions, employee, isAdmin, designationLevel, loading };
 }

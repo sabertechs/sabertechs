@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
-import { getEffectivePermissions } from "@/lib/permissions";
+import { getEffectivePermissions, getDesignationLevel } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -66,8 +66,9 @@ export default function Layout({ children, currentPageName }) {
         if (employees.length > 0) {
           const emp = employees[0];
           
-          // Check if employee status is pending and not HR/manager/department_head
-          if (emp.status === 'pending' && emp.role !== 'hr' && emp.role !== 'manager' && emp.role !== 'department_head') {
+          // Check if employee status is pending and not HR/manager
+          const empLevel = getDesignationLevel(emp.designation);
+          if (emp.status === 'pending' && empLevel !== 'hr' && empLevel !== 'manager') {
             // Redirect pending employees to registration to complete profile
             if (currentPageName !== "Registration") {
               window.location.href = createPageUrl("Registration");
@@ -79,11 +80,10 @@ export default function Layout({ children, currentPageName }) {
 
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
-            if (emp.role === 'hr' || emp.role === 'manager') {
+            const regLevel = getDesignationLevel(emp.designation);
+            if (emp.role === 'admin' || regLevel === 'hr' || regLevel === 'manager') {
               window.location.replace(createPageUrl("HRDashboard"));
-            } else if (emp.role === 'department_head') {
-              window.location.replace(createPageUrl("DeptHeadDashboard"));
-            } else if (emp.role === 'freelancer') {
+            } else if (regLevel === 'freelancer') {
               window.location.replace(createPageUrl("FreelancerDashboard"));
             } else {
               window.location.replace(createPageUrl("EmployeeDashboard"));
@@ -92,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
           }
         } else if (userData.role === 'admin') {
           // Admin users don't need employee record - treat as HR
-          setEmployeeData({ role: 'hr', email: userData.email });
+          setEmployeeData({ role: 'admin', designation: 'hr_head', email: userData.email });
         } else {
           // No employee record - redirect to registration to complete profile
           if (currentPageName !== "Registration") {
@@ -136,6 +136,10 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
+  const designationLevel = useMemo(() => {
+    if (userRole === 'admin') return 'hr';
+    return getDesignationLevel(employeeData?.designation);
+  }, [employeeData?.designation, userRole]);
 
   const getNavItems = useCallback(() => {
     const items = [];
@@ -143,19 +147,17 @@ export default function Layout({ children, currentPageName }) {
     const perms = getEffectivePermissions(employeeData);
     const can = (permission) => userRole === 'admin' || perms.includes(permission);
 
-    // Dashboard based on role
-    if (userRole === 'hr' || userRole === 'manager' || userRole === 'admin') {
+    // Dashboard based on designation level
+    if (userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
-    } else if (userRole === 'department_head') {
-      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "DeptHeadDashboard" });
-    } else if (userRole === 'freelancer') {
+    } else if (designationLevel === 'freelancer') {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "FreelancerDashboard" });
     } else {
       items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
     }
 
     // Freelancer self-service
-    if (userRole === 'freelancer') {
+    if (designationLevel === 'freelancer') {
       if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
@@ -164,7 +166,7 @@ export default function Layout({ children, currentPageName }) {
     }
 
     // Regular employee self-service
-    if (userRole === 'employee') {
+    if (designationLevel === 'employee') {
       if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       if (can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
@@ -222,7 +224,7 @@ export default function Layout({ children, currentPageName }) {
     if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
 
     // Reports
-    if (userRole === 'admin' || userRole === 'hr' || userRole === 'manager') {
+    if (userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') {
       items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
     }
 
@@ -232,7 +234,7 @@ export default function Layout({ children, currentPageName }) {
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
 
     return items;
-  }, [userRole, employeeData, moduleSettings]);
+  }, [userRole, designationLevel, employeeData, moduleSettings]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 
@@ -257,7 +259,7 @@ export default function Layout({ children, currentPageName }) {
                   <NotificationPopup userEmail={user?.email} />
 
                   {/* Background processor for scheduled notifications */}
-                  {(userRole === 'hr' || userRole === 'manager' || userRole === 'department_head') && (
+                  {(userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') && (
                     <ScheduledNotificationProcessor />
                   )}
       
@@ -336,7 +338,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <div className="flex-1 min-w-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-sm font-semibold text-slate-800 truncate">{user?.full_name || 'User'}</p>
-                <p className="text-xs text-slate-500 capitalize">{userRole.replace('_', ' ')}</p>
+                <p className="text-xs text-slate-500 capitalize">{(employeeData?.designation || userRole).replace('_', ' ')}</p>
               </div>
             </div>
           </div>

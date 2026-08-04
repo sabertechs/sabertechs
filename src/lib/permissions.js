@@ -1,12 +1,14 @@
 /**
  * Central Permission Configuration
  * 
- * Each permission is a string key. Permissions are grouped by module.
- * The layout, pages, and components check these permissions — not raw roles.
+ * Permissions are driven by DESIGNATION, not role.
+ * Role is only used for admin (platform-level) access.
  * 
- * An employee's effective permissions = their role's defaults + any overrides in section_access.
- * If section_access is set (non-empty), it IS the complete permission list (full override).
- * If section_access is empty/null, we fall back to role defaults.
+ * Designation → Permission Level mapping:
+ *   hr_head         → hr (full access)
+ *   senior_manager  → manager (team management, no system settings)
+ *   proctor         → freelancer (project access + task submission)
+ *   (anything else) → employee (self-service only)
  */
 
 export const PERMISSIONS = {
@@ -61,11 +63,23 @@ export const PERMISSIONS = {
 };
 
 /**
- * Default permissions for each role.
- * These apply when an employee has no section_access overrides.
+ * Map a designation to a permission level.
+ * Returns: 'hr', 'manager', 'freelancer', or 'employee'
  */
-export const DEFAULT_PERMISSIONS_BY_ROLE = {
-  hr: Object.keys(PERMISSIONS), // HR gets everything by default
+export function getDesignationLevel(designation) {
+  if (!designation) return 'employee';
+  const d = designation.toLowerCase().replace(/\s+/g, '_');
+  if (d === 'hr_head' || d === 'hr_manager') return 'hr';
+  if (d === 'senior_manager') return 'manager';
+  if (d === 'proctor') return 'freelancer';
+  return 'employee';
+}
+
+/**
+ * Default permissions for each designation level.
+ */
+export const DEFAULT_PERMISSIONS_BY_DESIGNATION = {
+  hr: Object.keys(PERMISSIONS),
 
   manager: [
     'view_employees', 'manage_employees',
@@ -79,51 +93,35 @@ export const DEFAULT_PERMISSIONS_BY_ROLE = {
     'view_recruitment', 'manage_recruitment',
     'manage_notifications',
     'view_team',
-    // Note: NO manage_assets, NO access_settings, NO access_control, NO module_management
-  ],
-
-  department_head: [
-    'view_employees', 'manage_employees',
-    'view_offer_letters', 'manage_onboarding',
-    'bg_verification', 'bulk_pan_verify',
-    'view_freelancers', 'manage_freelancers', 'upload_payroll', 'view_payroll_records',
-    'view_all_payslips', 'manage_payslips',
-    'manage_attendance',
-    'approve_expenses',
-    'view_projects', 'manage_projects', 'view_project_analytics', 'manage_task_templates',
-    'view_recruitment', 'manage_recruitment',
-    'view_team',
-    // Note: NO api_verification, NO manage_assets, NO system permissions
-  ],
-
-  employee: [
-    // Self-service only — these drive the employee-facing sidebar
-    'manage_attendance', // shows "My Attendance"
-    'approve_expenses',  // shows "My Expenses"
-    'view_team',
   ],
 
   freelancer: [
     'view_projects',
   ],
+
+  employee: [
+    'manage_attendance',
+    'approve_expenses',
+    'view_team',
+  ],
 };
 
 /**
  * Get the effective permissions for an employee.
- * Always starts with the role's default permissions.
- * section_access stores only the DELTA:
- *   - "perm_key"  → extra permission added beyond role defaults
- *   - "!perm_key" → role default permission explicitly removed
+ * Admins get all permissions. Otherwise, permissions are driven by designation.
+ * section_access stores overrides (extras + removals prefixed with "!").
  */
 export function getEffectivePermissions(employee) {
   if (!employee) return [];
-  const roleDefaults = DEFAULT_PERMISSIONS_BY_ROLE[employee.role] || DEFAULT_PERMISSIONS_BY_ROLE.employee;
+  if (employee.role === 'admin') return Object.keys(PERMISSIONS);
+  const level = getDesignationLevel(employee.designation);
+  const defaults = DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || DEFAULT_PERMISSIONS_BY_DESIGNATION.employee;
   if (!employee.section_access || employee.section_access.length === 0) {
-    return roleDefaults;
+    return defaults;
   }
   const extras = employee.section_access.filter(p => !p.startsWith('!'));
   const removed = employee.section_access.filter(p => p.startsWith('!')).map(p => p.slice(1));
-  const merged = [...new Set([...roleDefaults, ...extras])].filter(p => !removed.includes(p));
+  const merged = [...new Set([...defaults, ...extras])].filter(p => !removed.includes(p));
   return merged;
 }
 
