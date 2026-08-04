@@ -74,7 +74,8 @@
       "type": "string"
     },
     "designation": {
-      "type": "string"
+      "type": "string",
+      "description": "Job title \u2014 drives permission level: hr_head=HR, senior_manager=Manager, proctor=Freelancer, else=Employee"
     },
     "employment_type": {
       "type": "string",
@@ -169,20 +170,18 @@
     "role": {
       "type": "string",
       "enum": [
-        "employee",
-        "freelancer",
-        "department_head",
-        "manager",
-        "hr"
+        "admin",
+        "employee"
       ],
-      "default": "employee"
+      "default": "employee",
+      "description": "Admin or employee only \u2014 designation drives access level"
     },
     "section_access": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "List of section IDs the user can access"
+      "description": "Permission overrides: 'perm_key' to add, '!perm_key' to remove"
     },
     "status": {
       "type": "string",
@@ -309,17 +308,12 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
           "user_condition": {
-            "data.role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "manager"
+            "data.designation": "senior_manager"
           }
         }
       ]
@@ -336,22 +330,12 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
           "user_condition": {
-            "data.role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "department_head"
+            "data.designation": "senior_manager"
           }
         },
         {
@@ -363,59 +347,21 @@
               "data.department": "{{user.data.department}}"
             },
             {
-              "$or": [
-                {
-                  "user_condition": {
-                    "role": "manager"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "data.role": "manager"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "role": "department_head"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "data.role": "department_head"
-                  }
-                }
-              ]
+              "user_condition": {
+                "data.designation": "senior_manager"
+              }
             }
           ]
         },
         {
           "$and": [
             {
-              "data.role": "freelancer"
+              "data.designation": "proctor"
             },
             {
-              "$or": [
-                {
-                  "user_condition": {
-                    "role": "manager"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "data.role": "manager"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "role": "department_head"
-                  }
-                },
-                {
-                  "user_condition": {
-                    "data.role": "department_head"
-                  }
-                }
-              ]
+              "user_condition": {
+                "data.designation": "senior_manager"
+              }
             }
           ]
         }
@@ -433,17 +379,12 @@
         },
         {
           "user_condition": {
-            "role": "hr"
+            "data.designation": "hr_head"
           }
         },
         {
           "user_condition": {
-            "data.role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "manager"
+            "data.designation": "senior_manager"
           }
         },
         {
@@ -460,7 +401,7 @@
         },
         {
           "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
