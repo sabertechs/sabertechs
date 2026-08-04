@@ -58,12 +58,7 @@
         },
         {
           "user_condition": {
-            "role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
@@ -80,12 +75,7 @@
         },
         {
           "user_condition": {
-            "role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
@@ -99,12 +89,7 @@
         },
         {
           "user_condition": {
-            "role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
@@ -118,12 +103,7 @@
         },
         {
           "user_condition": {
-            "role": "hr"
-          }
-        },
-        {
-          "user_condition": {
-            "data.role": "hr"
+            "data.designation": "hr_head"
           }
         }
       ]
