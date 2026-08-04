@@ -2,27 +2,44 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import * as XLSX from 'npm:xlsx@0.18.5';
 
 // Helper: convert Excel serial date OR date string to YYYY-MM-DD
+// IMPORTANT: always use UTC epoch + UTC getters (never toISOString() on a
+// locally-constructed Date, and never mix local Date construction with
+// UTC output) — mixing the two shifts the date by 1 day depending on the
+// server/browser timezone, which previously caused month-boundary bugs
+// (e.g. July 31 stored as August 1).
+function toUTCDateString(y, m, d) {
+  const yyyy = String(y).padStart(4, '0');
+  const mm = String(m).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function parseExcelDate(val) {
   if (!val && val !== 0) return '';
   const num = Number(val);
   if (!isNaN(num) && num > 1000) {
-    // Excel serial date: days since 1899-12-30
-    const excelEpoch = new Date(1899, 11, 30);
-    const d = new Date(excelEpoch.getTime() + num * 86400000);
-    return d.toISOString().split('T')[0];
+    // Excel serial date: days since 1899-12-30 (UTC epoch, UTC getters)
+    const ms = Date.UTC(1899, 11, 30) + Math.round(num) * 86400000;
+    const d = new Date(ms);
+    return toUTCDateString(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
   }
   // Try as string date (dd-mm-yy, dd/mm/yyyy, yyyy-mm-dd, etc.)
   const str = val.toString().trim();
-  // Try dd-mm-yy or dd/mm/yy or dd-mm-yyyy or dd/mm/yyyy
+
+  // dd-mm-yy or dd/mm/yy or dd-mm-yyyy or dd/mm/yyyy — parse parts directly, no Date object
   const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
   if (dmyMatch) {
     let [, d, m, y] = dmyMatch;
     if (y.length === 2) y = '20' + y;
-    const dt = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-    if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+    return toUTCDateString(y, m, d);
   }
-  const dt = new Date(str);
-  if (!isNaN(dt)) return dt.toISOString().split('T')[0];
+
+  // yyyy-mm-dd (already ISO-like) — parse parts directly, no Date object
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    return toUTCDateString(isoMatch[1], isoMatch[2], isoMatch[3]);
+  }
+
   return '';
 }
 
