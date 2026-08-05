@@ -188,6 +188,11 @@
           }
         },
         {
+          "user_condition": {
+            "data.designation": "assistant_manager"
+          }
+        },
+        {
           "data.assigned_to": "{{user.email}}"
         }
       ]
