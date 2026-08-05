@@ -71,6 +71,7 @@ export function getDesignationLevel(designation) {
   const d = designation.toLowerCase().replace(/\s+/g, '_');
   if (d === 'hr_head' || d === 'hr_manager') return 'hr';
   if (d === 'senior_manager') return 'manager';
+  if (d === 'assistant_manager') return 'assistant_manager';
   if (d === 'proctor') return 'freelancer';
   return 'employee';
 }
@@ -92,6 +93,16 @@ export const DEFAULT_PERMISSIONS_BY_DESIGNATION = {
     'view_projects', 'manage_projects', 'view_project_analytics', 'manage_task_templates',
     'view_recruitment', 'manage_recruitment',
     'manage_notifications',
+    'view_team',
+  ],
+
+  assistant_manager: [
+    'view_employees',
+    'view_freelancers',
+    'view_projects',
+    'view_payroll_records',
+    'manage_attendance',
+    'approve_expenses',
     'view_team',
   ],
 

@@ -165,8 +165,8 @@ export default function Layout({ children, currentPageName }) {
       return items;
     }
 
-    // Regular employee self-service
-    if (designationLevel === 'employee') {
+    // Regular employee self-service (includes assistant managers with elevated view permissions)
+    if (designationLevel === 'employee' || designationLevel === 'assistant_manager') {
       if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       if (can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
