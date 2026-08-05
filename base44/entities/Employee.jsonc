@@ -75,7 +75,7 @@
     },
     "designation": {
       "type": "string",
-      "description": "Job title \u2014 drives permission level: hr_head=HR, senior_manager=Manager, proctor=Freelancer, else=Employee"
+      "description": "Job title \u2014 drives permission level: hr_head=HR, senior_manager=Manager, assistant_manager=Assistant Manager, proctor=Freelancer, else=Employee"
     },
     "employment_type": {
       "type": "string",
@@ -336,6 +336,11 @@
         {
           "user_condition": {
             "data.designation": "senior_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "assistant_manager"
           }
         },
         {
