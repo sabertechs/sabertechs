@@ -93,5 +93,60 @@
     "payout",
     "location",
     "description"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        }
+      ]
+    }
+  }
 }
