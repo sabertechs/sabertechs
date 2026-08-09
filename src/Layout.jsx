@@ -135,6 +135,13 @@ export default function Layout({ children, currentPageName }) {
     gcTime: 60 * 60 * 1000,
   });
 
+  const { data: designationPermissions = [] } = useQuery({
+    queryKey: ['designation-permissions'],
+    queryFn: () => base44.entities.DesignationPermission.list('display_order'),
+    enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
+  });
+
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
   const designationLevel = useMemo(() => {
     if (userRole === 'admin') return 'hr';
@@ -144,7 +151,7 @@ export default function Layout({ children, currentPageName }) {
   const getNavItems = useCallback(() => {
     const items = [];
     const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
-    const perms = getEffectivePermissions(employeeData);
+    const perms = getEffectivePermissions(employeeData, designationPermissions);
     const can = (permission) => userRole === 'admin' || perms.includes(permission);
 
     // Dashboard based on designation level
@@ -231,6 +238,7 @@ export default function Layout({ children, currentPageName }) {
     // System
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
     if (can('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
+    if (can('access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
 
     return items;

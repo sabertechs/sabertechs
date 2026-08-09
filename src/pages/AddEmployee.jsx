@@ -23,13 +23,19 @@ export default function AddEmployee() {
     queryFn: () => base44.entities.AppSettings.list(),
   });
 
+  const { data: designationPermissions = [] } = useQuery({
+    queryKey: ['designation-permissions'],
+    queryFn: () => base44.entities.DesignationPermission.list('display_order'),
+    staleTime: 10 * 60 * 1000,
+  });
+
   const getSetting = (key, defaultValue) => {
     const setting = appSettings.find(s => s.setting_key === key);
     return setting?.setting_value || defaultValue;
   };
 
   const departments = getSetting('departments', DEFAULT_DEPARTMENTS);
-  const designations = getSetting('designations', []);
+  const designations = designationPermissions.map(dp => ({ id: dp.id, name: dp.designation_name }));
 
   const [loading, setLoading] = useState(false);
   const [onboardingLink, setOnboardingLink] = useState(null);

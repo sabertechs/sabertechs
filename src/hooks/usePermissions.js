@@ -14,16 +14,22 @@ export function usePermissions() {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [designationPermissions, setDesignationPermissions] = useState([]);
+
   useEffect(() => {
     async function load() {
       try {
         const user = await base44.auth.me();
         setUserRole(user?.role);
-        const employees = await base44.entities.Employee.filter({ email: user.email });
+        const [employees, dpRows] = await Promise.all([
+          base44.entities.Employee.filter({ email: user.email }),
+          base44.entities.DesignationPermission.list('display_order'),
+        ]);
+        setDesignationPermissions(dpRows);
         if (employees.length > 0) {
           setEmployee(employees[0]);
         } else if (user?.role === 'admin') {
-          setEmployee({ role: 'admin', designation: 'hr_head', section_access: [] });
+          setEmployee({ role: 'admin', designation: 'hr_head' });
         }
       } catch (e) {
         // Not logged in
@@ -34,7 +40,7 @@ export function usePermissions() {
     load();
   }, []);
 
-  const permissions = useMemo(() => getEffectivePermissions(employee), [employee]);
+  const permissions = useMemo(() => getEffectivePermissions(employee, designationPermissions), [employee, designationPermissions]);
   const isAdmin = userRole === 'admin';
   const designationLevel = useMemo(() => {
     if (isAdmin) return 'hr';

@@ -148,10 +148,13 @@ export default function Employees() {
     return setting?.setting_value || [];
   }, [appSettings]);
 
-  const settingsDesignations = useMemo(() => {
-    const setting = appSettings.find(s => s.setting_key === 'designations');
-    return setting?.setting_value || [];
-  }, [appSettings]);
+  const { data: designationPermissions = [] } = useQuery({
+    queryKey: ['designation-permissions'],
+    queryFn: () => base44.entities.DesignationPermission.list('display_order'),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const settingsDesignations = useMemo(() => designationPermissions.map(dp => ({ id: dp.id, name: dp.designation_name })), [designationPermissions]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
@@ -1671,7 +1674,7 @@ export default function Employees() {
                 </SelectTrigger>
                 <SelectContent>
                   {settingsDesignations.map(des => (
-                    <SelectItem key={des.id} value={des.id}>{des.name}</SelectItem>
+                    <SelectItem key={des.id} value={des.name}>{des.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

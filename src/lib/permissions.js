@@ -122,18 +122,17 @@ export const DEFAULT_PERMISSIONS_BY_DESIGNATION = {
  * Admins get all permissions. Otherwise, permissions are driven by designation.
  * section_access stores overrides (extras + removals prefixed with "!").
  */
-export function getEffectivePermissions(employee) {
+export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
   if (employee.role === 'admin') return Object.keys(PERMISSIONS);
-  const level = getDesignationLevel(employee.designation);
-  const defaults = DEFAULT_PERMISSIONS_BY_DESIGNATION[level] || DEFAULT_PERMISSIONS_BY_DESIGNATION.employee;
-  if (!employee.section_access || employee.section_access.length === 0) {
-    return defaults;
-  }
-  const extras = employee.section_access.filter(p => !p.startsWith('!'));
-  const removed = employee.section_access.filter(p => p.startsWith('!')).map(p => p.slice(1));
-  const merged = [...new Set([...defaults, ...extras])].filter(p => !removed.includes(p));
-  return merged;
+  const match = designationPermissions.find(dp =>
+    dp.designation_name?.toLowerCase() === employee.designation?.toLowerCase()
+  );
+  if (match) return match.permissions || [];
+  const employeeRow = designationPermissions.find(dp =>
+    dp.designation_name?.toLowerCase() === 'employee'
+  );
+  return employeeRow?.permissions || [];
 }
 
 /**
