@@ -75,7 +75,7 @@
     },
     "designation": {
       "type": "string",
-      "description": "Job title \u2014 drives permission level: hr_head=HR, senior_manager=Manager, assistant_manager=Assistant Manager, proctor=Freelancer, else=Employee"
+      "description": "Job title \u2014 drives permission level via DesignationPermission mapping"
     },
     "employment_type": {
       "type": "string",
@@ -347,21 +347,12 @@
           "data.reporting_to": "{{user.email}}"
         },
         {
-          "$and": [
-            {
-              "data.department": "{{user.data.department}}"
-            },
-            {
-              "user_condition": {
-                "data.designation": "senior_manager"
-              }
-            }
-          ]
+          "data.employment_type": "contractual"
         },
         {
           "$and": [
             {
-              "data.designation": "proctor"
+              "data.department": "{{user.data.department}}"
             },
             {
               "user_condition": {
