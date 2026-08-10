@@ -140,22 +140,6 @@ Saber Technologies
       from_name: 'Saber Technologies HR'
     });
 
-    // 3. Create an in-app notification for the HR team
-    const hrEmployees = await base44.asServiceRole.entities.Employee.filter({ role: 'hr' });
-    const managerEmployees = await base44.asServiceRole.entities.Employee.filter({ role: 'manager' });
-    const notifyList = [...hrEmployees, ...managerEmployees];
-
-    await Promise.all(notifyList.map(hr =>
-      base44.asServiceRole.entities.Notification.create({
-        recipient_email: hr.email,
-        title: `New Employee Added: ${employee.full_name}`,
-        message: `${employee.full_name} (${employee.designation || 'No designation'} · ${employee.department || 'No department'}) has been added.${checklistAssigned ? ` Onboarding checklist "${checklistName}" was auto-assigned.` : ' No matching onboarding template found — please assign one manually.'} An invite email has been sent.`,
-        type: 'info',
-        is_read: false,
-        link: '/Employees'
-      })
-    ));
-
     return Response.json({
       success: true,
       employee_name: employee.full_name,
