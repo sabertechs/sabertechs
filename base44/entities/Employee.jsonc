@@ -347,7 +347,9 @@
           "data.reporting_to": "{{user.email}}"
         },
         {
-          "data.employment_type": "contractual"
+          "data.employment_type": {
+            "$eq": "contractual"
+          }
         },
         {
           "$and": [
