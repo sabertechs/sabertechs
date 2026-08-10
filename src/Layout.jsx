@@ -237,7 +237,6 @@ export default function Layout({ children, currentPageName }) {
 
     // System
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
-    if (can('access_control')) items.push({ name: "Access Control", icon: Shield, page: "AccessControl" });
     if (can('access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
 
