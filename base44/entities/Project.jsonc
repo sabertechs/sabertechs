@@ -111,6 +111,11 @@
           "user_condition": {
             "data.designation": "senior_manager"
           }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
+          }
         }
       ]
     },
@@ -131,6 +136,11 @@
           "user_condition": {
             "data.designation": "senior_manager"
           }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
+          }
         }
       ]
     },
@@ -144,6 +154,16 @@
         {
           "user_condition": {
             "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
           }
         }
       ]
