@@ -13,9 +13,11 @@ import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight, A
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function ProjectManagement() {
   const queryClient = useQueryClient();
+  const { can } = usePermissions();
   const [showDialog, setShowDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportResult, setExportResult] = useState(null);
@@ -260,6 +262,7 @@ export default function ProjectManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Projects</h2>
+        {can('manage_projects') && (
         <div className="flex gap-3 items-center">
           <Button
             onClick={async () => {
@@ -307,6 +310,7 @@ export default function ProjectManagement() {
             Add Project
           </Button>
         </div>
+        )}
       </div>
 
       {/* Search & Filter Bar */}
@@ -414,6 +418,7 @@ export default function ProjectManagement() {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
+                      {can('manage_projects') && (
                       <Button 
                         size="sm" 
                         className="h-8 w-8 p-0 bg-slate-900 hover:bg-slate-800"
@@ -421,6 +426,8 @@ export default function ProjectManagement() {
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
+                      )}
+                      {can('manage_projects') && (
                       <Button 
                         size="sm" 
                         className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600"
@@ -432,6 +439,7 @@ export default function ProjectManagement() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

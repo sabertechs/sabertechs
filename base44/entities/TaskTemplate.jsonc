@@ -63,5 +63,80 @@
   "required": [
     "template_name",
     "tasks"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "hr_head"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "senior_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Team Lead"
+          }
+        }
+      ]
+    }
+  }
 }

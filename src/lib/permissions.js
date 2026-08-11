@@ -70,7 +70,7 @@ export function getDesignationLevel(designation) {
   if (!designation) return 'employee';
   const d = designation.toLowerCase().replace(/\s+/g, '_');
   if (d === 'hr_head' || d === 'hr_manager') return 'hr';
-  if (d === 'senior_manager') return 'manager';
+  if (d === 'senior_manager' || d === 'team_lead') return 'manager';
   if (d === 'assistant_manager') return 'assistant_manager';
   if (d === 'proctor') return 'freelancer';
   return 'employee';
@@ -119,8 +119,8 @@ export const DEFAULT_PERMISSIONS_BY_DESIGNATION = {
 
 /**
  * Get the effective permissions for an employee.
- * Admins get all permissions. Otherwise, permissions are driven by designation.
- * section_access stores overrides (extras + removals prefixed with "!").
+ * Admins get all permissions. Otherwise, permissions are driven solely by
+ * the DesignationPermission entity (no individual section_access overrides).
  */
 export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
