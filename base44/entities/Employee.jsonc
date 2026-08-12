@@ -176,12 +176,13 @@
       "default": "employee",
       "description": "Admin or employee only \u2014 designation drives access level"
     },
-    "section_access": {
+    "module_overrides": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Permission overrides: 'perm_key' to add, '!perm_key' to remove"
+      "description": "Module IDs to grant to this employee regardless of designation (e.g., ['projects', 'freelancers'])",
+      "default": []
     },
     "status": {
       "type": "string",
@@ -315,6 +316,18 @@
           "user_condition": {
             "data.designation": "senior_manager"
           }
+        },
+        {
+          "$and": [
+            {
+              "user_condition": {
+                "data.designation": "Team Lead"
+              }
+            },
+            {
+              "data.employment_type": "contractual"
+            }
+          ]
         }
       ]
     },
@@ -387,6 +400,18 @@
         },
         {
           "data.reporting_to": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "user_condition": {
+                "data.designation": "Team Lead"
+              }
+            },
+            {
+              "data.employment_type": "contractual"
+            }
+          ]
         }
       ]
     },
