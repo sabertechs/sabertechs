@@ -74,12 +74,17 @@ export function useDesignationPermissions() {
   const seedingRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && designations.length === 0 && !seedingRef.current && !hasSeeded) {
+    if (!isLoading && !seedingRef.current && !hasSeeded) {
       seedingRef.current = true;
       hasSeeded = true;
-      base44.entities.DesignationPermission.bulkCreate(SEED_DESIGNATIONS)
-        .then(() => queryClient.invalidateQueries(['designation-permissions']))
-        .catch(() => { seedingRef.current = false; hasSeeded = false; });
+      // Idempotent seed: only create designations that don't already exist (case-insensitive)
+      const existingNames = new Set(designations.map(d => d.designation_name?.toLowerCase()));
+      const missing = SEED_DESIGNATIONS.filter(s => !existingNames.has(s.designation_name.toLowerCase()));
+      if (missing.length > 0) {
+        base44.entities.DesignationPermission.bulkCreate(missing)
+          .then(() => queryClient.invalidateQueries(['designation-permissions']))
+          .catch(() => { seedingRef.current = false; hasSeeded = false; });
+      }
     }
   }, [isLoading, designations.length, queryClient]);
 
