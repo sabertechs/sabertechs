@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
-import { getEffectivePermissions, getDesignationLevel } from "@/lib/permissions";
+import { getEffectivePermissions, getDesignationRole, getDesignationDashboard } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -67,8 +67,8 @@ export default function Layout({ children, currentPageName }) {
           const emp = employees[0];
           
           // Check if employee status is pending and not HR/manager
-          const empLevel = getDesignationLevel(emp.designation);
-          if (emp.status === 'pending' && empLevel !== 'hr' && empLevel !== 'manager') {
+          const empRole = getDesignationRole(emp.designation);
+          if (emp.status === 'pending' && empRole !== 'hr' && empRole !== 'manager') {
             // Redirect pending employees to registration to complete profile
             if (currentPageName !== "Registration") {
               window.location.href = createPageUrl("Registration");
@@ -80,10 +80,10 @@ export default function Layout({ children, currentPageName }) {
 
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
-            const regLevel = getDesignationLevel(emp.designation);
-            if (emp.role === 'admin' || regLevel === 'hr' || regLevel === 'manager') {
+            const regRole = getDesignationRole(emp.designation);
+            if (emp.role === 'admin' || regRole === 'hr' || regRole === 'manager') {
               window.location.replace(createPageUrl("HRDashboard"));
-            } else if (regLevel === 'freelancer') {
+            } else if (regRole === 'freelancer') {
               window.location.replace(createPageUrl("FreelancerDashboard"));
             } else {
               window.location.replace(createPageUrl("EmployeeDashboard"));
@@ -145,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
   const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
   const designationLevel = useMemo(() => {
     if (userRole === 'admin') return 'hr';
-    return getDesignationLevel(employeeData?.designation);
+    return getDesignationRole(employeeData?.designation);
   }, [employeeData?.designation, userRole]);
 
   const getNavItems = useCallback(() => {
@@ -153,18 +153,16 @@ export default function Layout({ children, currentPageName }) {
     const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
     const perms = getEffectivePermissions(employeeData, designationPermissions);
     const can = (permission) => userRole === 'admin' || perms.includes(permission);
+    const isFreelancer = employeeData?.designation?.toLowerCase() === 'proctor';
 
-    // Dashboard based on designation level
-    if (userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') {
-      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "HRDashboard" });
-    } else if (designationLevel === 'freelancer') {
-      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "FreelancerDashboard" });
-    } else {
-      items.push({ name: "Dashboard", icon: LayoutDashboard, page: "EmployeeDashboard" });
-    }
+    // Dashboard
+    const dashboardPage = userRole === 'admin'
+      ? 'HRDashboard'
+      : getDesignationDashboard(employeeData?.designation);
+    items.push({ name: "Dashboard", icon: LayoutDashboard, page: dashboardPage });
 
     // Freelancer self-service
-    if (designationLevel === 'freelancer') {
+    if (isFreelancer) {
       if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
@@ -172,24 +170,15 @@ export default function Layout({ children, currentPageName }) {
       return items;
     }
 
-    // Regular employee self-service (includes assistant managers with elevated view permissions)
-    if (designationLevel === 'employee' || designationLevel === 'assistant_manager') {
-      if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
-      items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
-      if (can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
-      if (can('view_team')) items.push({ name: "My Team", icon: Users, page: "TeamView" });
-      items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
-      if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
-      if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-      if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-      // Employees with extra permissions get extra items
-      if (can('view_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-      if (can('manage_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-      if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-      return items;
-    }
-
-    // --- HR / Manager / Dept Head / Admin --- permission-driven nav ---
+    // Self-service (hidden if management equivalent exists)
+    if (can('self_attendance') && !can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
+    items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
+    if (can('submit_expenses') && !can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+    if (can('view_team')) items.push({ name: "My Team", icon: Users, page: "TeamView" });
+    if (can('view_policies')) items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+    if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
+    if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
+    if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
 
     // HR Admin section
     const hrAdminItems = [];
@@ -224,16 +213,17 @@ export default function Layout({ children, currentPageName }) {
     if (can('manage_task_templates') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
     if (can('view_project_analytics') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
 
+    // Recruitment
+    if (can('view_recruitment')) items.push({ name: "Recruitment", icon: Users, page: "RecruitDashboard" });
+    if (can('manage_recruitment')) items.push({ name: "Pipeline", icon: ClipboardList, page: "Pipeline" });
+
     // Communication
     if (can('manage_company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     if (can('manage_policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
     if (can('manage_notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
-    if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
 
     // Reports
-    if (userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') {
-      items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
-    }
+    if (can('view_reports')) items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
 
     // System
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
@@ -241,7 +231,7 @@ export default function Layout({ children, currentPageName }) {
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
 
     return items;
-  }, [userRole, designationLevel, employeeData, moduleSettings]);
+  }, [userRole, designationLevel, employeeData, moduleSettings, designationPermissions]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 

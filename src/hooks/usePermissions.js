@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getEffectivePermissions, getDesignationLevel } from '@/lib/permissions';
+import { getEffectivePermissions, getDesignationRole } from '@/lib/permissions';
 
 /**
  * Hook that returns permission-checking utilities for the current user.
@@ -44,7 +44,7 @@ export function usePermissions() {
   const isAdmin = userRole === 'admin';
   const designationLevel = useMemo(() => {
     if (isAdmin) return 'hr';
-    return getDesignationLevel(employee?.designation);
+    return getDesignationRole(employee?.designation);
   }, [employee?.designation, isAdmin]);
 
   const can = useMemo(() => (permission) => {

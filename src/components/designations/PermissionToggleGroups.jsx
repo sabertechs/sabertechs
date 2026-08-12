@@ -1,7 +1,7 @@
 import React from "react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS, MODULES } from "@/lib/permissions";
 
 /**
  * Renders all permissions grouped by module, each with a Switch toggle.
@@ -27,7 +27,7 @@ export default function PermissionToggleGroups({ selectedPerms, onToggle, onTogg
           <div key={moduleName} className="border border-slate-200 rounded-xl overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
               <Switch checked={allSelected} onCheckedChange={() => onToggleModule(moduleName, perms)} />
-              <span className="font-semibold text-slate-700 flex-1 text-sm">{moduleName}</span>
+              <span className="font-semibold text-slate-700 flex-1 text-sm">{MODULES[moduleName]?.name || moduleName}</span>
               <Badge variant="outline" className="text-xs">{selectedCount}/{perms.length}</Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1 p-3">

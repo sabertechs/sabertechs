@@ -156,8 +156,8 @@ export default function DesignationPermissions() {
             <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-slate-700 space-y-1">
               <p className="font-semibold text-slate-800">How permissions work</p>
-              <p>Each employee's permissions are determined <strong>solely by their designation</strong>. Toggle the module permissions below for each designation, and every employee with that designation instantly gets that access.</p>
-              <p className="text-slate-500">Changes save automatically. Rename a designation to update all holders. Removing a designation reassigns affected employees to "Employee".</p>
+              <p>Permissions use a <strong>cascading hierarchy</strong>: Employee → Assistant Manager → Team Lead → Senior Manager → HR Head. Higher designations automatically inherit all permissions from lower ones. Toggle only the <strong>level-specific</strong> permissions below — inherited permissions are added automatically at runtime.</p>
+              <p className="text-slate-500">Changes save automatically. Rename a designation to update all holders. Removing a designation reassigns affected employees to "Employee". Use module-level overrides on individual employees to grant extra access when needed.</p>
             </div>
           </div>
         </CardContent>

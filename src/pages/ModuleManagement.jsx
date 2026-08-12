@@ -1,22 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Package, Users, Briefcase, Gamepad2, Shield, Settings, Save, AlertCircle, UserPlus, Newspaper, Clock } from "lucide-react";
+import {
+  Package, Users, Briefcase, Gamepad2, Shield, Settings, Save, AlertCircle,
+  UserPlus, Newspaper, Clock, DollarSign, Receipt, Megaphone, BarChart2,
+} from "lucide-react";
+import { MODULES } from "@/lib/permissions";
 
-const AVAILABLE_MODULES = [
-  { id: 'hr_admin', name: 'HR Admin Section', icon: UserPlus, description: 'Employee management, uploads, onboarding, and offer letters' },
-  { id: 'assets', name: 'Assets Management', icon: Package, description: 'Manage company assets, assignments, and tracking' },
-  { id: 'company_feed', name: 'Company Feed', icon: Newspaper, description: 'Company announcements and social feed' },
-  { id: 'attendance', name: 'Attendance Management', icon: Clock, description: 'Track and manage employee attendance' },
-  { id: 'freelancers', name: 'Freelancers', icon: Users, description: 'Manage freelancers and their profiles' },
-  { id: 'projects', name: 'Projects', icon: Briefcase, description: 'Manage projects, tasks, and assignments' },
-  { id: 'games', name: 'Games & Arena', icon: Gamepad2, description: 'Office games and leaderboards' },
-  { id: 'access_control', name: 'Access Control', icon: Shield, description: 'Module access management for users' }
-];
+// Icons mapped by module ID — auto-discovered from MODULES config
+const MODULE_ICONS = {
+  hr_admin: UserPlus,
+  freelancers: Users,
+  payroll: DollarSign,
+  attendance: Clock,
+  expenses: Receipt,
+  projects: Briefcase,
+  assets: Package,
+  recruitment: Users,
+  communication: Megaphone,
+  reports: BarChart2,
+  system: Settings,
+  games: Gamepad2,
+  company_feed: Newspaper,
+};
+
+// Build module list dynamically from MODULES config — new modules auto-appear here
+const AVAILABLE_MODULES = Object.entries(MODULES).map(([id, mod]) => ({
+  id,
+  name: mod.name,
+  description: mod.description,
+  icon: MODULE_ICONS[id] || Package,
+}));
 
 export default function ModuleManagement() {
   const queryClient = useQueryClient();
@@ -160,8 +178,9 @@ export default function ModuleManagement() {
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-4">
           <p className="text-sm text-blue-700">
-            <strong>Note:</strong> Disabling a module will hide it from navigation for all users. 
-            Module data will be preserved and can be re-enabled at any time.
+            <strong>Note:</strong> Modules are auto-discovered from the permission registry.
+            Adding a new module to the system will automatically appear here and in Designation Access.
+            Disabling a module hides it from navigation for all users — data is preserved.
           </p>
         </CardContent>
       </Card>
