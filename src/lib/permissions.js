@@ -133,6 +133,13 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
   if (employee.role === 'admin') return Object.keys(PERMISSIONS);
 
+  // Contractual employees use only fixed module access plus explicit overrides.
+  if (employee.employment_type === 'contractual') {
+    const fixedPerms = getModuleOverridePermissions(employee.fixed_modules);
+    const extraPerms = getModuleOverridePermissions(employee.module_overrides);
+    return [...new Set([...fixedPerms, ...extraPerms])];
+  }
+
   // Check if the designation is in the hierarchy
   const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
     d.name.toLowerCase() === employee.designation?.toLowerCase()
