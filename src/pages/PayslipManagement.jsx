@@ -51,7 +51,7 @@ export default function PayslipManagement() {
     queryFn: async () => {
       const allEmployees = await base44.entities.Employee.filter({ status: 'active' });
       // Only show permanent employees in payslip generation
-      return allEmployees.filter(emp => emp.role !== 'freelancer' && emp.employment_type === 'permanent');
+      return allEmployees.filter(emp => emp.employment_type === 'permanent');
     },
   });
 

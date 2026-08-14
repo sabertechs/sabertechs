@@ -59,6 +59,7 @@ import SalaryComponentsForm from "@/components/salary/SalaryComponentsForm";
 import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
 import DocumentReviewDialog from "@/components/employees/DocumentReviewDialog";
 import AssignChecklistDialog from "@/components/onboarding/AssignChecklistDialog";
+import { getDesignationRole } from "@/lib/permissions";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -114,7 +115,6 @@ export default function Employees() {
     deductions: {},
     reporting_to: "",
     status: "active",
-    role: "employee",
     bank_name: "",
     bank_account_number: "",
     bank_ifsc: "",
@@ -255,7 +255,6 @@ export default function Employees() {
       deductions: employee.deductions || {},
       reporting_to: employee.reporting_to || "",
       status: employee.status || "active",
-      role: employee.role || "employee",
       bank_name: employee.bank_name || "",
       bank_account_number: employee.bank_account_number || "",
       bank_ifsc: employee.bank_ifsc || "",
@@ -1123,7 +1122,7 @@ export default function Employees() {
       "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
       "Address", "Locality", "City", "State", "Pincode",
       "Aadhaar Number", "PAN Number", "Department", "Designation",
-      "Date of Joining", "Salary", "Role", "Status", "BGV Status"
+      "Date of Joining", "Salary", "Status", "BGV Status"
     ];
     
     let dataToExport;
@@ -1151,7 +1150,6 @@ export default function Employees() {
       emp.designation || '',
       emp.date_of_joining || '',
       emp.salary || '',
-      emp.role || '',
       emp.status || '',
       emp.bg_verification_status || ''
     ].map(val => `"${val}"`).join(','));
@@ -1708,12 +1706,13 @@ export default function Employees() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>None</SelectItem>
-                  {employees.filter(emp => 
-                    (emp.role === 'hr' || emp.role === 'manager' || emp.role === 'department_head') &&
-                    emp.id !== selectedEmployee?.id
-                  ).map(manager => (
+                  {employees.filter(emp => {
+                    const empRole = getDesignationRole(emp.designation);
+                    return (empRole === 'hr' || empRole === 'manager') &&
+                      emp.id !== selectedEmployee?.id;
+                  }).map(manager => (
                     <SelectItem key={manager.id} value={manager.email}>
-                      {manager.full_name} ({manager.role})
+                      {manager.full_name} ({manager.designation})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1740,20 +1739,6 @@ export default function Employees() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="employee">Employee</SelectItem>
-                  <SelectItem value="department_head">Department Head</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
             {/* Personal Details */}
             <div className="col-span-2">
               <h3 className="font-semibold text-slate-700 mb-3 mt-4">Personal Details</h3>

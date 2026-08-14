@@ -81,7 +81,7 @@ export default function Layout({ children, currentPageName }) {
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
             const regRole = getDesignationRole(emp.designation);
-            if (emp.role === 'admin' || regRole === 'hr' || regRole === 'manager') {
+            if (userData.role === 'admin' || regRole === 'hr' || regRole === 'manager') {
               window.location.replace(createPageUrl("HRDashboard"));
             } else if (regRole === 'freelancer') {
               window.location.replace(createPageUrl("FreelancerDashboard"));

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Search, Filter, CheckCircle, XCircle, Eye, Receipt, ExternalLink, Brain, AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
 import { getExpenseStatusEmail } from "@/components/email/EmailTemplate";
+import { getDesignationRole } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,13 +56,15 @@ export default function ExpenseApproval() {
   const expenses = useMemo(() => {
     if (!user || !employee) return allExpenses;
 
+    const empRole = getDesignationRole(employee.designation);
+
     // HR and admin see all expenses
-    if (employee.role === 'hr' || user.role === 'admin') {
+    if (empRole === 'hr' || user.role === 'admin') {
       return allExpenses;
     }
 
-    // Managers and department heads see expenses from their reportees
-    if (employee.role === 'manager' || employee.role === 'department_head') {
+    // Managers see expenses from their reportees
+    if (empRole === 'manager') {
       return allExpenses.filter(expense => {
         const reportee = allEmployees.find(emp => emp.email === expense.employee_email);
         return reportee?.reporting_to === user.email;

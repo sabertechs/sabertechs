@@ -88,8 +88,7 @@ export default function Freelancers() {
     employment_type: "contractual",
     date_of_joining: format(new Date(), 'yyyy-MM-dd'),
     work_type: "online",
-    status: "active",
-    role: "employee"
+    status: "active"
   });
 
   // Build server-side query
@@ -199,8 +198,7 @@ export default function Freelancers() {
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
       work_type: employee.work_type || "online",
-      status: employee.status || "active",
-      role: employee.role || "employee"
+      status: employee.status || "active"
     });
     setShowAddDialog(true);
   };
@@ -826,7 +824,7 @@ export default function Freelancers() {
       "Full Name", "Father Name", "Email", "Phone", "Date of Birth", "Gender",
       "Address", "Locality", "City", "State", "Pincode",
       "Aadhaar Number", "PAN Number", "Department", "Designation",
-      "Date of Joining", "Role", "Status", "BGV Status"
+      "Date of Joining", "Status", "BGV Status"
     ];
     
     let dataToExport;
@@ -853,7 +851,6 @@ export default function Freelancers() {
       emp.department || '',
       emp.designation || '',
       emp.date_of_joining || '',
-      emp.role || '',
       emp.status || '',
       emp.bg_verification_status || ''
     ].map(val => `"${val}"`).join(','));

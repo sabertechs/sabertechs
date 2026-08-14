@@ -40,7 +40,6 @@ export default function AccessControl() {
   });
 
   const getPerms = (emp) => {
-    if (emp.role === 'admin') return Object.keys(PERMISSIONS);
     return getEffectivePermissions(emp, designations);
   };
 

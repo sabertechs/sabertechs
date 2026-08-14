@@ -10,7 +10,6 @@ import ReportShell from "./ReportShell";
 import { downloadCSV, formatDate } from "./reportUtils";
 
 export default function EmployeeReport({ onBack }) {
-  const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
   const [empTypeFilter, setEmpTypeFilter] = useState("all");
@@ -26,7 +25,6 @@ export default function EmployeeReport({ onBack }) {
 
   const filtered = useMemo(() => {
     return employees.filter(emp => {
-      if (roleFilter !== "all" && emp.role !== roleFilter) return false;
       if (statusFilter !== "all" && emp.status !== statusFilter) return false;
       if (deptFilter !== "all" && emp.department !== deptFilter) return false;
       if (empTypeFilter !== "all" && emp.employment_type !== empTypeFilter) return false;
@@ -42,7 +40,7 @@ export default function EmployeeReport({ onBack }) {
       }
       return true;
     });
-  }, [employees, roleFilter, statusFilter, deptFilter, empTypeFilter, bgvFilter, search]);
+  }, [employees, statusFilter, deptFilter, empTypeFilter, bgvFilter, search]);
 
   const statusColors = {
     active: "bg-green-100 text-green-700",
@@ -59,7 +57,6 @@ export default function EmployeeReport({ onBack }) {
       Phone: emp.phone || "",
       Department: emp.department || "",
       Designation: emp.designation || "",
-      Role: emp.role || "",
       Employment_Type: emp.employment_type || "",
       Status: emp.status || "",
       Date_of_Joining: formatDate(emp.date_of_joining),
@@ -91,24 +88,10 @@ export default function EmployeeReport({ onBack }) {
       {/* Filters */}
       <Card className="border-0 shadow-sm">
         <CardContent className="pt-5">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="space-y-1 lg:col-span-2">
               <Label>Search</Label>
               <Input placeholder="Name, email, ID, phone..." value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Role</Label>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
-                  <SelectItem value="freelancer">Freelancer</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="department_head">Dept Head</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-1">
               <Label>Status</Label>
@@ -167,7 +150,7 @@ export default function EmployeeReport({ onBack }) {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 sticky top-0">
                 <tr>
-                  {["ID", "Name", "Email", "Department", "Designation", "Role", "Type", "Status", "Joining Date", "BGV"].map(h => (
+                  {["ID", "Name", "Email", "Department", "Designation", "Type", "Status", "Joining Date", "BGV"].map(h => (
                     <th key={h} className="text-left px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -182,9 +165,6 @@ export default function EmployeeReport({ onBack }) {
                     <td className="px-4 py-3 text-slate-500 text-xs">{emp.email}</td>
                     <td className="px-4 py-3 text-slate-600">{emp.department || "-"}</td>
                     <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{emp.designation || "-"}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="capitalize">{emp.role?.replace("_", " ")}</Badge>
-                    </td>
                     <td className="px-4 py-3 text-slate-600 capitalize">{emp.employment_type || "-"}</td>
                     <td className="px-4 py-3">
                       <Badge className={statusColors[emp.status] || ""}>{emp.status}</Badge>

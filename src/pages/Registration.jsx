@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import CityAutocomplete from "@/components/forms/CityAutocomplete";
 import { INDIAN_STATES } from "@/components/data/indiaData";
+import { getDesignationDashboard } from "@/lib/permissions";
 
 const InputWithError = function({ label, value, onChange, error, type = "text", placeholder, id, ...props }) { return (
   <div className="space-y-2">
@@ -111,15 +112,8 @@ export default function Registration() {
           if (emp.status === 'active' && !hasRejectedDocs && !hasMissingDocs) {
             // Fully active employee with all documents - redirect to dashboard
             redirecting = true;
-            if (emp.role === 'hr' || emp.role === 'manager') {
-              window.location.replace(createPageUrl("HRDashboard"));
-            } else if (emp.role === 'department_head') {
-              window.location.replace(createPageUrl("DeptHeadDashboard"));
-            } else if (emp.role === 'freelancer') {
-              window.location.replace(createPageUrl("FreelancerDashboard"));
-            } else {
-              window.location.replace(createPageUrl("EmployeeDashboard"));
-            }
+            const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(emp.designation);
+            window.location.replace(createPageUrl(dashboard));
             return;
           }
           
@@ -414,30 +408,21 @@ export default function Registration() {
           ...employeeData,
           employee_id: existing.employee_id || newEmployeeId,
           employment_type: existing.employment_type || "contractual",
-          role: existing.role || "freelancer",
           status: "pending",
           document_review_status: updatedDocStatus,
           document_rejection_reasons: updatedRejectionReasons
         });
         
-        // Redirect based on their role
-        if (existing.role === 'hr' || existing.role === 'manager') {
-          navigate(createPageUrl("HRDashboard"));
-        } else if (existing.role === 'department_head') {
-          navigate(createPageUrl("DeptHeadDashboard"));
-        } else if (existing.role === 'freelancer') {
-          navigate(createPageUrl("FreelancerDashboard"));
-        } else {
-          navigate(createPageUrl("EmployeeDashboard"));
-        }
+        // Redirect based on their designation
+        const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(existing.designation);
+        navigate(createPageUrl(dashboard));
       } else {
         // Create new freelancer
         await base44.entities.Employee.create({
           ...employeeData,
           employee_id: newEmployeeId,
           employment_type: "contractual",
-          status: "pending",
-          role: "freelancer"
+          status: "pending"
         });
         navigate(createPageUrl("FreelancerDashboard"));
       }

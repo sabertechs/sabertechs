@@ -167,15 +167,6 @@
       "type": "string",
       "description": "Email of reporting manager"
     },
-    "role": {
-      "type": "string",
-      "enum": [
-        "admin",
-        "employee"
-      ],
-      "default": "employee",
-      "description": "Admin or employee only \u2014 designation drives access level"
-    },
     "status": {
       "type": "string",
       "enum": [

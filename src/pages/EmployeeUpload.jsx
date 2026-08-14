@@ -41,7 +41,6 @@ export default function EmployeeUpload() {
       designation: "Software Engineer",
       date_of_joining: "15/01/2024",
       salary: "50000",
-      role: "employee",
       status: "active"
     }
   ];
@@ -51,7 +50,7 @@ export default function EmployeeUpload() {
       "full_name", "father_name", "email", "phone", "date_of_birth", "gender",
       "address", "locality", "city", "state", "pincode",
       "aadhaar_number", "pan_number", "department", "designation",
-      "date_of_joining", "salary", "role", "status"
+      "date_of_joining", "salary", "status"
     ];
 
     const csvContent = [
