@@ -48,8 +48,7 @@ export default function AddEmployee() {
     department: "",
     designation: "",
     date_of_joining: "",
-    salary: "",
-    role: "employee"
+    salary: ""
   });
 
   const generateToken = () => {
@@ -96,7 +95,6 @@ export default function AddEmployee() {
         department: formData.department.toLowerCase(),
         designation: formData.designation.trim(),
         date_of_joining: formData.date_of_joining,
-        role: formData.role,
         employee_id: newEmployeeId,
         employment_type: "permanent",
         status: "pending",
@@ -260,20 +258,6 @@ export default function AddEmployee() {
                     placeholder="Optional"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Role *</Label>
-                <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="department_head">Department Head</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <Button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700">
