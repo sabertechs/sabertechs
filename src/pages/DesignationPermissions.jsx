@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDesignationPermissions } from "@/hooks/useDesignationPermissions";
 import PermissionToggleGroups from "@/components/designations/PermissionToggleGroups";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS, getInheritedPermissions } from "@/lib/permissions";
 
 export default function DesignationPermissions() {
   const queryClient = useQueryClient();
@@ -156,8 +156,8 @@ export default function DesignationPermissions() {
             <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-slate-700 space-y-1">
               <p className="font-semibold text-slate-800">How permissions work</p>
-              <p>Permissions use a <strong>cascading hierarchy</strong>: Employee → Assistant Manager → Team Lead → Senior Manager → HR Head. Higher designations automatically inherit all permissions from lower ones. Toggle only the <strong>level-specific</strong> permissions below — inherited permissions are added automatically at runtime.</p>
-              <p className="text-slate-500">Changes save automatically. Rename a designation to update all holders. Removing a designation reassigns affected employees to "Employee". Use module-level overrides on individual employees to grant extra access when needed.</p>
+              <p>Permissions use a <strong>cascading hierarchy</strong>: Employee → Assistant Manager → Team Lead → Senior Manager → HR Head. Higher designations automatically inherit all permissions from lower ones. Toggle only the <strong>level-specific</strong> permissions below — inherited permissions appear as <span className="text-indigo-600 font-medium">read-only</span> (greyed with a lock badge) so you can see exactly what each designation effectively has at runtime.</p>
+              <p className="text-slate-500">Changes save automatically. Rename a designation to update all holders. Removing a designation reassigns affected employees to "Employee". Designation Access is the single source of truth — no per-employee overrides exist.</p>
             </div>
           </div>
         </CardContent>
@@ -234,6 +234,7 @@ export default function DesignationPermissions() {
                     selectedPerms={dp.permissions || []}
                     onToggle={(key) => handleTogglePerm(dp, key)}
                     onToggleModule={(moduleName, modulePerms) => handleToggleModule(dp, modulePerms)}
+                    inheritedPerms={getInheritedPermissions(dp.designation_name, designations)}
                   />
                 </div>
               )}

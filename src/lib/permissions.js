@@ -3,7 +3,7 @@
  *
  * Hierarchy (low → high): Employee → Assistant Manager → Team Lead → Senior Manager → HR Head
  * Permissions cascade upward: a designation at level N inherits all permissions from levels 1..N.
- * Module-level overrides on individual employees can grant additional module access.
+ * Designation Access is the single source of truth — no per-employee overrides.
  */
 
 // ── MODULE DEFINITIONS ─────────────────────────────
@@ -134,11 +134,9 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
   if (employee.role === 'admin') return Object.keys(PERMISSIONS);
 
-  // Contractual employees use only fixed module access plus explicit overrides.
+  // Contractual employees use only fixed module access.
   if (employee.employment_type === 'contractual') {
-    const fixedPerms = getModuleOverridePermissions(employee.fixed_modules);
-    const extraPerms = getModuleOverridePermissions(employee.module_overrides);
-    return [...new Set([...fixedPerms, ...extraPerms])];
+    return getModuleOverridePermissions(employee.fixed_modules);
   }
 
   // Check if the designation is in the hierarchy
@@ -147,13 +145,11 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
   );
 
   if (!hierarchyEntry) {
-    // Not in hierarchy (e.g., Proctor/Freelancer) — just return own permissions + overrides
+    // Not in hierarchy (e.g., Proctor/Freelancer) — just return own permissions
     const userDesig = designationPermissions.find(dp =>
       dp.designation_name?.toLowerCase() === employee.designation?.toLowerCase()
     );
-    const ownPerms = userDesig?.permissions || [];
-    const overridePerms = getModuleOverridePermissions(employee.module_overrides);
-    return [...new Set([...ownPerms, ...overridePerms])];
+    return userDesig?.permissions || [];
   }
 
   // In hierarchy — cascade: collect from all designations at or below user's level
@@ -165,10 +161,34 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
     })
     .flatMap(dp => dp.permissions || []);
 
-  // Add module-level overrides
-  const overridePerms = getModuleOverridePermissions(employee.module_overrides);
+  return [...new Set(cascaded)];
+}
 
-  return [...new Set([...cascaded, ...overridePerms])];
+// Get inherited permissions for a designation from all lower cascade levels.
+// Returns array of { key, fromDesignation } for the Designation Access UI to display as read-only.
+export function getInheritedPermissions(designationName, designationPermissions = []) {
+  const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
+    d.name.toLowerCase() === designationName?.toLowerCase()
+  );
+  if (!hierarchyEntry) return [];
+
+  const userLevel = hierarchyEntry.level;
+  const inherited = [];
+  const seen = new Set();
+
+  designationPermissions.forEach(dp => {
+    const entry = DESIGNATION_HIERARCHY.find(d => d.name.toLowerCase() === dp.designation_name?.toLowerCase());
+    if (entry && entry.level < userLevel) {
+      (dp.permissions || []).forEach(permKey => {
+        if (!seen.has(permKey)) {
+          seen.add(permKey);
+          inherited.push({ key: permKey, fromDesignation: dp.designation_name });
+        }
+      });
+    }
+  });
+
+  return inherited;
 }
 
 // Get all permission keys for a set of module IDs (for module overrides)

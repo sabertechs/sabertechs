@@ -176,14 +176,6 @@
       "default": "employee",
       "description": "Admin or employee only \u2014 designation drives access level"
     },
-    "module_overrides": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Module IDs to grant to this employee regardless of designation (e.g., ['projects', 'freelancers'])",
-      "default": []
-    },
     "status": {
       "type": "string",
       "enum": [
