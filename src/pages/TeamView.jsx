@@ -85,7 +85,7 @@ export default function TeamView() {
                 </div>
                 <div className="flex items-center gap-2 text-slate-600">
                   <Calendar className="w-4 h-4 text-slate-400" />
-                  Joined {member.date_of_joining ? format(new Date(member.date_of_joining), 'MMM d, yyyy') : '-'}
+                  Joined {member.date_of_joining && !isNaN(new Date(member.date_of_joining).getTime()) ? format(new Date(member.date_of_joining), 'MMM d, yyyy') : '-'}
                 </div>
               </div>
             </CardContent>

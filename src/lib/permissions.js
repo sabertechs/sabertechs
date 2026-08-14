@@ -113,7 +113,8 @@ export function getDesignationRole(designation) {
   if (!designation) return 'employee';
   const d = designation.toLowerCase().replace(/\s+/g, '_');
   if (d === 'hr_head' || d === 'hr_manager') return 'hr';
-  if (d === 'senior_manager' || d === 'team_lead') return 'manager';
+  if (d === 'senior_manager') return 'manager';
+  if (d === 'team_lead') return 'employee';
   if (d === 'assistant_manager') return 'assistant_manager';
   if (d === 'proctor') return 'freelancer';
   return 'employee';
