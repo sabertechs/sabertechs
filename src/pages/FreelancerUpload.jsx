@@ -287,11 +287,10 @@ export default function FreelancerUpload() {
               pincode: data.pincode?.trim() || '',
               aadhaar_number: data.aadhaar_number?.replace(/\s/g, '') || '',
               pan_number: data.pan_number?.toUpperCase() || '',
-              department: data.department?.toLowerCase() || '',
+              department: data.department?.trim() || '',
               designation: data.designation?.trim() || '',
               date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               employment_type: 'contractual',
-              role: 'freelancer',
               work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'

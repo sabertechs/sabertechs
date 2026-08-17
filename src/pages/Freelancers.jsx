@@ -188,13 +188,20 @@ export default function Freelancers() {
   const handleEdit = (employee) => {
     setShowViewDialog(false);
     setSelectedEmployee(employee);
+    // Normalize stored department/designation to match settings names (case-insensitive)
+    // so the Select dropdown displays the current value correctly.
+    const normalizeToSetting = (val, settings) => {
+      if (!val) return "";
+      const match = settings.find(s => s.name?.toLowerCase() === val.toLowerCase());
+      return match ? match.name : val;
+    };
     setFormData({
       full_name: employee.full_name || "",
       father_name: employee.father_name || "",
       email: employee.email || "",
       phone: employee.phone || "",
-      department: employee.department || "",
-      designation: employee.designation || "",
+      department: normalizeToSetting(employee.department, settingsDepartments),
+      designation: normalizeToSetting(employee.designation, settingsDesignations),
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
       work_type: employee.work_type || "online",
@@ -1299,6 +1306,9 @@ export default function Freelancers() {
                   {settingsDepartments.map(dept => (
                     <SelectItem key={dept.id} value={dept.name} className="capitalize">{dept.name}</SelectItem>
                   ))}
+                  {formData.department && !settingsDepartments.some(d => d.name === formData.department) && (
+                    <SelectItem value={formData.department} className="capitalize">{formData.department}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1312,6 +1322,9 @@ export default function Freelancers() {
                   {settingsDesignations.map(des => (
                     <SelectItem key={des.id} value={des.name}>{des.name}</SelectItem>
                   ))}
+                  {formData.designation && !settingsDesignations.some(d => d.name === formData.designation) && (
+                    <SelectItem value={formData.designation}>{formData.designation}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
