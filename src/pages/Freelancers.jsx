@@ -1297,7 +1297,7 @@ export default function Freelancers() {
                 </SelectTrigger>
                 <SelectContent>
                   {settingsDepartments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id} className="capitalize">{dept.name}</SelectItem>
+                    <SelectItem key={dept.id} value={dept.name} className="capitalize">{dept.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1310,7 +1310,7 @@ export default function Freelancers() {
                 </SelectTrigger>
                 <SelectContent>
                   {settingsDesignations.map(des => (
-                    <SelectItem key={des.id} value={des.id}>{des.name}</SelectItem>
+                    <SelectItem key={des.id} value={des.name}>{des.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
