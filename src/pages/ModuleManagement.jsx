@@ -61,6 +61,11 @@ export default function ModuleManagement() {
   useEffect(() => {
     if (settings?.setting_value) {
       const modules = {};
+      // Default every known module to enabled, then overlay saved state.
+      // This ensures newly added modules auto-appear as enabled until toggled.
+      AVAILABLE_MODULES.forEach(mod => {
+        modules[mod.id] = true;
+      });
       settings.setting_value.forEach(mod => {
         modules[mod.module_id] = mod.enabled;
       });
