@@ -61,6 +61,10 @@ export async function getUserPermissions(base44, user) {
     perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
   }
 
+  // Per-employee individual overrides (set via Access Control) merge on top
+  const extraPerms = Array.isArray(employee.extra_permissions) ? employee.extra_permissions : [];
+  perms = [...perms, ...extraPerms];
+
   return [...new Set(perms)];
 }
 

@@ -3,7 +3,8 @@
  *
  * Hierarchy (low → high): Employee → Assistant Manager → Team Lead → Senior Manager → HR Head
  * Permissions cascade upward: a designation at level N inherits all permissions from levels 1..N.
- * Designation Access is the single source of truth — no per-employee overrides.
+ * Designation Access is the baseline; per-employee extra_permissions (set via Access Control)
+ * are merged on top of the cascade as an individual override.
  */
 
 // ── MODULE DEFINITIONS ─────────────────────────────
@@ -161,6 +162,10 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
   if (isFreelancer(employee)) {
     perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
   }
+
+  // Per-employee individual overrides (set via Access Control) merge on top
+  const extraPerms = Array.isArray(employee.extra_permissions) ? employee.extra_permissions : [];
+  perms = [...perms, ...extraPerms];
 
   return [...new Set(perms)];
 }

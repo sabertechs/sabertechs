@@ -77,6 +77,14 @@
       "type": "string",
       "description": "Job title \u2014 drives permission level via DesignationPermission mapping"
     },
+    "extra_permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Per-employee permission overrides added on top of the designation cascade (managed via Access Control)"
+    },
     "employment_type": {
       "type": "string",
       "enum": [

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PERMISSIONS, getEffectivePermissions } from "@/lib/permissions";
 import { useDesignationPermissions } from "@/hooks/useDesignationPermissions";
+import EmployeeExtraPermissions from "@/components/access/EmployeeExtraPermissions";
 
 export default function AccessControl() {
   const queryClient = useQueryClient();
@@ -65,7 +66,7 @@ export default function AccessControl() {
             <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-slate-700 space-y-1">
               <p className="font-semibold text-slate-800">How permissions work</p>
-              <p>Permissions are driven <strong>solely by designation</strong>. Change an employee's designation to update their access. To edit which permissions each designation gets, go to <strong>Designation Permissions</strong>.</p>
+              <p>Permissions come from an employee's <strong>designation</strong> (changeable below). To grant a specific person <strong>extra</strong> module access without changing their designation, expand their row and toggle the extra permissions. To edit which permissions each designation gets, go to <strong>Designation Permissions</strong>.</p>
             </div>
           </div>
         </CardContent>
@@ -137,15 +138,19 @@ export default function AccessControl() {
                       </tr>
                       {isExpanded && (
                         <tr className="bg-slate-50">
-                          <td colSpan={3} className="px-6 py-4">
-                            <div className="flex flex-wrap gap-1.5">
-                              {perms.map(key => (
-                                <Badge key={key} variant="outline" className="text-xs bg-white">
-                                  {PERMISSIONS[key]?.label || key}
-                                </Badge>
-                              ))}
-                              {perms.length === 0 && <span className="text-sm text-slate-400">No permissions assigned</span>}
+                          <td colSpan={3} className="px-6 py-4 space-y-4">
+                            <div>
+                              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">From designation ({perms.length})</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {perms.map(key => (
+                                  <Badge key={key} variant="outline" className="text-xs bg-white">
+                                    {PERMISSIONS[key]?.label || key}
+                                  </Badge>
+                                ))}
+                                {perms.length === 0 && <span className="text-sm text-slate-400">No permissions assigned</span>}
+                              </div>
                             </div>
+                            <EmployeeExtraPermissions employee={emp} designations={designations} />
                           </td>
                         </tr>
                       )}
