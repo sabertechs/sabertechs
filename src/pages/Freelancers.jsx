@@ -140,11 +140,6 @@ export default function Freelancers() {
     return setting?.setting_value || [];
   }, [appSettings]);
 
-  const settingsDesignations = useMemo(() => {
-    const setting = appSettings.find(s => s.setting_key === 'designations');
-    return setting?.setting_value || [];
-  }, [appSettings]);
-
   // Designation Access (DesignationPermission) is the single source of truth
   // for designations — the permission engine matches Employee.designation against
   // DesignationPermission.designation_name. Pull the dropdown from here so stored
