@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
 
-        let email, role, department, section_access;
+        let email, role, department, section_access, designation;
 
         if (body.data && body.data.email) {
             // Entity automation payload
@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
                 ...(user.data || {}),
                 department,
                 section_access,
+                designation,
             },
         });
 
