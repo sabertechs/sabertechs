@@ -50,12 +50,24 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
+        {
+          "data.proctor_email": "{{user.email}}"
+        },
         {
           "user_condition": {
             "role": "admin"
@@ -77,19 +89,39 @@
           }
         },
         {
-          "data.proctor_email": "{{user.email}}"
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
         }
       ]
     },
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
     }
   }
 }
