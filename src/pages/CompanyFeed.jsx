@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const postTypeConfig = {
   update: { icon: Megaphone, color: "bg-blue-100 text-blue-600", label: "Update" },
@@ -81,18 +82,19 @@ export default function CompanyFeedPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isHR = employee?.role === 'hr' || employee?.role === 'manager' || employee?.role === 'department_head' || user?.role === 'admin';
+  const { can } = usePermissions();
+  const canManageFeed = can('manage_company_feed');
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.filter({ status: 'active' }),
-    enabled: isHR,
+    enabled: canManageFeed,
     staleTime: 10 * 60 * 1000,
   });
 
   // Auto-generate birthday and anniversary posts
   React.useEffect(() => {
-    if (!isHR || employees.length === 0 || posts.length === 0) return;
+    if (!canManageFeed || employees.length === 0 || posts.length === 0) return;
     
     const today = format(new Date(), 'MM-dd');
     const checkAndCreatePost = async () => {
@@ -150,7 +152,7 @@ export default function CompanyFeedPage() {
     };
     
     checkAndCreatePost();
-  }, [employees, posts, isHR]);
+  }, [employees, posts, canManageFeed]);
 
   const createPostMutation = useMutation({
     mutationFn: (data) => base44.entities.CompanyPost.create(data),
@@ -234,7 +236,7 @@ export default function CompanyFeedPage() {
           <h2 className="text-2xl font-bold text-slate-800">Company Feed</h2>
           <p className="text-slate-500">Updates, celebrations & announcements</p>
         </div>
-        {isHR && (
+        {canManageFeed && (
           <Button onClick={() => setShowCreateDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus className="w-4 h-4 mr-2" />
             Create Post

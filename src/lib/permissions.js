@@ -74,6 +74,9 @@ export const PERMISSIONS = {
   // ── COMPANY FEED ──────────────────────────────────────
   manage_company_feed:     { label: 'Manage Company Feed',     module: 'company_feed',  description: 'Post company updates and announcements' },
 
+  // ── GAMES ───────────────────────────────────────────────
+  manage_games:            { label: 'Manage Games',            module: 'games',         description: 'Configure game settings and tokens' },
+
   // ── REPORTS ──────────────────────────────────────────
   view_reports:            { label: 'View Reports',            module: 'reports',       description: 'Access reports and analytics dashboards' },
 
@@ -198,3 +201,60 @@ export function getPermissionModules() {
   });
   return modules;
 }
+
+// ── ROUTE PROTECTION MAP ────────────────────────────
+// Maps page names to the permission(s) required to access them directly by URL.
+// Pages not listed are accessible to all authenticated users (dashboards,
+// self-service, and dual-purpose pages where the management action is gated
+// in-page via can()). Uses the same central resolver as the sidebar, so items
+// hidden in the sidebar are not reachable by URL. An array means ANY listed
+// permission grants access.
+export const PAGE_PERMISSIONS = {
+  // HR Admin
+  Employees: 'view_employees',
+  AddEmployee: 'manage_employees',
+  EmployeeUpload: 'manage_employees',
+  OfferLetterManagement: 'view_offer_letters',
+  OnboardingTemplates: 'manage_onboarding',
+  BackgroundVerification: 'bg_verification',
+  APIModule: 'api_verification',
+  BulkPANVerification: 'bulk_pan_verify',
+  // Freelancers
+  Freelancers: 'view_freelancers',
+  FreelancerUpload: 'manage_freelancers',
+  FreelancerPayrollUpload: 'upload_payroll',
+  AdminPayrollView: 'view_payroll_records',
+  // Payroll
+  PayslipManagement: ['view_all_payslips', 'manage_payslips'],
+  // Attendance
+  AttendanceManagement: 'manage_attendance',
+  MyAttendance: 'self_attendance',
+  // Expenses
+  ExpenseApproval: 'approve_expenses',
+  MyExpenses: 'submit_expenses',
+  // Projects
+  ProjectManagement: 'view_projects',
+  ProjectDetails: 'view_projects',
+  ProjectAnalytics: 'view_project_analytics',
+  TaskTemplates: 'manage_task_templates',
+  FreelancerProjects: 'view_projects',
+  // Assets
+  AssetDashboard: 'manage_assets',
+  AssetList: 'manage_assets',
+  AssetMaintenance: 'manage_assets',
+  AssetReports: 'manage_assets',
+  // Communication
+  PolicyManagement: 'manage_policies',
+  NotificationCenter: 'manage_notifications',
+  CompanyPolicies: 'view_policies',
+  // Reports
+  Reports: 'view_reports',
+  // System
+  Settings: 'access_settings',
+  DesignationPermissions: 'access_control',
+  AccessControl: 'access_control',
+  ModuleManagement: 'module_management',
+  TeamView: 'view_team',
+  TestEmail: 'access_control',
+  PushNotificationTest: 'access_control',
+};

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Building2, Loader2 } from "lucide-react";
 import { createPageUrl } from "../utils";
+import { getEffectivePermissions, getDesignationDashboard } from "@/lib/permissions";
 
 export default function AuthRedirect() {
   const [status, setStatus] = useState("Loading...");
@@ -17,22 +18,21 @@ export default function AuthRedirect() {
           return;
         }
 
-        // Check if employee exists in database - case-insensitive match
+        // Admin (app owner) goes to HR dashboard via the explicit admin policy
+        if (user.role === 'admin') {
+          window.location.href = createPageUrl('HRDashboard');
+          return;
+        }
+
+        // Employees: dashboard comes from Designation Access (designation cascade)
         const userEmail = user.email.toLowerCase().trim();
-        const allEmployees = await base44.entities.Employee.list();
-        const employees = allEmployees.filter(emp => emp.email && emp.email.toLowerCase().trim() === userEmail);
-        
+        const employees = await base44.entities.Employee.filter({ email: userEmail });
+
         if (employees.length > 0) {
-          const role = employees[0].role || 'employee';
-          
-          // Immediate redirect without delay
-          if (role === 'hr' || role === 'manager') {
-            window.location.href = createPageUrl('HRDashboard');
-          } else if (role === 'department_head') {
-            window.location.href = createPageUrl('DeptHeadDashboard');
-          } else {
-            window.location.href = createPageUrl('EmployeeDashboard');
-          }
+          const emp = employees[0];
+          const dpRows = await base44.entities.DesignationPermission.list('display_order');
+          const perms = getEffectivePermissions(emp, dpRows);
+          window.location.href = createPageUrl(getDesignationDashboard(emp, perms));
         } else {
           window.location.href = createPageUrl('Registration');
         }

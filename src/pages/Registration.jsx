@@ -112,7 +112,7 @@ export default function Registration() {
           if (emp.status === 'active' && !hasRejectedDocs && !hasMissingDocs) {
             // Fully active employee with all documents - redirect to dashboard
             redirecting = true;
-            const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(emp.designation);
+            const dashboard = getDesignationDashboard(emp);
             window.location.replace(createPageUrl(dashboard));
             return;
           }
@@ -414,7 +414,7 @@ export default function Registration() {
         });
         
         // Redirect based on their designation
-        const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(existing, []);
+        const dashboard = getDesignationDashboard(existing, []);
         navigate(createPageUrl(dashboard));
       } else {
         // Create new freelancer

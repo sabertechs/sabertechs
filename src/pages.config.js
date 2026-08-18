@@ -61,7 +61,6 @@ import BackgroundVerification from './pages/BackgroundVerification';
 import BulkPANVerification from './pages/BulkPANVerification';
 import CompanyFeed from './pages/CompanyFeed';
 import CompanyPolicies from './pages/CompanyPolicies';
-import DeptHeadDashboard from './pages/DeptHeadDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import EmployeeOnboarding from './pages/EmployeeOnboarding';
 import EmployeeUpload from './pages/EmployeeUpload';
@@ -112,7 +111,6 @@ export const PAGES = {
     "BulkPANVerification": BulkPANVerification,
     "CompanyFeed": CompanyFeed,
     "CompanyPolicies": CompanyPolicies,
-    "DeptHeadDashboard": DeptHeadDashboard,
     "EmployeeDashboard": EmployeeDashboard,
     "EmployeeOnboarding": EmployeeOnboarding,
     "EmployeeUpload": EmployeeUpload,

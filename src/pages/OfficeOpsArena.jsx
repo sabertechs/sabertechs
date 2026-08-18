@@ -36,6 +36,7 @@ import QuizBattleGame from "@/components/games/QuizBattleGame";
 import GameLeaderboard from "@/components/games/GameLeaderboard";
 import PlayerCard from "@/components/games/PlayerCard";
 import { getDepartmentTheme, getPlayerTitle, getPlayerFrame } from "@/components/games/DepartmentThemes";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const GAMES = [
   { id: 'reaction', name: 'Reaction Speed', icon: Zap, color: 'from-orange-500 to-red-500', desc: 'Test your reflexes!' },
@@ -64,7 +65,8 @@ export default function OfficeOpsArena() {
     init();
   }, []);
 
-  const isAdmin = user?.role === 'admin' || employee?.role === 'hr' || employee?.role === 'manager';
+  const { can } = usePermissions();
+  const canManageGames = can('manage_games');
 
   const { data: gamePlayer } = useQuery({
     queryKey: ['gamePlayer', user?.email],
@@ -303,7 +305,7 @@ export default function OfficeOpsArena() {
           backgroundPosition: 'bottom', backgroundRepeat: 'repeat-x', backgroundSize: 'cover'
         }} />
 
-        {isAdmin && (
+        {canManageGames && (
           <button onClick={() => { setAdminSettings(settings || {}); setShowAdminDialog(true); }} className="absolute top-4 left-4 z-10 p-2 bg-white/10 rounded-lg hover:bg-white/20">
             <Settings className="w-5 h-5 text-white/80" />
           </button>

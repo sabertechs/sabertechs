@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const categories = [
   { value: "laptop", label: "Laptop" },
@@ -70,11 +71,12 @@ export default function AssetRequests() {
     fetchUser();
   }, []);
 
-  const isHR = employee?.role === 'hr' || employee?.role === 'manager' || employee?.role === 'department_head' || user?.role === 'admin';
+  const { can } = usePermissions();
+  const canManageAssets = can('manage_assets');
 
   const { data: requests = [] } = useQuery({
-    queryKey: ['assetRequests'],
-    queryFn: () => isHR 
+    queryKey: ['assetRequests', canManageAssets],
+    queryFn: () => canManageAssets 
       ? base44.entities.AssetRequest.list()
       : base44.entities.AssetRequest.filter({ requester_email: user?.email }),
     enabled: !!user,
@@ -133,7 +135,7 @@ export default function AssetRequests() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Asset Requests</h2>
-          <p className="text-slate-500">{isHR ? 'Manage all asset requests' : 'Request new assets'}</p>
+          <p className="text-slate-500">{canManageAssets ? 'Manage all asset requests' : 'Request new assets'}</p>
         </div>
         <Button onClick={() => setShowAddDialog(true)} className="bg-indigo-600 hover:bg-indigo-700">
           <Plus className="w-4 h-4 mr-2" /> New Request
@@ -198,7 +200,7 @@ export default function AssetRequests() {
                         {req.urgency} priority
                       </Badge>
                     </div>
-                    {isHR && <p className="text-sm text-slate-500 mt-1">{req.requester_name} • {req.department}</p>}
+                    {canManageAssets && <p className="text-sm text-slate-500 mt-1">{req.requester_name} • {req.department}</p>}
                     <p className="text-slate-600 mt-2">{req.reason}</p>
                     <p className="text-xs text-slate-400 mt-2">
                       Requested on {format(new Date(req.created_date), 'MMM d, yyyy')}
@@ -214,7 +216,7 @@ export default function AssetRequests() {
                   }>
                     {req.status}
                   </Badge>
-                  {isHR && req.status === 'pending' && (
+                  {canManageAssets && req.status === 'pending' && (
                     <Button
                       size="sm"
                       onClick={() => { setSelectedRequest(req); setShowApproveDialog(true); }}

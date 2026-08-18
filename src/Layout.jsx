@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
-import { getEffectivePermissions, getDesignationDashboard, isFreelancer } from "@/lib/permissions";
+import { getEffectivePermissions, getDesignationDashboard, isFreelancer, PAGE_PERMISSIONS } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -133,7 +133,7 @@ export default function Layout({ children, currentPageName }) {
     gcTime: 60 * 60 * 1000,
   });
 
-  const { data: designationPermissions = [] } = useQuery({
+  const { data: designationPermissions = [], isLoading: permsLoading } = useQuery({
     queryKey: ['designation-permissions'],
     queryFn: () => base44.entities.DesignationPermission.list('display_order'),
     enabled: !!user?.email,
@@ -229,7 +229,9 @@ export default function Layout({ children, currentPageName }) {
     return <>{children}</>;
   }
 
-  if (loading) {
+  // Wait for the permission cascade to load before gating routes (non-admins
+  // need their Designation Access permissions to resolve can() correctly).
+  if (loading || (!isAdmin && permsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -238,6 +240,19 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </div>
     );
+  }
+
+  // Route protection: hidden sidebar items must not be directly accessible by
+  // URL. Uses the same central resolver (can) as the sidebar.
+  const requiredPerm = PAGE_PERMISSIONS[currentPageName];
+  if (requiredPerm) {
+    const allowed = Array.isArray(requiredPerm)
+      ? requiredPerm.some(p => can(p))
+      : can(requiredPerm);
+    if (!allowed) {
+      const dashboard = isAdmin ? 'HRDashboard' : getDesignationDashboard(employeeData, perms);
+      return <Navigate to={createPageUrl(dashboard)} replace />;
+    }
   }
 
   return (
