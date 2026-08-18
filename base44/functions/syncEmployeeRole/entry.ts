@@ -19,12 +19,14 @@ Deno.serve(async (req) => {
             role = body.data.role;
             department = body.data.department;
             section_access = body.data.section_access;
+            designation = body.data.designation;
         } else {
             // Direct call
             email = body.employee_email;
             role = body.role;
             department = body.department;
             section_access = body.section_access;
+            designation = body.designation;
         }
 
         if (!email) {
