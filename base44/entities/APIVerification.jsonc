@@ -57,12 +57,12 @@
         },
         {
           "user_condition": {
-            "data.designation": "hr_head"
+            "data.designation": "HR Head"
           }
         },
         {
           "user_condition": {
-            "data.designation": "assistant_manager"
+            "data.designation": "Assistant Manager"
           }
         }
       ]

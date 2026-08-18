@@ -65,17 +65,17 @@
         },
         {
           "user_condition": {
-            "data.designation": "hr_head"
+            "data.designation": "HR Head"
           }
         },
         {
           "user_condition": {
-            "data.designation": "senior_manager"
+            "data.designation": "Senior Manager"
           }
         },
         {
           "user_condition": {
-            "data.designation": "assistant_manager"
+            "data.designation": "Assistant Manager"
           }
         }
       ]
@@ -89,12 +89,12 @@
         },
         {
           "user_condition": {
-            "data.designation": "hr_head"
+            "data.designation": "HR Head"
           }
         },
         {
           "user_condition": {
-            "data.designation": "senior_manager"
+            "data.designation": "Senior Manager"
           }
         }
       ]
