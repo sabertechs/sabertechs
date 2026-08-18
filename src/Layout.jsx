@@ -178,7 +178,7 @@ export default function Layout({ children, currentPageName }) {
     if (can('view_policies')) items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
     if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
     if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-    if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+    if (isModuleEnabled('company_feed') && !can('manage_company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
 
     // HR Admin section
     const hrAdminItems = [];
