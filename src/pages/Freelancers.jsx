@@ -145,6 +145,21 @@ export default function Freelancers() {
     return setting?.setting_value || [];
   }, [appSettings]);
 
+  // Designation Access (DesignationPermission) is the single source of truth
+  // for designations — the permission engine matches Employee.designation against
+  // DesignationPermission.designation_name. Pull the dropdown from here so stored
+  // values always resolve to permissions correctly.
+  const { data: designationPermissions = [] } = useQuery({
+    queryKey: ['designationPermissions'],
+    queryFn: () => base44.entities.DesignationPermission.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const permissionDesignations = useMemo(
+    () => designationPermissions.map(dp => dp.designation_name).filter(Boolean),
+    [designationPermissions]
+  );
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Employee.create(data),
     onSuccess: () => {
@@ -192,8 +207,8 @@ export default function Freelancers() {
     // so the Select dropdown displays the current value correctly.
     const normalizeToSetting = (val, settings) => {
       if (!val) return "";
-      const match = settings.find(s => s.name?.toLowerCase() === val.toLowerCase());
-      return match ? match.name : val;
+      const match = settings.find(s => (typeof s === 'string' ? s : s.name)?.toLowerCase() === val.toLowerCase());
+      return match ? (typeof match === 'string' ? match : match.name) : val;
     };
     setFormData({
       full_name: employee.full_name || "",
@@ -201,7 +216,7 @@ export default function Freelancers() {
       email: employee.email || "",
       phone: employee.phone || "",
       department: normalizeToSetting(employee.department, settingsDepartments),
-      designation: normalizeToSetting(employee.designation, settingsDesignations),
+      designation: normalizeToSetting(employee.designation, permissionDesignations),
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
       work_type: employee.work_type || "online",
@@ -1319,10 +1334,10 @@ export default function Freelancers() {
                   <SelectValue placeholder="Select designation" />
                 </SelectTrigger>
                 <SelectContent>
-                  {settingsDesignations.map(des => (
-                    <SelectItem key={des.id} value={des.name}>{des.name}</SelectItem>
+                  {permissionDesignations.map(des => (
+                    <SelectItem key={des} value={des}>{des}</SelectItem>
                   ))}
-                  {formData.designation && !settingsDesignations.some(d => d.name === formData.designation) && (
+                  {formData.designation && !permissionDesignations.includes(formData.designation) && (
                     <SelectItem value={formData.designation}>{formData.designation}</SelectItem>
                   )}
                 </SelectContent>
