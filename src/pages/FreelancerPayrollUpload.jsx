@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Upload, Trash2, FileSpreadsheet, Users, Download, AlertTriangle, CheckC
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
 
 function downloadSample() {
   const headers = ['Date (YYYY-MM-DD)', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
@@ -37,77 +38,16 @@ function downloadErrorReport(skippedRows) {
   XLSX.writeFile(wb, 'payroll_upload_error_report.xlsx');
 }
 
-// Safely format a date as YYYY-MM-DD WITHOUT using toISOString()
-// toISOString() converts to UTC which can shift date back 1 day for IST (UTC+5:30)
-const toLocalDateString = (d) => {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const parseExcelDate = (val) => {
-  if (!val && val !== 0) return '';
-
-  // If XLSX gave us a real JS Date object (when cellDates:true is used)
-  if (val instanceof Date) {
-    if (isNaN(val)) return '';
-    return toLocalDateString(val);
-  }
-
-  const num = Number(val);
-  // Excel serial number — days since 1899-12-30
-  // MUST use UTC (not local) for both epoch and date parts, otherwise
-  // timezone offsets (e.g. IST +5:30) shift the date forward by 1 day,
-  // causing month-boundary errors like July 31 → August 1.
-  if (!isNaN(num) && num > 1000) {
-    const ms = Date.UTC(1899, 11, 30) + Math.round(num) * 86400000;
-    const d = new Date(ms);
-    const yyyy = d.getUTCFullYear();
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  const str = val.toString().trim();
-
-  // dd-mmm-yy  e.g. "01-Apr-26"
-  const dMonYMatch = str.match(/^(\d{1,2})[-\/]([A-Za-z]{3})[-\/](\d{2,4})$/);
-  if (dMonYMatch) {
-    let [, day, mon, yr] = dMonYMatch;
-    if (yr.length === 2) yr = '20' + yr;
-    const dt = new Date(`${day} ${mon} ${yr}`);
-    if (!isNaN(dt)) return toLocalDateString(dt);
-  }
-
-  // dd-mm-yy or dd/mm/yy
-  const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-  if (dmyMatch) {
-    let [, d, m, y] = dmyMatch;
-    if (y.length === 2) y = '20' + y;
-    // Build as local date (NOT via ISO string which assumes UTC)
-    const dt = new Date(Number(y), Number(m) - 1, Number(d));
-    if (!isNaN(dt)) return toLocalDateString(dt);
-  }
-
-  // yyyy-mm-dd (already ISO-like — parse parts directly)
-  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    const dt = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
-    if (!isNaN(dt)) return toLocalDateString(dt);
-  }
-
-  return '';
-};
-
 export default function FreelancerPayrollUpload() {
   const queryClient = useQueryClient();
+  const [parsing, setParsing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadResult, setUploadResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [file, setFile] = useState(null);
-  const [confirmDeleteBatch, setConfirmDeleteBatch] = useState(null); // batch object to confirm
+  const [preview, setPreview] = useState(null); // { validRecords, rejectedRows, totalRows, batchId, fileName }
+  const [confirmDeleteBatch, setConfirmDeleteBatch] = useState(null);
   const [deleteProgress, setDeleteProgress] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
@@ -143,7 +83,6 @@ export default function FreelancerPayrollUpload() {
             if (lines.length < 2) return resolve([]);
             const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
             const rows = lines.slice(1).map(line => {
-              // Handle quoted fields with commas inside
               const values = [];
               let current = '';
               let inQuotes = false;
@@ -183,12 +122,13 @@ export default function FreelancerPayrollUpload() {
     });
   };
 
-  const handleUpload = async () => {
+  // Parse + validate the file into a preview — no commit yet.
+  const handleParsePreview = async () => {
     if (!file) return toast.error('Please select a file first');
-    setUploading(true);
-    setProgress(5);
-    setUploadResult(null);
+    setParsing(true);
     setUploadError(null);
+    setUploadResult(null);
+    setPreview(null);
 
     try {
       const rows = await parseFileToRows(file);
@@ -197,11 +137,9 @@ export default function FreelancerPayrollUpload() {
         return;
       }
 
-      setProgress(15);
-
       const batchId = `batch_${Date.now()}`;
       const validRecords = [];
-      const skippedRows = [];
+      const rejectedRows = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -213,9 +151,8 @@ export default function FreelancerPayrollUpload() {
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Invalid email: "${email}"`);
 
         const rawDate = row['Date (YYYY-MM-DD)'] || row['Date'] || '';
-        const date = parseExcelDate(rawDate);
-        if (!date) errors.push(`Missing or invalid Date: "${rawDate}"`);
-        else console.log(`Payroll import row ${rowNum}: raw date="${rawDate}" -> parsed date="${date}" (month="${date.substring(0, 7)}")`);
+        const dateRes = parseSpreadsheetDate(rawDate);
+        if (!dateRes.ok) errors.push(`Invalid Date "${rawDate}": ${dateRes.error}`);
 
         const proctorName = (row['Proctor Name'] || '').toString().trim();
         const mobileNumber = (row['Mobile Number'] || '').toString().trim();
@@ -228,12 +165,12 @@ export default function FreelancerPayrollUpload() {
         if (isNaN(payment)) errors.push(`Missing or invalid Payment: "${rawPayment}"`);
 
         if (errors.length > 0) {
-          skippedRows.push({ row: rowNum, email: email || '-', reason: errors.join('; ') });
+          rejectedRows.push({ row: rowNum, email: email || '-', reason: errors.join('; ') });
           continue;
         }
 
         validRecords.push({
-          date,
+          date: dateRes.value,
           proctor_name: proctorName,
           mobile_number: mobileNumber,
           proctor_email: email,
@@ -241,11 +178,28 @@ export default function FreelancerPayrollUpload() {
           drive_timing: driveTiming,
           role,
           payment,
-          project_month: date.substring(0, 7),
+          project_month: dateRes.value.substring(0, 7),
           upload_batch: batchId,
         });
       }
 
+      setPreview({ validRecords, rejectedRows, totalRows: rows.length, batchId, fileName: file.name });
+    } catch (err) {
+      setUploadError(`Error: ${err.message}`);
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  // Commit the previewed valid records.
+  const handleConfirmUpload = async () => {
+    if (!preview) return;
+    setUploading(true);
+    setProgress(5);
+    setUploadResult(null);
+
+    try {
+      const { validRecords, rejectedRows, totalRows } = preview;
       const CHUNK_SIZE = 100;
       let inserted = 0;
       const insertErrors = [];
@@ -268,14 +222,15 @@ export default function FreelancerPayrollUpload() {
       setUploadResult({
         success: true,
         inserted,
-        skipped: skippedRows,
+        skipped: rejectedRows,
         errors: insertErrors,
-        total_rows: rows.length,
+        total_rows: totalRows,
       });
 
       if (inserted > 0) {
-        toast.success(`Uploaded ${inserted} of ${rows.length} records successfully`);
+        toast.success(`Uploaded ${inserted} of ${totalRows} records successfully`);
         setFile(null);
+        setPreview(null);
         queryClient.invalidateQueries(['freelancerPayrollAll']);
       }
     } catch (err) {
@@ -292,7 +247,6 @@ export default function FreelancerPayrollUpload() {
     setDeleting(true);
     setDeleteProgress(5);
     try {
-      // Fetch all records for this batch directly from entity to ensure we have IDs
       const toDelete = await base44.entities.FreelancerPayroll.filter({ upload_batch: batchId });
       if (toDelete.length === 0) {
         toast.error('No records found for this batch');
@@ -319,7 +273,7 @@ export default function FreelancerPayrollUpload() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Freelancer Payroll Upload</h1>
-        <p className="text-slate-500 mt-1">Upload CSV or XLSX payroll reports. Skipped rows will be available as a downloadable error report.</p>
+        <p className="text-slate-500 mt-1">Upload CSV or XLSX payroll reports. Review parsed dates and rejected rows before committing.</p>
         <Button variant="outline" size="sm" onClick={downloadSample} className="mt-2 border-green-400 text-green-700 hover:bg-green-50">
           <Download className="w-4 h-4 mr-2" /> Download Sample Template
         </Button>
@@ -336,26 +290,26 @@ export default function FreelancerPayrollUpload() {
                 Required columns: <span className="font-semibold text-indigo-700">Date, Proctor Name, Mobile Number, Email ID, Client Name, Drive timing, Role, Payment</span>
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Date column must be in <span className="font-semibold">YYYY-MM-DD</span> format (e.g. 2026-07-31). DD-MM-YYYY and DD/MM/YYYY are also accepted.
+                Date column accepts <span className="font-semibold">YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY, DD-MMM-YY</span> and Excel serial dates — no timezone shifting.
               </p>
             </div>
             <div className="flex items-center gap-3">
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
-                onChange={(e) => { setFile(e.target.files[0]); setUploadResult(null); setUploadError(null); }}
+                onChange={(e) => { setFile(e.target.files[0]); setPreview(null); setUploadResult(null); setUploadError(null); }}
                 className="block text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:cursor-pointer"
               />
-              <Button onClick={handleUpload} disabled={!file || uploading} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button onClick={handleParsePreview} disabled={!file || parsing || uploading} className="bg-indigo-600 hover:bg-indigo-700">
                 <Upload className="w-4 h-4 mr-2" />
-                {uploading ? 'Uploading...' : 'Upload'}
+                {parsing ? 'Parsing…' : 'Parse & Preview'}
               </Button>
             </div>
 
-            {uploading && (
+            {parsing && (
               <div className="w-full max-w-md space-y-1">
-                <Progress value={progress} className="h-2" />
-                <p className="text-xs text-slate-500 text-center">Processing file, please wait…</p>
+                <Progress value={60} className="h-2" />
+                <p className="text-xs text-slate-500 text-center">Parsing file, please wait…</p>
               </div>
             )}
           </div>
@@ -377,6 +331,83 @@ export default function FreelancerPayrollUpload() {
         </Card>
       )}
 
+      {/* Import Preview / Validation Summary */}
+      {preview && !uploading && (
+        <Card className="border-indigo-200 bg-indigo-50/40">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
+              <p className="font-semibold text-slate-800">Import Preview — {preview.fileName}</p>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <span className="text-green-700 font-medium">✅ Valid: {preview.validRecords.length}</span>
+              <span className="text-slate-500">📋 Total rows: {preview.totalRows}</span>
+              {preview.rejectedRows.length > 0 && (
+                <span className="text-yellow-700 font-medium">⚠️ Rejected: {preview.rejectedRows.length}</span>
+              )}
+            </div>
+
+            {/* Sample parsed dates */}
+            {preview.validRecords.length > 0 && (
+              <div className="bg-white rounded border border-indigo-100 p-3">
+                <p className="text-xs font-medium text-slate-600 mb-2">Sample parsed dates (first 5):</p>
+                <div className="flex flex-wrap gap-2">
+                  {preview.validRecords.slice(0, 5).map((r, i) => (
+                    <Badge key={i} variant="outline" className="font-mono text-xs bg-green-50 border-green-200 text-green-700">
+                      {r.proctor_email}: {r.date}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Rejected rows */}
+            {preview.rejectedRows.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-yellow-800 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> Rejected Rows ({preview.rejectedRows.length})
+                  </p>
+                  <Button size="sm" variant="outline" className="border-yellow-400 text-yellow-800 hover:bg-yellow-50 h-7 text-xs" onClick={() => downloadErrorReport(preview.rejectedRows)}>
+                    <Download className="w-3 h-3 mr-1" /> Download Error Report
+                  </Button>
+                </div>
+                <div className="bg-white rounded border border-yellow-200 max-h-48 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-yellow-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Row #</th>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Email</th>
+                        <th className="px-3 py-1.5 text-left text-yellow-800">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.rejectedRows.map((s, i) => (
+                        <tr key={i} className="border-t border-yellow-100">
+                          <td className="px-3 py-1 text-slate-600">{s.row}</td>
+                          <td className="px-3 py-1 text-slate-600">{s.email}</td>
+                          <td className="px-3 py-1 text-red-600">{s.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button onClick={handleConfirmUpload} disabled={preview.validRecords.length === 0} className="bg-green-600 hover:bg-green-700">
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Confirm Upload ({preview.validRecords.length})
+              </Button>
+              <Button variant="outline" onClick={() => setPreview(null)} disabled={uploading}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload Result */}
       {uploadResult && !uploading && (
         <Card className={uploadResult.inserted > 0 ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}>
@@ -389,7 +420,7 @@ export default function FreelancerPayrollUpload() {
               <span className="text-green-700 font-medium">✅ Inserted: {uploadResult.inserted}</span>
               <span className="text-slate-500">📋 Total rows: {uploadResult.total_rows}</span>
               {uploadResult.skipped?.length > 0 && (
-                <span className="text-yellow-700 font-medium">⚠️ Skipped: {uploadResult.skipped.length}</span>
+                <span className="text-yellow-700 font-medium">⚠️ Rejected: {uploadResult.skipped.length}</span>
               )}
               {uploadResult.errors?.length > 0 && (
                 <span className="text-red-700 font-medium">❌ Errors: {uploadResult.errors.length}</span>
@@ -400,7 +431,7 @@ export default function FreelancerPayrollUpload() {
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium text-yellow-800 flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4" /> Skipped Rows ({uploadResult.skipped.length})
+                    <AlertTriangle className="w-4 h-4" /> Rejected Rows ({uploadResult.skipped.length})
                   </p>
                   <Button size="sm" variant="outline" className="border-yellow-400 text-yellow-800 hover:bg-yellow-50 h-7 text-xs" onClick={() => downloadErrorReport(uploadResult.skipped)}>
                     <Download className="w-3 h-3 mr-1" /> Download Error Report
@@ -473,6 +504,7 @@ export default function FreelancerPayrollUpload() {
           )}
         </CardContent>
       </Card>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!confirmDeleteBatch} onOpenChange={() => { if (!deleting) setConfirmDeleteBatch(null); }}>
         <DialogContent className="max-w-md">

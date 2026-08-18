@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
 
 export default function FreelancerUpload() {
   const [uploading, setUploading] = useState(false);
@@ -102,14 +103,15 @@ export default function FreelancerUpload() {
     return rows;
   };
 
-  const parseDateDDMMYYYY = (dateStr) => {
-    if (!dateStr) return null;
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      const [day, month, year] = parts;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    return null;
+  // Shared, timezone-safe date parser — handles Excel serials, DD/MM/YYYY,
+  // DD-MM-YYYY, YYYY-MM-DD, DD-MMM-YY, etc. without shifting the date.
+  const parseDate = (val) => {
+    const res = parseSpreadsheetDate(val);
+    return res.ok ? res.value : null;
+  };
+  const dateParseError = (val) => {
+    const res = parseSpreadsheetDate(val);
+    return res.ok ? null : res.error;
   };
 
   const validateRow = (row, lineNumber) => {
@@ -136,12 +138,14 @@ export default function FreelancerUpload() {
       errors.push("Invalid status value");
     }
 
-    if (row.date_of_birth && !parseDateDDMMYYYY(row.date_of_birth)) {
-      errors.push("Date of birth must be in DD/MM/YYYY format");
+    if (row.date_of_birth) {
+      const dobErr = dateParseError(row.date_of_birth);
+      if (dobErr) errors.push(`Date of birth invalid: ${dobErr}`);
     }
 
-    if (row.date_of_joining && !parseDateDDMMYYYY(row.date_of_joining)) {
-      errors.push("Date of joining must be in DD/MM/YYYY format");
+    if (row.date_of_joining) {
+      const dojErr = dateParseError(row.date_of_joining);
+      if (dojErr) errors.push(`Date of joining invalid: ${dojErr}`);
     }
 
     return errors;
@@ -278,7 +282,7 @@ export default function FreelancerUpload() {
               father_name: data.father_name?.trim() || '',
               email: data.email?.trim().toLowerCase(),
               phone: data.phone?.trim(),
-              date_of_birth: parseDateDDMMYYYY(data.date_of_birth),
+              date_of_birth: parseDate(data.date_of_birth),
               gender: data.gender?.toLowerCase() || null,
               address: data.address?.trim() || '',
               locality: data.locality?.trim() || '',
@@ -289,7 +293,7 @@ export default function FreelancerUpload() {
               pan_number: data.pan_number?.toUpperCase() || '',
               department: data.department?.trim() || '',
               designation: data.designation?.trim() || '',
-              date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
+              date_of_joining: parseDate(data.date_of_joining),
               employment_type: 'contractual',
               work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
               status: data.status?.toLowerCase() || 'pending',

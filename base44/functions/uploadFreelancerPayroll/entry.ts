@@ -1,48 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { can } from '../../shared/permissions.ts';
+import { parseSpreadsheetDate } from '../../shared/spreadsheetDates.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
-
-// Helper: convert Excel serial date OR date string to YYYY-MM-DD
-// IMPORTANT: always use UTC epoch + UTC getters (never toISOString() on a
-// locally-constructed Date, and never mix local Date construction with
-// UTC output) — mixing the two shifts the date by 1 day depending on the
-// server/browser timezone, which previously caused month-boundary bugs
-// (e.g. July 31 stored as August 1).
-function toUTCDateString(y, m, d) {
-  const yyyy = String(y).padStart(4, '0');
-  const mm = String(m).padStart(2, '0');
-  const dd = String(d).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function parseExcelDate(val) {
-  if (!val && val !== 0) return '';
-  const num = Number(val);
-  if (!isNaN(num) && num > 1000) {
-    // Excel serial date: days since 1899-12-30 (UTC epoch, UTC getters)
-    const ms = Date.UTC(1899, 11, 30) + Math.round(num) * 86400000;
-    const d = new Date(ms);
-    return toUTCDateString(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
-  }
-  // Try as string date (dd-mm-yy, dd/mm/yyyy, yyyy-mm-dd, etc.)
-  const str = val.toString().trim();
-
-  // dd-mm-yy or dd/mm/yy or dd-mm-yyyy or dd/mm/yyyy — parse parts directly, no Date object
-  const dmyMatch = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-  if (dmyMatch) {
-    let [, d, m, y] = dmyMatch;
-    if (y.length === 2) y = '20' + y;
-    return toUTCDateString(y, m, d);
-  }
-
-  // yyyy-mm-dd (already ISO-like) — parse parts directly, no Date object
-  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (isoMatch) {
-    return toUTCDateString(isoMatch[1], isoMatch[2], isoMatch[3]);
-  }
-
-  return '';
-}
 
 Deno.serve(async (req) => {
   try {
@@ -111,8 +70,9 @@ Deno.serve(async (req) => {
 
       // Mandatory: Drive Date
       const rawDriveDate = row['Drive Date'] || row['Drive Start Date'] || '';
-      const driveDate = parseExcelDate(rawDriveDate);
-      if (!driveDate) errors.push(`Missing or invalid Drive Date: "${rawDriveDate}"`);
+      const dateRes = parseSpreadsheetDate(rawDriveDate);
+      const driveDate = dateRes.ok ? dateRes.value : '';
+      if (!driveDate) errors.push(`Missing or invalid Drive Date "${rawDriveDate}": ${dateRes.error || 'empty'}`);
 
       // Mandatory: Drive Hours
       const driveHours = (row['Drive Hours'] || row['Driver hours'] || row['Driver Hours'] || '').toString().trim();
