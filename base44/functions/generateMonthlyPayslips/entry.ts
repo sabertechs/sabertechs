@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
       emp.role !== 'freelancer'
     );
 
-    // Calculate days in month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month - 1, daysInMonth);
+    // Calculate days in month (UTC — never use local Date, it shifts the date in IST)
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const monthStr = String(month).padStart(2, '0');
+    const startDateStr = `${year}-${monthStr}-01`;
+    const endDateStr = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
 
     const results = {
       success: [],
@@ -39,9 +40,9 @@ Deno.serve(async (req) => {
         // Check if all days have attendance marked
         const attendance = await base44.asServiceRole.entities.Attendance.filter({
           employee_email: emp.email,
-          date: { 
-            $gte: startDate.toISOString().split('T')[0],
-            $lte: endDate.toISOString().split('T')[0]
+          date: {
+            $gte: startDateStr,
+            $lte: endDateStr
           }
         });
 
