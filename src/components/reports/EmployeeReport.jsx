@@ -79,7 +79,7 @@ export default function EmployeeReport({ onBack }) {
   return (
     <ReportShell
       title="Employee Report"
-      description="Filter employees by role, department, status, employment type"
+      description="Filter employees by department, designation, status, employment type"
       onBack={onBack}
       onDownload={handleDownload}
       loading={isLoading}

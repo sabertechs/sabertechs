@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Search, Filter, CheckCircle, XCircle, Eye, Receipt, ExternalLink, Brain, AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
 import { getExpenseStatusEmail } from "@/components/email/EmailTemplate";
-import { getDesignationRole } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,27 +51,12 @@ export default function ExpenseApproval() {
     queryFn: () => base44.entities.Employee.list(),
   });
 
-  // Filter expenses based on reporting relationship
+  // Designation Access is the sole source — expense visibility is enforced by RLS.
+  // This page is gated to users who can approve expenses; show all RLS-visible expenses.
   const expenses = useMemo(() => {
-    if (!user || !employee) return allExpenses;
-
-    const empRole = getDesignationRole(employee.designation);
-
-    // HR and admin see all expenses
-    if (empRole === 'hr' || user.role === 'admin') {
-      return allExpenses;
-    }
-
-    // Managers see expenses from their reportees
-    if (empRole === 'manager') {
-      return allExpenses.filter(expense => {
-        const reportee = allEmployees.find(emp => emp.email === expense.employee_email);
-        return reportee?.reporting_to === user.email;
-      });
-    }
-
-    return [];
-  }, [allExpenses, allEmployees, user, employee]);
+    if (!user) return [];
+    return allExpenses;
+  }, [allExpenses, user]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),

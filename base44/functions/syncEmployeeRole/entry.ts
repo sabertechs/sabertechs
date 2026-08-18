@@ -44,11 +44,7 @@ Deno.serve(async (req) => {
             return Response.json({ message: 'Skipped — user is platform admin', email });
         }
 
-        const validRoles = ['hr', 'manager', 'department_head', 'employee', 'freelancer'];
-        const targetRole = role && validRoles.includes(role) ? role : 'employee';
-
         await base44.asServiceRole.entities.User.update(user.id, {
-            role: targetRole,
             data: {
                 ...(user.data || {}),
                 department,
@@ -57,7 +53,7 @@ Deno.serve(async (req) => {
             },
         });
 
-        return Response.json({ success: true, email, role: targetRole });
+        return Response.json({ success: true, email, designation });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }

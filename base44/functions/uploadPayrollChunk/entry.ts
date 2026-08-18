@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -6,19 +7,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Look up Employee record to get the actual role assigned in the system
-    const employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
-    const employeeRole = employees.length > 0 ? employees[0].role : null;
-
-    const isAdmin = user.role === 'admin'
-      || user.role === 'hr'
-      || user.role === 'manager'
-      || user.role === 'department_head'
-      || employeeRole === 'hr'
-      || employeeRole === 'manager'
-      || employeeRole === 'department_head';
-
-    if (!isAdmin) {
+    // Designation Access is the sole source of truth — require upload_payroll
+    const allowed = await can(base44, user, 'upload_payroll');
+    if (!allowed) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

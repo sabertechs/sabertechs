@@ -120,8 +120,7 @@ export default function AddEmployee() {
         department: "",
         designation: "",
         date_of_joining: "",
-        salary: "",
-        role: "employee"
+        salary: ""
       });
     } catch (error) {
       console.error('Error creating employee:', error);

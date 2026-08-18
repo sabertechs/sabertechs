@@ -103,23 +103,25 @@ export function getDesignationLevel(designation) {
   return match ? match.level : 1;
 }
 
-// Returns role string for nav routing: 'hr', 'manager', 'assistant_manager', 'freelancer', 'employee'
-export function getDesignationRole(designation) {
-  if (!designation) return 'employee';
-  const d = designation.toLowerCase().replace(/\s+/g, '_');
-  if (d === 'hr_head' || d === 'hr_manager') return 'hr';
-  if (d === 'senior_manager') return 'manager';
-  if (d === 'team_lead') return 'employee';
-  if (d === 'assistant_manager') return 'assistant_manager';
-  if (d === 'proctor') return 'freelancer';
-  return 'employee';
+// Freelancers are contractual employees (employment_type === 'contractual').
+// Designation alone does not determine freelancer status — employment_type does.
+export function isFreelancer(employee) {
+  return employee?.employment_type === 'contractual';
 }
 
-// Returns dashboard page name for a designation
-export function getDesignationDashboard(designation) {
-  const role = getDesignationRole(designation);
-  if (role === 'hr' || role === 'manager') return 'HRDashboard';
-  if (role === 'freelancer') return 'FreelancerDashboard';
+// Fixed permissions always granted to freelancers (contractual employees),
+// independent of Designation Access — ensures freelancers can always see
+// the modules they need to work (their assigned projects).
+export const FREELANCER_FIXED_PERMISSIONS = ['view_projects'];
+
+// Returns dashboard page name for an employee + their effective permissions.
+// Decision is designation/permission based — no legacy role strings.
+export function getDesignationDashboard(employee, permissions = []) {
+  if (isFreelancer(employee)) return 'FreelancerDashboard';
+  if (permissions.includes('view_employees')) return 'HRDashboard';
+  // Fallback by designation when permissions aren't loaded yet
+  const d = employee?.designation?.toLowerCase();
+  if (d === 'hr head' || d === 'senior manager') return 'HRDashboard';
   return 'EmployeeDashboard';
 }
 
@@ -127,6 +129,8 @@ export function getDesignationDashboard(designation) {
 
 export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
+
+  let perms;
 
   // Check if the designation is in the hierarchy
   const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
@@ -138,19 +142,24 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
     const userDesig = designationPermissions.find(dp =>
       dp.designation_name?.toLowerCase() === employee.designation?.toLowerCase()
     );
-    return userDesig?.permissions || [];
+    perms = [...(userDesig?.permissions || [])];
+  } else {
+    // In hierarchy — cascade: collect from all designations at or below user's level
+    const userLevel = hierarchyEntry.level;
+    perms = designationPermissions
+      .filter(dp => {
+        const entry = DESIGNATION_HIERARCHY.find(d => d.name.toLowerCase() === dp.designation_name?.toLowerCase());
+        return entry && entry.level <= userLevel;
+      })
+      .flatMap(dp => dp.permissions || []);
   }
 
-  // In hierarchy — cascade: collect from all designations at or below user's level
-  const userLevel = hierarchyEntry.level;
-  const cascaded = designationPermissions
-    .filter(dp => {
-      const entry = DESIGNATION_HIERARCHY.find(d => d.name.toLowerCase() === dp.designation_name?.toLowerCase());
-      return entry && entry.level <= userLevel;
-    })
-    .flatMap(dp => dp.permissions || []);
+  // Contractual employees (freelancers) always get their fixed modules
+  if (isFreelancer(employee)) {
+    perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
+  }
 
-  return [...new Set(cascaded)];
+  return [...new Set(perms)];
 }
 
 // Get inherited permissions for a designation from all lower cascade levels.

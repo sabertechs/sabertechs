@@ -1,18 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    // Only HR/Admin can send push notifications
-    if (!user || (user.role !== 'admin')) {
-      const employees = await base44.asServiceRole.entities.Employee.filter({ 
-        email: user?.email 
-      });
-      if (!employees[0] || !['hr', 'manager', 'department_head'].includes(employees[0].role)) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Designation Access is the sole source of truth — require manage_notifications
+    const allowed = await can(base44, user, 'manage_notifications');
+    if (!allowed) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { 

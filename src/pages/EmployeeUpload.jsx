@@ -137,10 +137,6 @@ export default function EmployeeUpload() {
       errors.push("Invalid status value");
     }
     
-    if (row.role && !['employee', 'department_head', 'hr'].includes(row.role.toLowerCase())) {
-      errors.push("Invalid role value");
-    }
-
     if (row.date_of_birth && !parseDateDDMMYYYY(row.date_of_birth)) {
       errors.push("Date of birth must be in DD/MM/YYYY format");
     }
@@ -252,7 +248,6 @@ export default function EmployeeUpload() {
               designation: data.designation?.trim() || '',
               date_of_joining: parseDateDDMMYYYY(data.date_of_joining),
               salary: data.salary ? parseFloat(data.salary) : null,
-              role: data.role?.toLowerCase() || 'employee',
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
@@ -359,7 +354,6 @@ export default function EmployeeUpload() {
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
                 <li>• department, designation, date_of_joining (DD/MM/YYYY), salary</li>
-                <li>• role (employee/department_head/hr)</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
             </div>

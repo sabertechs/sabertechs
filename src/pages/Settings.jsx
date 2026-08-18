@@ -47,13 +47,6 @@ const DEFAULT_DEPARTMENTS = [
   { id: "proctoring", name: "Proctoring" },
 ];
 
-const DEFAULT_ROLES = [
-  { id: "employee", name: "Employee" },
-  { id: "department_head", name: "Department Head" },
-  { id: "manager", name: "Manager" },
-  { id: "hr", name: "HR" },
-];
-
 const DEFAULT_EXPENSE_TYPES = [
   { id: "travel", name: "Travel" },
   { id: "meals", name: "Meals" },
@@ -95,7 +88,6 @@ export default function Settings() {
   };
 
   const departments = getSetting('departments', DEFAULT_DEPARTMENTS);
-  const roles = getSetting('roles', DEFAULT_ROLES);
   const designations = getSetting('designations', []);
   const expenseTypes = getSetting('expense_types', DEFAULT_EXPENSE_TYPES);
 

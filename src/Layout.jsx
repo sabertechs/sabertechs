@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
-import { getEffectivePermissions, getDesignationRole, getDesignationDashboard } from "@/lib/permissions";
+import { getEffectivePermissions, getDesignationDashboard, isFreelancer } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -67,8 +67,8 @@ export default function Layout({ children, currentPageName }) {
           const emp = employees[0];
           
           // Check if employee status is pending and not HR/manager
-          const empRole = getDesignationRole(emp.designation);
-          if (emp.status === 'pending' && empRole !== 'hr' && empRole !== 'manager') {
+          const managerialDesignations = ['hr head', 'senior manager'];
+          if (emp.status === 'pending' && !managerialDesignations.includes(emp.designation?.toLowerCase())) {
             // Redirect pending employees to registration to complete profile
             if (currentPageName !== "Registration") {
               window.location.href = createPageUrl("Registration");
@@ -80,13 +80,11 @@ export default function Layout({ children, currentPageName }) {
 
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
-            const regRole = getDesignationRole(emp.designation);
-            if (userData.role === 'admin' || regRole === 'hr' || regRole === 'manager') {
+            if (userData.role === 'admin') {
               window.location.replace(createPageUrl("HRDashboard"));
-            } else if (regRole === 'freelancer') {
-              window.location.replace(createPageUrl("FreelancerDashboard"));
             } else {
-              window.location.replace(createPageUrl("EmployeeDashboard"));
+              const regPerms = getEffectivePermissions(emp, designationPermissions);
+              window.location.replace(createPageUrl(getDesignationDashboard(emp, regPerms)));
             }
             return;
           }
@@ -142,27 +140,23 @@ export default function Layout({ children, currentPageName }) {
     staleTime: 10 * 60 * 1000,
   });
 
-  const userRole = useMemo(() => user?.role || 'employee', [user?.role]);
-  const designationLevel = useMemo(() => {
-    if (userRole === 'admin') return 'hr';
-    return getDesignationRole(employeeData?.designation);
-  }, [employeeData?.designation, userRole]);
+  const isAdmin = user?.role === 'admin';
+  const perms = useMemo(() => getEffectivePermissions(employeeData, designationPermissions), [employeeData, designationPermissions]);
+  const isFreelancerUser = useMemo(() => isFreelancer(employeeData), [employeeData]);
+  const can = useCallback((permission) => isAdmin || perms.includes(permission), [isAdmin, perms]);
 
   const getNavItems = useCallback(() => {
     const items = [];
     const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
-    const perms = getEffectivePermissions(employeeData, designationPermissions);
-    const can = (permission) => userRole === 'admin' || perms.includes(permission);
-    const isFreelancer = employeeData?.designation?.toLowerCase() === 'proctor';
 
     // Dashboard
-    const dashboardPage = userRole === 'admin'
+    const dashboardPage = isAdmin
       ? 'HRDashboard'
-      : getDesignationDashboard(employeeData?.designation);
+      : getDesignationDashboard(employeeData, perms);
     items.push({ name: "Dashboard", icon: LayoutDashboard, page: dashboardPage });
 
     // Freelancer self-service
-    if (isFreelancer) {
+    if (isFreelancerUser) {
       if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
@@ -227,7 +221,7 @@ export default function Layout({ children, currentPageName }) {
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
 
     return items;
-  }, [userRole, designationLevel, employeeData, moduleSettings, designationPermissions]);
+  }, [isAdmin, perms, isFreelancerUser, employeeData, moduleSettings, designationPermissions]);
 
   const navItems = useMemo(() => getNavItems(), [getNavItems]);
 
@@ -252,7 +246,7 @@ export default function Layout({ children, currentPageName }) {
                   <NotificationPopup userEmail={user?.email} />
 
                   {/* Background processor for scheduled notifications */}
-                  {(userRole === 'admin' || designationLevel === 'hr' || designationLevel === 'manager') && (
+                  {(isAdmin || can('manage_notifications')) && (
                     <ScheduledNotificationProcessor />
                   )}
       
@@ -331,7 +325,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <div className="flex-1 min-w-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-sm font-semibold text-slate-800 truncate">{user?.full_name || 'User'}</p>
-                <p className="text-xs text-slate-500 capitalize">{(employeeData?.designation || userRole).replace('_', ' ')}</p>
+                <p className="text-xs text-slate-500 capitalize">{(employeeData?.designation || (isAdmin ? 'Admin' : 'Employee')).replace('_', ' ')}</p>
               </div>
             </div>
           </div>

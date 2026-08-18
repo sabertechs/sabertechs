@@ -20,7 +20,6 @@ const MODULE_ICONS = {
   expenses: Receipt,
   projects: Briefcase,
   assets: Package,
-  recruitment: Users,
   communication: Megaphone,
   reports: BarChart2,
   system: Settings,

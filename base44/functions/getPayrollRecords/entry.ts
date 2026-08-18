@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -9,22 +10,11 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { month, freelancer_email } = body;
 
-    // Look up Employee record to get the actual role assigned in the system
-    const employees = await base44.asServiceRole.entities.Employee.filter({ email: user.email });
-    const employeeRole = employees.length > 0 ? employees[0].role : null;
-
-    // Check admin access using both User role and Employee role
-    const isAdmin = user.role === 'admin'
-      || user.role === 'hr'
-      || user.role === 'manager'
-      || user.role === 'department_head'
-      || employeeRole === 'hr'
-      || employeeRole === 'manager'
-      || employeeRole === 'department_head';
-
+    // Designation Access is the sole source of truth — require view_payroll_records
+    const allowed = await can(base44, user, 'view_payroll_records');
     let records = [];
 
-    if (isAdmin) {
+    if (allowed) {
       const filterObj = {};
       if (freelancer_email && freelancer_email.trim()) {
         filterObj.proctor_email = freelancer_email.trim().toLowerCase();
@@ -40,7 +30,7 @@ Deno.serve(async (req) => {
       records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-date', 2000);
     }
 
-    console.log(`getPayrollRecords: user=${user.email} userRole=${user.role} empRole=${employeeRole} month=${month} → ${records.length} records`);
+    console.log(`getPayrollRecords: user=${user.email} month=${month} → ${records.length} records`);
 
     return Response.json({ records });
   } catch (error) {

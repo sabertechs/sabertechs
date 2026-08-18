@@ -9,28 +9,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
     }
 
-    // Get all employees with contractual employment type but wrong role
+    // Freelancers are contractual employees — access is driven by Designation Access, not role.
     const allEmployees = await base44.asServiceRole.entities.Employee.list();
-    const freelancersToFix = allEmployees.filter(emp => 
-      emp.employment_type === 'contractual' && emp.role !== 'freelancer'
-    );
+    const freelancers = allEmployees.filter(emp => emp.employment_type === 'contractual');
 
     const results = {
-      total_found: freelancersToFix.length,
+      total_found: freelancers.length,
       updated: [],
       failed: []
     };
 
-    for (const emp of freelancersToFix) {
+    for (const emp of freelancers) {
       try {
         await base44.asServiceRole.entities.Employee.update(emp.id, {
-          role: 'freelancer',
           section_access: ['projects', 'payslips', 'company_feed']
         });
         results.updated.push({
           name: emp.full_name,
-          email: emp.email,
-          old_role: emp.role
+          email: emp.email
         });
         
         // Add delay to avoid rate limits
@@ -46,7 +42,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      message: `Updated ${results.updated.length} freelancers from employee to freelancer role`,
+      message: `Updated section access for ${results.updated.length} freelancers`,
       results
     });
 

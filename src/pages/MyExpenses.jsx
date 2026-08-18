@@ -18,10 +18,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getDesignationRole } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function MyExpenses() {
   const queryClient = useQueryClient();
+  const { can } = usePermissions();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -253,7 +254,7 @@ export default function MyExpenses() {
           <p className="text-slate-500">Submit and track your expense claims</p>
         </div>
         <div className="flex gap-2">
-          {['hr', 'manager'].includes(getDesignationRole(employee?.designation)) && (
+          {can('approve_expenses') && (
             <Button onClick={() => { setShowInsights(true); loadInsights(); }} variant="outline">
               <TrendingUp className="w-4 h-4 mr-2" />
               AI Insights

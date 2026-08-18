@@ -414,7 +414,7 @@ export default function Registration() {
         });
         
         // Redirect based on their designation
-        const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(existing.designation);
+        const dashboard = userData.role === 'admin' ? 'HRDashboard' : getDesignationDashboard(existing, []);
         navigate(createPageUrl(dashboard));
       } else {
         // Create new freelancer

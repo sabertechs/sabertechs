@@ -19,8 +19,7 @@ Deno.serve(async (req) => {
     const allEmployees = await base44.asServiceRole.entities.Employee.list();
     const employees = allEmployees.filter(emp => 
       emp.status === 'active' && 
-      emp.employment_type === 'permanent' && 
-      emp.role !== 'freelancer'
+      emp.employment_type === 'permanent'
     );
 
     // Calculate days in month (UTC — never use local Date, it shifts the date in IST)

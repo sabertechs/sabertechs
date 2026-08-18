@@ -5,16 +5,13 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
 
-        // Only allow HR/admin to run this
+        // Only platform admin may run this
         if (user?.role !== 'admin') {
-            const emp = await base44.entities.Employee.filter({ email: user.email });
-            if (!emp[0] || emp[0].role !== 'hr') {
-                return Response.json({ error: 'Unauthorized - HR only' }, { status: 403 });
-            }
+            return Response.json({ error: 'Unauthorized - Admin only' }, { status: 403 });
         }
 
-        // Get all freelancers
-        const freelancers = await base44.asServiceRole.entities.Employee.filter({ role: 'freelancer' });
+        // Get all freelancers (contractual employees)
+        const freelancers = await base44.asServiceRole.entities.Employee.filter({ employment_type: 'contractual' });
         
         const defaultAccess = ['projects', 'payslips', 'company_feed'];
         let updated = 0;

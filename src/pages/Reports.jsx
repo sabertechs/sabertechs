@@ -20,7 +20,7 @@ const REPORT_TYPES = [
   {
     id: "employee",
     label: "Employee Report",
-    description: "Employee directory with department, role, status filters",
+    description: "Employee directory with department, designation, status filters",
     icon: Users,
     color: "text-indigo-600",
     bg: "bg-indigo-50",

@@ -59,7 +59,7 @@ import SalaryComponentsForm from "@/components/salary/SalaryComponentsForm";
 import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
 import DocumentReviewDialog from "@/components/employees/DocumentReviewDialog";
 import AssignChecklistDialog from "@/components/onboarding/AssignChecklistDialog";
-import { getDesignationRole } from "@/lib/permissions";
+import { getDesignationLevel } from "@/lib/permissions";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -219,7 +219,6 @@ export default function Employees() {
       deductions: {},
       reporting_to: "",
       status: "active",
-      role: "employee",
       bank_name: "",
       bank_account_number: "",
       bank_ifsc: "",
@@ -1707,8 +1706,7 @@ export default function Employees() {
                 <SelectContent>
                   <SelectItem value={null}>None</SelectItem>
                   {employees.filter(emp => {
-                    const empRole = getDesignationRole(emp.designation);
-                    return (empRole === 'hr' || empRole === 'manager') &&
+                    return getDesignationLevel(emp.designation) >= 4 &&
                       emp.id !== selectedEmployee?.id;
                   }).map(manager => (
                     <SelectItem key={manager.id} value={manager.email}>
@@ -2061,10 +2059,6 @@ export default function Employees() {
                     <div className="p-4 bg-slate-50 rounded-xl">
                       <p className="text-sm text-slate-500">Designation</p>
                       <p className="font-medium">{selectedEmployee.designation || '-'}</p>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <p className="text-sm text-slate-500">Role</p>
-                      <p className="font-medium capitalize">{selectedEmployee.role || 'employee'}</p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-xl">
                       <p className="text-sm text-slate-500">Employment Type</p>
