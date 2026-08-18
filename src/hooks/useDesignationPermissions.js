@@ -35,7 +35,6 @@ const SEED_DESIGNATIONS = [
       'bg_verification', 'api_verification', 'bulk_pan_verify',
       'upload_payroll', 'view_all_payslips', 'manage_payslips',
       'manage_attendance', 'approve_expenses',
-      'view_recruitment', 'manage_recruitment',
       'manage_notifications', 'view_reports',
     ],
     is_system: true,

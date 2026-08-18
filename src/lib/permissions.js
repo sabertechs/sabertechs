@@ -18,7 +18,6 @@ export const MODULES = {
   expenses:      { name: 'Expenses',       description: 'Expense claims and approvals' },
   projects:      { name: 'Projects',       description: 'Manage projects, tasks, and assignments' },
   assets:        { name: 'Assets',         description: 'Company asset lifecycle management' },
-  recruitment:   { name: 'Recruitment',    description: 'Recruitment pipeline and candidates' },
   communication: { name: 'Communication',  description: 'Notifications, policies, company feed' },
   reports:       { name: 'Reports',        description: 'Reports and analytics dashboards' },
   system:        { name: 'System',         description: 'App settings, access control, module management' },
@@ -66,10 +65,6 @@ export const PERMISSIONS = {
 
   // ── ASSETS ───────────────────────────────────────────
   manage_assets:           { label: 'Asset Management',        module: 'assets',        description: 'Full asset lifecycle management' },
-
-  // ── RECRUITMENT ──────────────────────────────────────
-  view_recruitment:        { label: 'View Recruitment',        module: 'recruitment',   description: 'Access recruitment dashboard & candidates' },
-  manage_recruitment:      { label: 'Manage Recruitment',      module: 'recruitment',   description: 'Edit candidates, pipeline, requisitions' },
 
   // ── COMMUNICATION ────────────────────────────────────
   manage_notifications:    { label: 'Notifications Center',    module: 'communication', description: 'Send and schedule notifications' },
@@ -128,16 +123,10 @@ export function getDesignationDashboard(designation) {
   return 'EmployeeDashboard';
 }
 
-// ── EFFECTIVE PERMISSIONS (cascade + module overrides) ──
+// ── EFFECTIVE PERMISSIONS (designation cascade) ──
 
 export function getEffectivePermissions(employee, designationPermissions = []) {
   if (!employee) return [];
-  if (employee.role === 'admin') return Object.keys(PERMISSIONS);
-
-  // Contractual employees use only fixed module access.
-  if (employee.employment_type === 'contractual') {
-    return getModuleOverridePermissions(employee.fixed_modules);
-  }
 
   // Check if the designation is in the hierarchy
   const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
@@ -189,14 +178,6 @@ export function getInheritedPermissions(designationName, designationPermissions 
   });
 
   return inherited;
-}
-
-// Get all permission keys for a set of module IDs (for module overrides)
-export function getModuleOverridePermissions(moduleOverrides = []) {
-  if (!moduleOverrides || moduleOverrides.length === 0) return [];
-  return Object.entries(PERMISSIONS)
-    .filter(([, val]) => moduleOverrides.includes(val.module))
-    .map(([key]) => key);
 }
 
 // Get all unique modules from PERMISSIONS config (auto-discovered, keyed by module ID)

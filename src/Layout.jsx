@@ -92,7 +92,7 @@ export default function Layout({ children, currentPageName }) {
           }
         } else if (userData.role === 'admin') {
           // Admin users don't need employee record - treat as HR
-          setEmployeeData({ role: 'admin', designation: 'hr_head', email: userData.email });
+          setEmployeeData({ designation: 'hr_head', email: userData.email });
         } else {
           // No employee record - redirect to registration to complete profile
           if (currentPageName !== "Registration") {
@@ -142,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
     staleTime: 10 * 60 * 1000,
   });
 
-  const userRole = useMemo(() => employeeData?.role || user?.role || 'employee', [employeeData?.role, user?.role]);
+  const userRole = useMemo(() => user?.role || 'employee', [user?.role]);
   const designationLevel = useMemo(() => {
     if (userRole === 'admin') return 'hr';
     return getDesignationRole(employeeData?.designation);
@@ -212,10 +212,6 @@ export default function Layout({ children, currentPageName }) {
     if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
     if (can('manage_task_templates') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
     if (can('view_project_analytics') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
-
-    // Recruitment
-    if (can('view_recruitment')) items.push({ name: "Recruitment", icon: Users, page: "RecruitDashboard" });
-    if (can('manage_recruitment')) items.push({ name: "Pipeline", icon: ClipboardList, page: "Pipeline" });
 
     // Communication
     if (can('manage_company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });

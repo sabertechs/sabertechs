@@ -111,23 +111,19 @@ export default function AccessControl() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          {emp.role === 'admin' ? (
-                            <Badge className="bg-blue-100 text-blue-700">Admin</Badge>
-                          ) : (
-                            <Select
-                              value={emp.designation || 'Employee'}
-                              onValueChange={val => handleDesignationChange(emp.id, val)}
-                            >
-                              <SelectTrigger className="w-48 h-8 text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {designations.map(d => (
-                                  <SelectItem key={d.id} value={d.designation_name}>{d.designation_name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
+                          <Select
+                            value={emp.designation || 'Employee'}
+                            onValueChange={val => handleDesignationChange(emp.id, val)}
+                          >
+                            <SelectTrigger className="w-48 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {designations.map(d => (
+                                <SelectItem key={d.id} value={d.designation_name}>{d.designation_name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </td>
                         <td className="px-6 py-4">
                           <button

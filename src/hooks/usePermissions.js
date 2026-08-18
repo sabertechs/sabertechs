@@ -29,7 +29,7 @@ export function usePermissions() {
         if (employees.length > 0) {
           setEmployee(employees[0]);
         } else if (user?.role === 'admin') {
-          setEmployee({ role: 'admin', designation: 'hr_head' });
+          setEmployee({ designation: 'hr_head' });
         }
       } catch (e) {
         // Not logged in
