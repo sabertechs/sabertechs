@@ -105,7 +105,7 @@ export default function Freelancers() {
     }
     
     return query;
-  }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
+  }, [statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['freelancers', currentPage, sortField, sortOrder, buildQuery()],
