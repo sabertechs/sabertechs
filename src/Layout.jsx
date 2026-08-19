@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { base44 } from "@/api/base44Client";
-import { getEffectivePermissions, getDesignationDashboard, isFreelancer, PAGE_PERMISSIONS } from "@/lib/permissions";
+import { getEffectivePermissions, getDesignationDashboard, isFreelancer, resolveCan, PAGE_PERMISSIONS } from "@/lib/permissions";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -83,8 +83,8 @@ export default function Layout({ children, currentPageName }) {
             if (userData.role === 'admin') {
               window.location.replace(createPageUrl("HRDashboard"));
             } else {
-              const regPerms = getEffectivePermissions(emp, designationPermissions);
-              window.location.replace(createPageUrl(getDesignationDashboard(emp, regPerms)));
+              const regPerms = getEffectivePermissions(userData, designationPermissions);
+              window.location.replace(createPageUrl(getDesignationDashboard(userData, regPerms)));
             }
             return;
           }
@@ -141,9 +141,10 @@ export default function Layout({ children, currentPageName }) {
   });
 
   const isAdmin = user?.role === 'admin';
-  const perms = useMemo(() => getEffectivePermissions(employeeData, designationPermissions), [employeeData, designationPermissions]);
-  const isFreelancerUser = useMemo(() => isFreelancer(employeeData), [employeeData]);
-  const can = useCallback((permission) => isAdmin || perms.includes(permission), [isAdmin, perms]);
+  // Way 1: permission source is user.data (designation + employment_type), not the Employee record.
+  const perms = useMemo(() => getEffectivePermissions(user, designationPermissions), [user, designationPermissions]);
+  const isFreelancerUser = useMemo(() => isFreelancer(user), [user]);
+  const can = useCallback((permission) => isAdmin || resolveCan(perms, permission), [isAdmin, perms]);
 
   const getNavItems = useCallback(() => {
     const items = [];
@@ -152,7 +153,7 @@ export default function Layout({ children, currentPageName }) {
     // Dashboard
     const dashboardPage = isAdmin
       ? 'HRDashboard'
-      : getDesignationDashboard(employeeData, perms);
+      : getDesignationDashboard(user, perms);
     items.push({ name: "Dashboard", icon: LayoutDashboard, page: dashboardPage });
 
     // Freelancer self-service
@@ -219,6 +220,7 @@ export default function Layout({ children, currentPageName }) {
     if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
     if (can('access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
     if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
+    if (can('system.permission_inspector')) items.push({ name: "Permission Inspector", icon: ShieldCheck, page: "PermissionInspector" });
 
     return items;
   }, [isAdmin, perms, isFreelancerUser, employeeData, moduleSettings, designationPermissions]);

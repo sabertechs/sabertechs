@@ -1,20 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getEffectivePermissions, isFreelancer, getDesignationLevel } from '@/lib/permissions';
+import { getEffectivePermissions, isFreelancer, getDesignationLevel, resolveCan } from '@/lib/permissions';
 
 /**
  * Hook that returns permission-checking utilities for the current user.
  *
- * Designation Access is the sole source of module permissions for employees.
- * The platform admin (user.role === 'admin', the app owner) retains a full-access
- * override so the app can be administered — this is the only role-based check that remains.
+ * Way 1: user.data is the SOLE permission source (designation + employment_type).
+ * The Employee entity is never queried for authorization. The platform admin
+ * (user.role === 'admin', the app owner) retains a full-access override — the
+ * only role-based check that remains. No per-employee overrides.
+ *
+ * can() accepts new module.action keys (e.g. 'projects.create') and legacy
+ * aliased keys (e.g. 'manage_projects') via the resolveCan bridge.
  *
  * Usage:
- *   const { can, permissions, employee, isFreelancer: isFreel, isAdmin, designationLevel, loading } = usePermissions();
- *   if (can('view_all_payslips')) { ... }
+ *   const { can, permissions, user, isFreelancer: isFreel, isAdmin, designationLevel, loading } = usePermissions();
+ *   if (can('payroll.employee.view')) { ... }
  */
 export function usePermissions() {
-  const [employee, setEmployee] = useState(null);
+  const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null); // business data only — NOT a permission source
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [designationPermissions, setDesignationPermissions] = useState([]);
@@ -22,18 +27,15 @@ export function usePermissions() {
   useEffect(() => {
     async function load() {
       try {
-        const user = await base44.auth.me();
-        setIsAdmin(user?.role === 'admin');
-        const [employees, dpRows] = await Promise.all([
-          base44.entities.Employee.filter({ email: user.email }),
+        const me = await base44.auth.me();
+        setUser(me);
+        setIsAdmin(me?.role === 'admin');
+        const [dpRows, employees] = await Promise.all([
           base44.entities.DesignationPermission.list('display_order'),
+          base44.entities.Employee.filter({ email: me.email }),
         ]);
         setDesignationPermissions(dpRows);
-        if (employees.length > 0) {
-          setEmployee(employees[0]);
-        }
-        // Platform admins with no Employee record get no employee-scoped permissions
-        // from Designation Access; the admin override in can() grants full access instead.
+        if (employees.length > 0) setEmployee(employees[0]);
       } catch (e) {
         // Not logged in
       } finally {
@@ -43,18 +45,22 @@ export function usePermissions() {
     load();
   }, []);
 
+  // Permissions resolve from user.data (Way 1) — never from the Employee record.
   const permissions = useMemo(
-    () => getEffectivePermissions(employee, designationPermissions),
-    [employee, designationPermissions]
+    () => getEffectivePermissions(user, designationPermissions),
+    [user, designationPermissions]
   );
 
-  const freelancer = useMemo(() => isFreelancer(employee), [employee]);
-  const designationLevel = useMemo(() => getDesignationLevel(employee?.designation), [employee?.designation]);
+  const freelancer = useMemo(() => isFreelancer(user), [user]);
+  const designationLevel = useMemo(
+    () => getDesignationLevel(user?.data?.designation ?? user?.designation),
+    [user]
+  );
 
   const can = useMemo(() => (permission) => {
     if (isAdmin) return true; // platform admin (app owner) override
-    return permissions.includes(permission);
+    return resolveCan(permissions, permission);
   }, [permissions, isAdmin]);
 
-  return { can, permissions, employee, isFreelancer: freelancer, isAdmin, designationLevel, loading };
+  return { can, permissions, user, employee, isFreelancer: freelancer, isAdmin, designationLevel, loading };
 }

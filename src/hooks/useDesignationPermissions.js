@@ -4,38 +4,41 @@ import { useEffect, useRef } from 'react';
 
 let hasSeeded = false;
 
-// ── SEED DATA ──────────────────────────────────────
-// Each designation stores ONLY its level-specific permissions.
-// The cascade in getEffectivePermissions automatically inherits from lower levels at runtime.
+// ── SEED DATA (action-based module.action keys) ─────────
+// Each designation stores ONLY its level-specific permissions. The cascade in
+// getEffectivePermissions inherits from lower levels at runtime.
 // Hierarchy: Employee(1) → Assistant Manager(2) → Team Lead(3) → Senior Manager(4) → HR Head(5)
+// Business rule: every freelancer is contractual; freelancer payroll upload/records
+// are separate from regular employee payroll. Recruitment/Pipeline removed.
 
 const SEED_DESIGNATIONS = [
   {
     designation_name: 'Employee',
-    permissions: ['self_attendance', 'submit_expenses', 'view_team', 'view_policies'],
+    permissions: ['attendance.self.view', 'attendance.self.mark', 'expenses.self.submit', 'system.team.view', 'comm.policies.view'],
     is_system: true,
     display_order: 1,
   },
   {
     designation_name: 'Assistant Manager',
-    permissions: ['view_employees', 'view_freelancers', 'view_projects', 'view_payroll_records'],
+    permissions: ['hr.employees.view', 'freelancers.view', 'projects.view', 'payroll.freelancer.records'],
     is_system: true,
     display_order: 2,
   },
   {
     designation_name: 'Team Lead',
-    permissions: ['manage_freelancers', 'manage_projects', 'manage_task_templates', 'view_project_analytics'],
+    permissions: ['freelancers.manage', 'projects.create', 'projects.edit', 'projects.delete', 'projects.task_templates', 'projects.analytics'],
     is_system: true,
     display_order: 3,
   },
   {
     designation_name: 'Senior Manager',
     permissions: [
-      'manage_employees', 'view_offer_letters', 'manage_onboarding',
-      'bg_verification', 'api_verification', 'bulk_pan_verify',
-      'upload_payroll', 'view_all_payslips', 'manage_payslips',
-      'manage_attendance', 'approve_expenses',
-      'manage_notifications', 'view_reports',
+      'hr.employees.manage', 'hr.offer_letters', 'hr.onboarding',
+      'hr.bg_verification', 'hr.api_verification', 'hr.bulk_pan',
+      'payroll.freelancer.upload', 'payroll.employee.view', 'payroll.employee.edit',
+      'attendance.team.view', 'attendance.team.edit',
+      'expenses.team.approve',
+      'comm.notifications', 'reports.view',
     ],
     is_system: true,
     display_order: 4,
@@ -43,16 +46,17 @@ const SEED_DESIGNATIONS = [
   {
     designation_name: 'HR Head',
     permissions: [
-      'manage_policies', 'manage_company_feed',
-      'access_settings', 'access_control', 'module_management',
-      'manage_assets',
+      'comm.policies.manage', 'feed.manage',
+      'system.settings', 'system.access_control', 'system.module_management',
+      'system.permission_inspector',
+      'assets.manage', 'assets.view', 'assets.create', 'assets.approve',
     ],
     is_system: true,
     display_order: 5,
   },
   {
     designation_name: 'Proctor',
-    permissions: ['view_projects'],
+    permissions: ['projects.view'],
     is_system: true,
     display_order: 6,
   },

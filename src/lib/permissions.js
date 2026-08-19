@@ -1,16 +1,21 @@
 /**
- * Central Permission Configuration — Designation Access is the single source of truth.
+ * Central Permission Configuration — ACTION-BASED Designation Access.
+ *
+ * Way 1 migration: user.data is the SOLE permission source (designation +
+ * employment_type). The Employee entity holds HR/business data only and never
+ * drives authorization. There are NO per-employee overrides.
+ *
+ * Permission keys are module.action strings (e.g. "projects.create",
+ * "attendance.team.edit", "payroll.freelancer.upload"). A legacy alias bridge
+ * maps old module-only keys (e.g. "manage_projects") to their new equivalents so
+ * call sites can migrate incrementally without breaking the build.
  *
  * Hierarchy (low → high): Employee → Assistant Manager → Team Lead → Senior Manager → HR Head
  * Permissions cascade upward: a designation at level N inherits all permissions from levels 1..N.
- * Designation Access is the baseline; per-employee extra_permissions (set via Access Control)
- * are merged on top of the cascade as an individual override.
+ * Inherited permissions are read-only in the Designation Access UI.
  */
 
 // ── MODULE DEFINITIONS ─────────────────────────────
-// To add a new module: add an entry here + permission keys in PERMISSIONS referencing this module ID.
-// It will automatically appear in Module Management and Designation Access.
-
 export const MODULES = {
   hr_admin:      { name: 'HR Admin',      description: 'Employee management, uploads, onboarding, offer letters' },
   freelancers:   { name: 'Freelancers',    description: 'Manage freelancers and their profiles' },
@@ -22,76 +27,123 @@ export const MODULES = {
   communication: { name: 'Communication',  description: 'Notifications, policies, company feed' },
   reports:       { name: 'Reports',        description: 'Reports and analytics dashboards' },
   system:        { name: 'System',         description: 'App settings, access control, module management' },
-  games:         { name: 'Games',          description: 'Office games and leaderboards' },
   company_feed:  { name: 'Company Feed',   description: 'Company announcements and social feed' },
 };
 
-// ── PERMISSION REGISTRY ────────────────────────────
-// Each permission references a module ID. Adding a permission here auto-exposes it
-// in both Module Management and Designation Access.
+// ── ACTION-BASED PERMISSION REGISTRY ────────────────
+// Each key is "module.action" (or "module.sub.action"). Adding a permission
+// here auto-exposes it in Module Management and Designation Access.
 
 export const PERMISSIONS = {
   // ── HR ADMIN ────────────────────────────────────────
-  view_employees:          { label: 'View Employees',          module: 'hr_admin',      description: 'See employee list and profiles' },
-  manage_employees:        { label: 'Manage Employees',        module: 'hr_admin',      description: 'Add, edit, upload employees' },
-  view_offer_letters:      { label: 'Offer Letters',           module: 'hr_admin',      description: 'Create & manage offer letters' },
-  manage_onboarding:       { label: 'Onboarding',              module: 'hr_admin',      description: 'Employee onboarding checklists' },
-  bg_verification:         { label: 'BG Verification',         module: 'hr_admin',      description: 'Background verification workflow' },
-  api_verification:        { label: 'API Verification',        module: 'hr_admin',      description: 'External API document checks' },
-  bulk_pan_verify:         { label: 'Bulk PAN Verify',         module: 'hr_admin',      description: 'Bulk PAN card verification' },
+  'hr.employees.view':       { label: 'View Employees',        module: 'hr_admin',      description: 'See employee list and profiles' },
+  'hr.employees.manage':     { label: 'Manage Employees',      module: 'hr_admin',      description: 'Add, edit, upload employees' },
+  'hr.offer_letters':        { label: 'Offer Letters',        module: 'hr_admin',      description: 'Create & manage offer letters' },
+  'hr.onboarding':           { label: 'Onboarding',           module: 'hr_admin',      description: 'Employee onboarding checklists' },
+  'hr.bg_verification':      { label: 'BG Verification',      module: 'hr_admin',      description: 'Background verification workflow' },
+  'hr.api_verification':     { label: 'API Verification',     module: 'hr_admin',      description: 'External API document checks' },
+  'hr.bulk_pan':             { label: 'Bulk PAN Verify',       module: 'hr_admin',      description: 'Bulk PAN card verification' },
 
   // ── FREELANCERS ───────────────────────────────────────
-  view_freelancers:        { label: 'View Freelancers',        module: 'freelancers',   description: 'See freelancer list' },
-  manage_freelancers:      { label: 'Manage Freelancers',      module: 'freelancers',   description: 'Add, edit, upload freelancers' },
-  upload_payroll:          { label: 'Upload Payroll',          module: 'freelancers',   description: 'Upload freelancer payroll files' },
-  view_payroll_records:    { label: 'View Payroll Records',    module: 'freelancers',   description: 'View freelancer payroll records' },
+  'freelancers.view':        { label: 'View Freelancers',      module: 'freelancers',   description: 'See freelancer list' },
+  'freelancers.manage':      { label: 'Manage Freelancers',    module: 'freelancers',   description: 'Add, edit, upload freelancers' },
 
-  // ── PAYROLL ───────────────────────────────────────────
-  view_all_payslips:       { label: 'View All Payslips',       module: 'payroll',       description: 'See payslips of ALL employees (sensitive)' },
-  manage_payslips:         { label: 'Manage Payslips',         module: 'payroll',       description: 'Generate and publish payslips' },
+  // ── PAYROLL (employee — regular staff) ──────────────────
+  'payroll.employee.view':   { label: 'View Employee Payslips', module: 'payroll',     description: 'See payslips of regular employees' },
+  'payroll.employee.edit':   { label: 'Manage Employee Payslips', module: 'payroll',   description: 'Generate and publish employee payslips' },
+
+  // ── PAYROLL (freelancer — contractual) ──────────────────
+  // Business rule: Freelancer Payroll Upload + Records are ONLY for freelancers.
+  // Regular employee payroll is separate (payroll.employee.*). No overlap.
+  'payroll.freelancer.upload':   { label: 'Freelancer Payroll Upload', module: 'freelancers', description: 'Upload freelancer payroll files' },
+  'payroll.freelancer.records':  { label: 'Freelancer Payroll Records', module: 'freelancers', description: 'View freelancer payroll records' },
 
   // ── ATTENDANCE ───────────────────────────────────────
-  self_attendance:         { label: 'Self Attendance',         module: 'attendance',    description: 'Mark own attendance' },
-  manage_attendance:       { label: 'Manage Team Attendance',   module: 'attendance',    description: 'Mark & edit attendance for team' },
+  'attendance.self.view':    { label: 'View Own Attendance',   module: 'attendance',    description: 'See own attendance records' },
+  'attendance.self.mark':    { label: 'Mark Own Attendance',    module: 'attendance',    description: 'Check in / check out for self' },
+  'attendance.team.view':    { label: 'View Team Attendance',   module: 'attendance',    description: 'See attendance for the team' },
+  'attendance.team.edit':    { label: 'Edit Team Attendance',   module: 'attendance',    description: 'Mark & edit attendance for team' },
 
   // ── EXPENSES ─────────────────────────────────────────
-  submit_expenses:         { label: 'Submit Expenses',         module: 'expenses',      description: 'Submit own expense claims' },
-  approve_expenses:        { label: 'Approve Expenses',        module: 'expenses',      description: 'Approve or reject expense claims' },
+  'expenses.self.submit':    { label: 'Submit Expenses',        module: 'expenses',      description: 'Submit own expense claims' },
+  'expenses.team.view':      { label: 'View Team Expenses',     module: 'expenses',      description: 'See team expense claims' },
+  'expenses.team.approve':   { label: 'Approve Expenses',       module: 'expenses',      description: 'Approve or reject expense claims' },
 
   // ── PROJECTS ─────────────────────────────────────────
-  view_projects:           { label: 'View Projects',           module: 'projects',      description: 'See project list and details' },
-  manage_projects:         { label: 'Manage Projects',         module: 'projects',      description: 'Create, edit and assign projects' },
-  view_project_analytics:  { label: 'Project Analytics',       module: 'projects',      description: 'View project reports and analytics' },
-  manage_task_templates:   { label: 'Task Templates',          module: 'projects',      description: 'Manage reusable project task templates' },
+  'projects.view':           { label: 'View Projects',          module: 'projects',      description: 'See project list and details' },
+  'projects.create':         { label: 'Create Projects',        module: 'projects',      description: 'Create new projects' },
+  'projects.edit':           { label: 'Edit Projects',          module: 'projects',      description: 'Edit and assign projects' },
+  'projects.delete':         { label: 'Delete Projects',       module: 'projects',      description: 'Delete projects' },
+  'projects.export':         { label: 'Export Projects',        module: 'projects',      description: 'Export projects to Drive' },
+  'projects.analytics':      { label: 'Project Analytics',      module: 'projects',      description: 'View project reports and analytics' },
+  'projects.task_templates': { label: 'Task Templates',         module: 'projects',      description: 'Manage reusable project task templates' },
 
   // ── ASSETS ───────────────────────────────────────────
-  manage_assets:           { label: 'Asset Management',        module: 'assets',        description: 'Full asset lifecycle management' },
+  'assets.view':             { label: 'View Assets',            module: 'assets',        description: 'See asset list and details' },
+  'assets.create':           { label: 'Create Assets',          module: 'assets',        description: 'Add new assets' },
+  'assets.approve':          { label: 'Approve Asset Requests', module: 'assets',        description: 'Approve asset assignment requests' },
+  'assets.manage':           { label: 'Manage Assets',          module: 'assets',        description: 'Full asset lifecycle management' },
 
   // ── COMMUNICATION ────────────────────────────────────
-  manage_notifications:    { label: 'Notifications Center',    module: 'communication', description: 'Send and schedule notifications' },
-  manage_policies:         { label: 'Manage Policies',         module: 'communication', description: 'Upload and edit company policies' },
-  view_policies:           { label: 'View Policies',            module: 'communication', description: 'View company policies' },
+  'comm.notifications':      { label: 'Notifications Center',   module: 'communication', description: 'Send and schedule notifications' },
+  'comm.policies.manage':    { label: 'Manage Policies',        module: 'communication', description: 'Upload and edit company policies' },
+  'comm.policies.view':      { label: 'View Policies',          module: 'communication', description: 'View company policies' },
 
   // ── COMPANY FEED ──────────────────────────────────────
-  manage_company_feed:     { label: 'Manage Company Feed',     module: 'company_feed',  description: 'Post company updates and announcements' },
-
-  // ── GAMES ───────────────────────────────────────────────
-  manage_games:            { label: 'Manage Games',            module: 'games',         description: 'Configure game settings and tokens' },
+  'feed.manage':             { label: 'Manage Company Feed',    module: 'company_feed',  description: 'Post company updates and announcements' },
 
   // ── REPORTS ──────────────────────────────────────────
-  view_reports:            { label: 'View Reports',            module: 'reports',       description: 'Access reports and analytics dashboards' },
+  'reports.view':            { label: 'View Reports',           module: 'reports',       description: 'Access reports and analytics dashboards' },
 
   // ── SYSTEM ───────────────────────────────────────────
-  access_settings:         { label: 'App Settings',            module: 'system',        description: 'Configure application settings' },
-  access_control:          { label: 'Access Control',          module: 'system',        description: 'Manage user roles & permissions' },
-  module_management:       { label: 'Module Management',       module: 'system',        description: 'Enable/disable app modules' },
-  view_team:               { label: 'View Team',               module: 'system',        description: 'See team member directory' },
+  'system.settings':         { label: 'App Settings',           module: 'system',        description: 'Configure application settings' },
+  'system.access_control':   { label: 'Access Control',         module: 'system',        description: 'Manage designation access' },
+  'system.module_management': { label: 'Module Management',     module: 'system',        description: 'Enable/disable app modules' },
+  'system.team.view':        { label: 'View Team',              module: 'system',        description: 'See team member directory' },
+  'system.permission_inspector': { label: 'Permission Inspector', module: 'system',     description: 'Inspect & validate effective permissions' },
+};
+
+// ── LEGACY ALIAS BRIDGE ────────────────────────────
+// Maps old module-only keys → new module.action key(s). can('old_key') resolves
+// to the new key(s) and returns true if ANY is in the effective set. This lets
+// unmigrated call sites keep working while pages are updated incrementally.
+// NOTE: Recruitment / Pipeline keys are intentionally absent — those modules
+// have been fully removed.
+export const LEGACY_ALIASES = {
+  view_employees:          ['hr.employees.view'],
+  manage_employees:        ['hr.employees.manage'],
+  view_offer_letters:      ['hr.offer_letters'],
+  manage_onboarding:       ['hr.onboarding'],
+  bg_verification:         ['hr.bg_verification'],
+  api_verification:        ['hr.api_verification'],
+  bulk_pan_verify:         ['hr.bulk_pan'],
+  view_freelancers:        ['freelancers.view'],
+  manage_freelancers:      ['freelancers.manage'],
+  upload_payroll:          ['payroll.freelancer.upload'],
+  view_payroll_records:    ['payroll.freelancer.records'],
+  view_all_payslips:       ['payroll.employee.view'],
+  manage_payslips:         ['payroll.employee.edit'],
+  self_attendance:         ['attendance.self.view', 'attendance.self.mark'],
+  manage_attendance:       ['attendance.team.view', 'attendance.team.edit'],
+  submit_expenses:         ['expenses.self.submit'],
+  approve_expenses:        ['expenses.team.approve'],
+  view_projects:           ['projects.view'],
+  manage_projects:         ['projects.create', 'projects.edit', 'projects.delete'],
+  view_project_analytics:  ['projects.analytics'],
+  manage_task_templates:   ['projects.task_templates'],
+  manage_assets:           ['assets.manage', 'assets.view', 'assets.create', 'assets.approve'],
+  manage_notifications:    ['comm.notifications'],
+  manage_policies:         ['comm.policies.manage'],
+  view_policies:           ['comm.policies.view'],
+  manage_company_feed:     ['feed.manage'],
+  view_reports:            ['reports.view'],
+  access_settings:         ['system.settings'],
+  access_control:          ['system.access_control'],
+  module_management:       ['system.module_management'],
+  view_team:               ['system.team.view'],
 };
 
 // ── DESIGNATION HIERARCHY ───────────────────────────
-// Ordered low → high. Permissions cascade upward: level N inherits all from levels 1..N.
-// Each permission should be defined at the LOWEST level that should have it.
-
 export const DESIGNATION_HIERARCHY = [
   { name: 'Employee',           level: 1 },
   { name: 'Assistant Manager',  level: 2 },
@@ -100,55 +152,58 @@ export const DESIGNATION_HIERARCHY = [
   { name: 'HR Head',            level: 5 },
 ];
 
-// Returns cascade level (1-5). Unknown designations default to 1.
 export function getDesignationLevel(designation) {
   if (!designation) return 1;
   const match = DESIGNATION_HIERARCHY.find(d => d.name.toLowerCase() === designation.toLowerCase());
   return match ? match.level : 1;
 }
 
-// Freelancers are contractual employees (employment_type === 'contractual').
-// Designation alone does not determine freelancer status — employment_type does.
-export function isFreelancer(employee) {
-  return employee?.employment_type === 'contractual';
+// Way 1: permission source is user.data. Accepts a User object (has .data) or,
+// for backward compatibility during migration, an Employee object (has direct
+// fields). Reads designation + employment_type from whichever is present.
+function readDesignation(obj) {
+  return obj?.data?.designation ?? obj?.designation ?? null;
+}
+function readEmploymentType(obj) {
+  return obj?.data?.employment_type ?? obj?.employment_type ?? null;
 }
 
-// Fixed permissions always granted to freelancers (contractual employees),
-// independent of Designation Access — ensures freelancers can always see
-// the modules they need to work (their assigned projects).
-export const FREELANCER_FIXED_PERMISSIONS = ['view_projects'];
+// Every freelancer is contractual. employment_type === 'contractual' => freelancer.
+export function isFreelancer(obj) {
+  return readEmploymentType(obj) === 'contractual';
+}
 
-// Returns dashboard page name for an employee + their effective permissions.
-// Decision is designation/permission based — no legacy role strings.
-export function getDesignationDashboard(employee, permissions = []) {
-  if (isFreelancer(employee)) return 'FreelancerDashboard';
-  if (permissions.includes('view_employees')) return 'HRDashboard';
-  // Fallback by designation when permissions aren't loaded yet
-  const d = employee?.designation?.toLowerCase();
+// Fixed permissions always granted to freelancers (contractual), independent of
+// Designation Access — ensures freelancers can always see their assigned projects.
+export const FREELANCER_FIXED_PERMISSIONS = ['projects.view'];
+
+export function getDesignationDashboard(obj, permissions = []) {
+  if (isFreelancer(obj)) return 'FreelancerDashboard';
+  if (permissions.includes('hr.employees.view') || permissions.includes('view_employees')) return 'HRDashboard';
+  const d = readDesignation(obj)?.toLowerCase();
   if (d === 'hr head' || d === 'senior manager') return 'HRDashboard';
   return 'EmployeeDashboard';
 }
 
-// ── EFFECTIVE PERMISSIONS (designation cascade) ──
-
-export function getEffectivePermissions(employee, designationPermissions = []) {
-  if (!employee) return [];
+// ── EFFECTIVE PERMISSIONS (designation cascade, user.data source) ──
+// No per-employee overrides. Cascade only + freelancer fixed set.
+export function getEffectivePermissions(obj, designationPermissions = []) {
+  const designation = readDesignation(obj);
+  if (!designation) return [];
 
   let perms;
-
-  // Check if the designation is in the hierarchy
   const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
-    d.name.toLowerCase() === employee.designation?.toLowerCase()
+    d.name.toLowerCase() === designation.toLowerCase()
   );
 
   if (!hierarchyEntry) {
-    // Not in hierarchy (e.g., Proctor/Freelancer) — just return own permissions
+    // Not in hierarchy (e.g., Proctor) — own permissions only, no inheritance
     const userDesig = designationPermissions.find(dp =>
-      dp.designation_name?.toLowerCase() === employee.designation?.toLowerCase()
+      dp.designation_name?.toLowerCase() === designation.toLowerCase()
     );
     perms = [...(userDesig?.permissions || [])];
   } else {
-    // In hierarchy — cascade: collect from all designations at or below user's level
+    // Cascade: collect from all designations at or below the user's level
     const userLevel = hierarchyEntry.level;
     perms = designationPermissions
       .filter(dp => {
@@ -159,19 +214,29 @@ export function getEffectivePermissions(employee, designationPermissions = []) {
   }
 
   // Contractual employees (freelancers) always get their fixed modules
-  if (isFreelancer(employee)) {
+  if (isFreelancer(obj)) {
     perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
   }
-
-  // Per-employee individual overrides (set via Access Control) merge on top
-  const extraPerms = Array.isArray(employee.extra_permissions) ? employee.extra_permissions : [];
-  perms = [...perms, ...extraPerms];
 
   return [...new Set(perms)];
 }
 
+// Resolve a can() check against an effective-permission set. Handles both new
+// module.action keys and legacy aliased keys. Exported so the frontend hook and
+// the backend shared resolver use the exact same logic.
+export function resolveCan(effectivePerms, permissionKey) {
+  if (permissionKey == null) return false;
+  // Direct new-key match
+  if (effectivePerms.includes(permissionKey)) return true;
+  // Legacy alias bridge
+  const aliases = LEGACY_ALIASES[permissionKey];
+  if (aliases) return aliases.some(a => effectivePerms.includes(a));
+  return false;
+}
+
 // Get inherited permissions for a designation from all lower cascade levels.
-// Returns array of { key, fromDesignation } for the Designation Access UI to display as read-only.
+// Returns array of { key, fromDesignation } for the Designation Access UI to
+// display as read-only (inherited permissions cannot be edited).
 export function getInheritedPermissions(designationName, designationPermissions = []) {
   const hierarchyEntry = DESIGNATION_HIERARCHY.find(d =>
     d.name.toLowerCase() === designationName?.toLowerCase()
@@ -208,58 +273,56 @@ export function getPermissionModules() {
 }
 
 // ── ROUTE PROTECTION MAP ────────────────────────────
-// Maps page names to the permission(s) required to access them directly by URL.
-// Pages not listed are accessible to all authenticated users (dashboards,
-// self-service, and dual-purpose pages where the management action is gated
-// in-page via can()). Uses the same central resolver as the sidebar, so items
-// hidden in the sidebar are not reachable by URL. An array means ANY listed
-// permission grants access.
+// Maps page names → required permission(s). Direct URL entry is denied unless
+// can() passes. An array means ANY listed permission grants access. Uses new
+// module.action keys; the legacy alias bridge keeps unmigrated entries working.
 export const PAGE_PERMISSIONS = {
   // HR Admin
-  Employees: 'view_employees',
-  AddEmployee: 'manage_employees',
-  EmployeeUpload: 'manage_employees',
-  OfferLetterManagement: 'view_offer_letters',
-  OnboardingTemplates: 'manage_onboarding',
-  BackgroundVerification: 'bg_verification',
-  APIModule: 'api_verification',
-  BulkPANVerification: 'bulk_pan_verify',
+  Employees: 'hr.employees.view',
+  AddEmployee: 'hr.employees.manage',
+  EmployeeUpload: 'hr.employees.manage',
+  OfferLetterManagement: 'hr.offer_letters',
+  OnboardingTemplates: 'hr.onboarding',
+  BackgroundVerification: 'hr.bg_verification',
+  APIModule: 'hr.api_verification',
+  BulkPANVerification: 'hr.bulk_pan',
   // Freelancers
-  Freelancers: 'view_freelancers',
-  FreelancerUpload: 'manage_freelancers',
-  FreelancerPayrollUpload: 'upload_payroll',
-  AdminPayrollView: 'view_payroll_records',
-  // Payroll
-  PayslipManagement: ['view_all_payslips', 'manage_payslips'],
+  Freelancers: 'freelancers.view',
+  FreelancerUpload: 'freelancers.manage',
+  FreelancerPayrollUpload: 'payroll.freelancer.upload',
+  AdminPayrollView: 'payroll.freelancer.records',
+  // Payroll (employee)
+  PayslipManagement: ['payroll.employee.view', 'payroll.employee.edit'],
   // Attendance
-  AttendanceManagement: 'manage_attendance',
-  MyAttendance: 'self_attendance',
+  AttendanceManagement: ['attendance.team.view', 'attendance.team.edit'],
+  MyAttendance: ['attendance.self.view', 'attendance.self.mark'],
   // Expenses
-  ExpenseApproval: 'approve_expenses',
-  MyExpenses: 'submit_expenses',
+  ExpenseApproval: 'expenses.team.approve',
+  MyExpenses: 'expenses.self.submit',
   // Projects
-  ProjectManagement: 'view_projects',
-  ProjectDetails: 'view_projects',
-  ProjectAnalytics: 'view_project_analytics',
-  TaskTemplates: 'manage_task_templates',
-  FreelancerProjects: 'view_projects',
+  ProjectManagement: 'projects.view',
+  ProjectDetails: 'projects.view',
+  ProjectAnalytics: 'projects.analytics',
+  TaskTemplates: 'projects.task_templates',
+  FreelancerProjects: 'projects.view',
   // Assets
-  AssetDashboard: 'manage_assets',
-  AssetList: 'manage_assets',
-  AssetMaintenance: 'manage_assets',
-  AssetReports: 'manage_assets',
+  AssetDashboard: 'assets.manage',
+  AssetList: 'assets.manage',
+  AssetMaintenance: 'assets.manage',
+  AssetReports: 'assets.manage',
   // Communication
-  PolicyManagement: 'manage_policies',
-  NotificationCenter: 'manage_notifications',
-  CompanyPolicies: 'view_policies',
+  PolicyManagement: 'comm.policies.manage',
+  NotificationCenter: 'comm.notifications',
+  CompanyPolicies: 'comm.policies.view',
   // Reports
-  Reports: 'view_reports',
+  Reports: 'reports.view',
   // System
-  Settings: 'access_settings',
-  DesignationPermissions: 'access_control',
-  AccessControl: 'access_control',
-  ModuleManagement: 'module_management',
-  TeamView: 'view_team',
-  TestEmail: 'access_control',
-  PushNotificationTest: 'access_control',
+  Settings: 'system.settings',
+  DesignationPermissions: 'system.access_control',
+  AccessControl: 'system.access_control',
+  ModuleManagement: 'system.module_management',
+  TeamView: 'system.team.view',
+  PermissionInspector: 'system.permission_inspector',
+  TestEmail: 'system.access_control',
+  PushNotificationTest: 'system.access_control',
 };
