@@ -44,14 +44,11 @@ Deno.serve(async (req) => {
             return Response.json({ message: 'Skipped — user is platform admin', email });
         }
 
-        await base44.asServiceRole.entities.User.update(user.id, {
-            data: {
-                ...(user.data || {}),
-                department,
-                section_access,
-                designation,
-            },
-        });
+        const newData = { ...(user.data || {}) };
+        if (department !== undefined) newData.department = department;
+        if (section_access !== undefined) newData.section_access = section_access;
+        if (designation !== undefined) newData.designation = designation;
+        await base44.asServiceRole.entities.User.update(user.id, { data: newData });
 
         return Response.json({ success: true, email, designation });
     } catch (error) {

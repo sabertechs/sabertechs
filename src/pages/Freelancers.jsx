@@ -95,13 +95,6 @@ export default function Freelancers() {
   const buildQuery = useCallback(() => {
     const query = { employment_type: 'contractual' };
     
-    if (search) {
-      query.$or = [
-        { full_name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } }
-      ];
-    }
     if (statusFilter !== "all") query.status = statusFilter;
     if (bgvFilter !== "all") query.bg_verification_status = bgvFilter;
     if (departmentFilter !== "all") query.department = departmentFilter;
@@ -793,13 +786,23 @@ export default function Freelancers() {
     }
   };
 
+  const filteredEmployees = useMemo(() => {
+    if (!search) return employees;
+    const q = search.toLowerCase();
+    return employees.filter(e =>
+      e.full_name?.toLowerCase().includes(q) ||
+      e.email?.toLowerCase().includes(q) ||
+      (e.phone || '').toLowerCase().includes(q)
+    );
+  }, [employees, search]);
+
   const paginatedEmployees = useMemo(() => {
     const start = (currentPage - 1) * employeesPerPage;
     const end = start + employeesPerPage;
-    return employees.slice(start, end);
-  }, [employees, currentPage, employeesPerPage]);
+    return filteredEmployees.slice(start, end);
+  }, [filteredEmployees, currentPage, employeesPerPage]);
 
-  const totalPages = Math.ceil(employees.length / employeesPerPage);
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
   
   const { data: allEmployeesForFilters = [] } = useQuery({
     queryKey: ['employees-filters'],
@@ -1223,7 +1226,7 @@ export default function Freelancers() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100">
               <p className="text-sm text-slate-500">
-                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, employees.length)} of {employees.length}+ freelancers
+                Showing {((currentPage - 1) * employeesPerPage) + 1} to {Math.min(currentPage * employeesPerPage, filteredEmployees.length)} of {filteredEmployees.length} freelancers
               </p>
               <div className="flex items-center gap-2">
                 <Button
