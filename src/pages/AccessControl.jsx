@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PERMISSIONS, getEffectivePermissions } from "@/lib/permissions";
 import { useDesignationPermissions } from "@/hooks/useDesignationPermissions";
-import EmployeeExtraPermissions from "@/components/access/EmployeeExtraPermissions";
 
 export default function AccessControl() {
   const queryClient = useQueryClient();
@@ -66,7 +65,7 @@ export default function AccessControl() {
             <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-slate-700 space-y-1">
               <p className="font-semibold text-slate-800">How permissions work</p>
-              <p>Permissions come from an employee's <strong>designation</strong> (changeable below). To grant a specific person <strong>extra</strong> module access without changing their designation, expand their row and toggle the extra permissions. To edit which permissions each designation gets, go to <strong>Designation Permissions</strong>.</p>
+              <p>Permissions come solely from an employee's <strong>designation</strong> (changeable below) via the cascading Designation Access hierarchy. There are <strong>no per-employee overrides</strong> — to change a person's access, change their designation or edit the mapping in <strong>Designation Permissions</strong>.</p>
             </div>
           </div>
         </CardContent>
@@ -150,7 +149,9 @@ export default function AccessControl() {
                                 {perms.length === 0 && <span className="text-sm text-slate-400">No permissions assigned</span>}
                               </div>
                             </div>
-                            <EmployeeExtraPermissions employee={emp} designations={designations} />
+                            <div className="text-xs text-slate-500 bg-white border border-slate-200 rounded-lg p-3">
+                              No per-employee overrides — access is controlled entirely by the designation above. Change the designation or edit <strong>Designation Permissions</strong> to adjust access.
+                            </div>
                           </td>
                         </tr>
                       )}

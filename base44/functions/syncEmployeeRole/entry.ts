@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
 
-        let email, role, department, section_access, designation;
+        let email, role, department, section_access, designation, employment_type;
 
         if (body.data && body.data.email) {
             // Entity automation payload
@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
             department = body.data.department;
             section_access = body.data.section_access;
             designation = body.data.designation;
+            employment_type = body.data.employment_type;
         } else {
             // Direct call
             email = body.employee_email;
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
             department = body.department;
             section_access = body.section_access;
             designation = body.designation;
+            employment_type = body.employment_type;
         }
 
         if (!email) {
@@ -48,6 +50,7 @@ Deno.serve(async (req) => {
         if (department !== undefined) newData.department = department;
         if (section_access !== undefined) newData.section_access = section_access;
         if (designation !== undefined) newData.designation = designation;
+        if (employment_type !== undefined) newData.employment_type = employment_type;
         await base44.asServiceRole.entities.User.update(user.id, { data: newData });
 
         return Response.json({ success: true, email, designation });

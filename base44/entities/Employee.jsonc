@@ -75,15 +75,7 @@
     },
     "designation": {
       "type": "string",
-      "description": "Job title \u2014 drives permission level via DesignationPermission mapping"
-    },
-    "extra_permissions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "default": [],
-      "description": "Per-employee permission overrides added on top of the designation cascade (managed via Access Control)"
+      "description": "Job title \u2014 HR/business data only; does NOT drive authorization. Authorization is driven by User.data.designation (kept in sync by the syncEmployeeRole automation)."
     },
     "employment_type": {
       "type": "string",
@@ -92,7 +84,7 @@
         "contractual"
       ],
       "default": "permanent",
-      "description": "Type of employment - permanent or contractual"
+      "description": "Type of employment - permanent or contractual (contractual = freelancer)"
     },
     "contract_end_date": {
       "type": "string",
@@ -173,7 +165,7 @@
     },
     "reporting_to": {
       "type": "string",
-      "description": "Email of reporting manager"
+      "description": "Email of reporting manager \u2014 determines data visibility scope only, separate from module/action permissions"
     },
     "status": {
       "type": "string",
