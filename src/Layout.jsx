@@ -158,7 +158,7 @@ export default function Layout({ children, currentPageName }) {
 
     // Freelancer self-service
     if (isFreelancerUser) {
-      if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
+      if (can('projects.view') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "FreelancerProjects" });
       items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
       items.push({ name: "My Payroll", icon: DollarSign, page: "FreelancerPayrollView" });
       if (isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
@@ -166,60 +166,60 @@ export default function Layout({ children, currentPageName }) {
     }
 
     // Self-service (hidden if management equivalent exists)
-    if (can('self_attendance') && !can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
+    if (can('attendance.self.view') && !can('attendance.team.view') && isModuleEnabled('attendance')) items.push({ name: "My Attendance", icon: Clock, page: "MyAttendance" });
     items.push({ name: "My Payslips", icon: FileText, page: "MyPayslips" });
-    if (can('submit_expenses') && !can('approve_expenses')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
-    if (can('view_team')) items.push({ name: "My Team", icon: Users, page: "TeamView" });
-    if (can('view_policies')) items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
+    if (can('expenses.self.submit') && !can('expenses.team.approve')) items.push({ name: "My Expenses", icon: Receipt, page: "MyExpenses" });
+    if (can('system.team.view')) items.push({ name: "My Team", icon: Users, page: "TeamView" });
+    if (can('comm.policies.view')) items.push({ name: "Policies", icon: BookOpen, page: "CompanyPolicies" });
     if (isModuleEnabled('assets')) items.push({ name: "My Assets", icon: Package, page: "MyAssets" });
     if (isModuleEnabled('games')) items.push({ name: "Games", icon: Gamepad2, page: "OfficeOpsArena" });
-    if (isModuleEnabled('company_feed') && !can('manage_company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+    if (isModuleEnabled('company_feed') && !can('feed.manage')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
 
     // HR Admin section
     const hrAdminItems = [];
-    if (can('view_employees')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
-    if (can('manage_employees')) {
+    if (can('hr.employees.view')) hrAdminItems.push({ name: "Employees", icon: Users, page: "Employees" });
+    if (can('hr.employees.manage')) {
       hrAdminItems.push({ name: "Add Employee", icon: UserPlus, page: "AddEmployee" });
       hrAdminItems.push({ name: "Employee Upload", icon: UserPlus, page: "EmployeeUpload" });
     }
-    if (can('view_offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
-    if (can('manage_onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
+    if (can('hr.offer_letters')) hrAdminItems.push({ name: "Offer Letters", icon: Mail, page: "OfferLetterManagement" });
+    if (can('hr.onboarding')) hrAdminItems.push({ name: "Onboarding", icon: ClipboardList, page: "OnboardingTemplates" });
     if (hrAdminItems.length > 0) {
       items.push({ name: "HR Admin", icon: Users, isSection: true, sectionId: "hrAdmin", children: hrAdminItems });
     }
 
     // Freelancer management
-    if (can('view_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
-    if (can('manage_freelancers') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
-    if (can('upload_payroll')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
-    if (can('view_payroll_records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
+    if (can('freelancers.view') && isModuleEnabled('freelancers')) items.push({ name: "Freelancers", icon: Users, page: "Freelancers" });
+    if (can('freelancers.manage') && isModuleEnabled('freelancers')) items.push({ name: "Freelancer Upload", icon: UserPlus, page: "FreelancerUpload" });
+    if (can('payroll.freelancer.upload')) items.push({ name: "Payroll Upload", icon: DollarSign, page: "FreelancerPayrollUpload" });
+    if (can('payroll.freelancer.records')) items.push({ name: "Payroll Records", icon: DollarSign, page: "AdminPayrollView" });
 
     // Operations
-    if (can('manage_attendance') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
-    if (can('view_all_payslips') || can('manage_payslips')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
-    if (can('bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
-    if (can('api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
-    if (can('bulk_pan_verify')) items.push({ name: "Bulk PAN Verify", icon: ShieldCheck, page: "BulkPANVerification" });
-    if (can('approve_expenses')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
-    if (can('manage_assets') && isModuleEnabled('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
+    if (can('attendance.team.view') && isModuleEnabled('attendance')) items.push({ name: "Attendance", icon: Clock, page: "AttendanceManagement" });
+    if (can('payroll.employee.view') || can('payroll.employee.edit')) items.push({ name: "Payslips", icon: FileText, page: "PayslipManagement" });
+    if (can('hr.bg_verification')) items.push({ name: "BG Verification", icon: ShieldCheck, page: "BackgroundVerification" });
+    if (can('hr.api_verification')) items.push({ name: "API Verification", icon: ShieldCheck, page: "APIModule" });
+    if (can('hr.bulk_pan')) items.push({ name: "Bulk PAN Verify", icon: ShieldCheck, page: "BulkPANVerification" });
+    if (can('expenses.team.approve')) items.push({ name: "Expenses", icon: Receipt, page: "ExpenseApproval" });
+    if (can('assets.manage') && isModuleEnabled('assets')) items.push({ name: "Assets", icon: Package, page: "AssetDashboard" });
 
     // Projects
-    if (can('view_projects') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
-    if (can('manage_task_templates') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
-    if (can('view_project_analytics') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
+    if (can('projects.view') && isModuleEnabled('projects')) items.push({ name: "Projects", icon: Briefcase, page: "ProjectManagement" });
+    if (can('projects.task_templates') && isModuleEnabled('projects')) items.push({ name: "Task Templates", icon: ClipboardList, page: "TaskTemplates" });
+    if (can('projects.analytics') && isModuleEnabled('projects')) items.push({ name: "Project Analytics", icon: LayoutDashboard, page: "ProjectAnalytics" });
 
     // Communication
-    if (can('manage_company_feed') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
-    if (can('manage_policies')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
-    if (can('manage_notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
+    if (can('feed.manage') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
+    if (can('comm.policies.manage')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
+    if (can('comm.notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
 
     // Reports
-    if (can('view_reports')) items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
+    if (can('reports.view')) items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
 
     // System
-    if (can('access_settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
-    if (can('access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
-    if (can('module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
+    if (can('system.settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
+    if (can('system.access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
+    if (can('system.module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
     if (can('system.permission_inspector')) items.push({ name: "Permission Inspector", icon: ShieldCheck, page: "PermissionInspector" });
 
     return items;
@@ -263,7 +263,7 @@ export default function Layout({ children, currentPageName }) {
                   <NotificationPopup userEmail={user?.email} />
 
                   {/* Background processor for scheduled notifications */}
-                  {(isAdmin || can('manage_notifications')) && (
+                  {(isAdmin || can('comm.notifications')) && (
                     <ScheduledNotificationProcessor />
                   )}
       

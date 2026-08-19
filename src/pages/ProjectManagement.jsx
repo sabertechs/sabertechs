@@ -262,7 +262,7 @@ export default function ProjectManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Projects</h2>
-        {can('manage_projects') && (
+        {can('projects.export') && (
         <div className="flex gap-3 items-center">
           <Button
             onClick={async () => {
@@ -418,7 +418,7 @@ export default function ProjectManagement() {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
-                      {can('manage_projects') && (
+                      {can('projects.edit') && (
                       <Button 
                         size="sm" 
                         className="h-8 w-8 p-0 bg-slate-900 hover:bg-slate-800"
@@ -427,7 +427,7 @@ export default function ProjectManagement() {
                         <Edit className="w-4 h-4" />
                       </Button>
                       )}
-                      {can('manage_projects') && (
+                      {can('projects.delete') && (
                       <Button 
                         size="sm" 
                         className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600"

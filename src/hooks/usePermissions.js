@@ -10,8 +10,9 @@ import { getEffectivePermissions, isFreelancer, getDesignationLevel, resolveCan 
  * (user.role === 'admin', the app owner) retains a full-access override — the
  * only role-based check that remains. No per-employee overrides.
  *
- * can() accepts new module.action keys (e.g. 'projects.create') and legacy
- * aliased keys (e.g. 'manage_projects') via the resolveCan bridge.
+ * can() accepts module.action keys (e.g. 'projects.create', 'attendance.team.edit').
+ * A legacy alias bridge remains for backward compatibility but all call sites
+ * now use the new module.action keys directly.
  *
  * Usage:
  *   const { can, permissions, user, isFreelancer: isFreel, isAdmin, designationLevel, loading } = usePermissions();

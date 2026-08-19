@@ -83,7 +83,7 @@ export default function CompanyFeedPage() {
   });
 
   const { can } = usePermissions();
-  const canManageFeed = can('manage_company_feed');
+  const canManageFeed = can('feed.manage');
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],

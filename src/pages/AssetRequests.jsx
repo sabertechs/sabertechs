@@ -72,7 +72,7 @@ export default function AssetRequests() {
   }, []);
 
   const { can } = usePermissions();
-  const canManageAssets = can('manage_assets');
+  const canManageAssets = can('assets.manage');
 
   const { data: requests = [] } = useQuery({
     queryKey: ['assetRequests', canManageAssets],

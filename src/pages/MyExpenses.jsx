@@ -254,7 +254,7 @@ export default function MyExpenses() {
           <p className="text-slate-500">Submit and track your expense claims</p>
         </div>
         <div className="flex gap-2">
-          {can('approve_expenses') && (
+          {can('expenses.team.approve') && (
             <Button onClick={() => { setShowInsights(true); loadInsights(); }} variant="outline">
               <TrendingUp className="w-4 h-4 mr-2" />
               AI Insights

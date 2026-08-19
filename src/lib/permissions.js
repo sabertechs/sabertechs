@@ -179,7 +179,7 @@ export const FREELANCER_FIXED_PERMISSIONS = ['projects.view'];
 
 export function getDesignationDashboard(obj, permissions = []) {
   if (isFreelancer(obj)) return 'FreelancerDashboard';
-  if (permissions.includes('hr.employees.view') || permissions.includes('view_employees')) return 'HRDashboard';
+  if (permissions.includes('hr.employees.view')) return 'HRDashboard';
   const d = readDesignation(obj)?.toLowerCase();
   if (d === 'hr head' || d === 'senior manager') return 'HRDashboard';
   return 'EmployeeDashboard';
