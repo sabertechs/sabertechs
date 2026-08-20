@@ -50,6 +50,11 @@
           "user_condition": {
             "data.designation": "HR Head"
           }
+        },
+        {
+          "user_condition": {
+            "data.designation": "Senior Manager"
+          }
         }
       ]
     },
