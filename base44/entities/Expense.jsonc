@@ -116,65 +116,7 @@
         }
       ]
     },
-    "update": {
-      "$or": [
-        {
-          "$and": [
-            {
-              "data.employee_email": "{{user.email}}"
-            },
-            {
-              "data.status": "pending"
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "$and": [
-            {
-              "data.department": "{{user.data.department}}"
-            },
-            {
-              "user_condition": {
-                "data.designation": "Senior Manager"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "$and": [
-            {
-              "data.employee_email": "{{user.email}}"
-            },
-            {
-              "data.status": "pending"
-            }
-          ]
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
