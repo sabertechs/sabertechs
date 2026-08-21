@@ -85,76 +85,9 @@
     "task_type"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        },
-        {
-          "data.assigned_to": "{{user.email}}"
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
