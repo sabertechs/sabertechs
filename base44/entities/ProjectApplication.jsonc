@@ -56,48 +56,7 @@
       "data.freelancer_email": "{{user.email}}"
     },
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Assistant Manager"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
