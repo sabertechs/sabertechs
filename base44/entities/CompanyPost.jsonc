@@ -55,54 +55,9 @@
     "post_type"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
