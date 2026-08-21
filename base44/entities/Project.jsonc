@@ -95,88 +95,9 @@
     "description"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Assistant Manager"
-          }
-        }
-      ]
-    },
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Assistant Manager"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Team Lead"
-          }
-        }
-      ]
-    }
+    "create": {},
+    "update": {},
+    "delete": {}
   }
 }
