@@ -8,6 +8,7 @@ import FreelancerPayrollView from './pages/FreelancerPayrollView';
 import AdminPayrollView from './pages/AdminPayrollView';
 
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
@@ -99,6 +100,7 @@ function App() {
           <AuthenticatedApp />
         </Router>
         <Toaster />
+        <SonnerToaster richColors position="top-right" />
         <VisualEditAgent />
       </QueryClientProvider>
     </AuthProvider>
