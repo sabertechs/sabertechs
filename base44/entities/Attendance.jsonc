@@ -60,28 +60,7 @@
     "status"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.employee_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "$or": [
         {
@@ -111,45 +90,7 @@
         }
       ]
     },
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "$and": [
-            {
-              "data.employee_email": "{{user.email}}"
-            },
-            {
-              "data.status": "pending"
-            },
-            {
-              "data.marked_by_role": "self"
-            }
-          ]
-        },
-        {
-          "$and": [
-            {
-              "data.department": "{{user.data.department}}"
-            },
-            {
-              "user_condition": {
-                "data.designation": "Senior Manager"
-              }
-            }
-          ]
-        }
-      ]
-    },
+    "update": {},
     "delete": {
       "user_condition": {
         "role": "admin"
