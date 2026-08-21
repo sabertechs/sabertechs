@@ -58,61 +58,9 @@
     "response_type"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.freelancer_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {},
-    "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
