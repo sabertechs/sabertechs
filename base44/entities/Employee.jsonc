@@ -283,37 +283,7 @@
     "phone"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "$and": [
-            {
-              "user_condition": {
-                "data.designation": "Team Lead"
-              }
-            },
-            {
-              "data.employment_type": "contractual"
-            }
-          ]
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "$or": [
         {
@@ -361,68 +331,7 @@
         }
       ]
     },
-    "update": {
-      "$or": [
-        {
-          "data.email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        },
-        {
-          "data.reporting_to": "{{user.email}}"
-        },
-        {
-          "$and": [
-            {
-              "user_condition": {
-                "data.designation": "Team Lead"
-              }
-            },
-            {
-              "data.employment_type": "contractual"
-            }
-          ]
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "$and": [
-            {
-              "user_condition": {
-                "data.designation": "Team Lead"
-              }
-            },
-            {
-              "data.employment_type": "contractual"
-            }
-          ]
-        }
-      ]
-    }
+    "update": {},
+    "delete": {}
   }
 }
