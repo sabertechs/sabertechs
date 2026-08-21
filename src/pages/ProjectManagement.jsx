@@ -71,6 +71,9 @@ export default function ProjectManagement() {
       setShowDialog(false);
       resetForm();
       toast.success('Project created successfully');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to create project');
     }
   });
 
@@ -82,6 +85,9 @@ export default function ProjectManagement() {
       setEditingProject(null);
       resetForm();
       toast.success('Project updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to update project');
     }
   });
 
@@ -90,6 +96,9 @@ export default function ProjectManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
       toast.success('Project deleted');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || error?.message || 'Failed to delete project');
     }
   });
 
@@ -175,12 +184,12 @@ export default function ProjectManagement() {
       ? new Date(`${formData.application_end_date}T${formData.application_end_time}:00`).toISOString()
       : null;
 
-    // Application date validations
-    if (appStartDateTime && formData.start_date && new Date(appStartDateTime) > new Date(formData.start_date)) {
+    // Application date validations (date-only comparison; same-day is allowed)
+    if (formData.application_start_date && formData.start_date && formData.application_start_date > formData.start_date) {
       newErrors.application_start_date = 'Application start cannot be after project start date';
     }
 
-    if (appEndDateTime && formData.start_date && new Date(appEndDateTime) > new Date(formData.start_date)) {
+    if (formData.application_end_date && formData.start_date && formData.application_end_date > formData.start_date) {
       newErrors.application_end_date = 'Application end cannot be after project start date';
     }
 
