@@ -262,55 +262,59 @@ export default function ProjectManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Projects</h2>
-        {can('projects.export') && (
         <div className="flex gap-3 items-center">
-          <Button
-            onClick={async () => {
-              setExporting(true);
-              setExportResult(null);
-              try {
-                const res = await base44.functions.invoke('exportProjectsToDrive');
-                if (res.data?.success) {
-                  setExportResult(res.data);
-                  toast.success('Exported to Google Drive!');
-                } else {
-                  toast.error(res.data?.error || 'Export failed');
-                }
-              } catch (err) {
-                toast.error(err?.response?.data?.error || err?.message || 'Export failed — check if Google Drive is connected');
-              } finally {
-                setExporting(false);
-              }
-            }}
-            disabled={exporting}
-            variant="outline"
-            className="border-green-600 text-green-700 hover:bg-green-50"
-          >
-            <CloudUpload className="w-4 h-4 mr-2" />
-            {exporting ? 'Exporting...' : 'Export to Drive'}
-          </Button>
-          {exportResult?.file_url && (
+          {can('projects.export') && (
             <>
-              <a href={exportResult.file_url} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
-                  <ExternalLink className="w-4 h-4 mr-1" /> View File
-                </Button>
-              </a>
-              {exportResult?.folder_url && (
-                <a href={exportResult.folder_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="border-purple-500 text-purple-600 hover:bg-purple-50">
-                    <ExternalLink className="w-4 h-4 mr-1" /> Open Folder
-                  </Button>
-                </a>
+              <Button
+                onClick={async () => {
+                  setExporting(true);
+                  setExportResult(null);
+                  try {
+                    const res = await base44.functions.invoke('exportProjectsToDrive');
+                    if (res.data?.success) {
+                      setExportResult(res.data);
+                      toast.success('Exported to Google Drive!');
+                    } else {
+                      toast.error(res.data?.error || 'Export failed');
+                    }
+                  } catch (err) {
+                    toast.error(err?.response?.data?.error || err?.message || 'Export failed — check if Google Drive is connected');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                disabled={exporting}
+                variant="outline"
+                className="border-green-600 text-green-700 hover:bg-green-50"
+              >
+                <CloudUpload className="w-4 h-4 mr-2" />
+                {exporting ? 'Exporting...' : 'Export to Drive'}
+              </Button>
+              {exportResult?.file_url && (
+                <>
+                  <a href={exportResult.file_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                      <ExternalLink className="w-4 h-4 mr-1" /> View File
+                    </Button>
+                  </a>
+                  {exportResult?.folder_url && (
+                    <a href={exportResult.folder_url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                        <ExternalLink className="w-4 h-4 mr-1" /> Open Folder
+                      </Button>
+                    </a>
+                  )}
+                </>
               )}
             </>
           )}
-          <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Project
-          </Button>
+          {can('projects.create') && (
+            <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Project
+            </Button>
+          )}
         </div>
-        )}
       </div>
 
       {/* Search & Filter Bar */}
