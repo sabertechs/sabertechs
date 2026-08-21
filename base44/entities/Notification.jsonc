@@ -36,48 +36,11 @@
     "type"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.recipient_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "Senior Manager"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "data.recipient_email": "{{user.email}}"
     },
-    "update": {
-      "$or": [
-        {
-          "data.recipient_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    },
+    "update": {},
     "delete": {
       "data.recipient_email": "{{user.email}}"
     }
