@@ -69,7 +69,7 @@
       "$or": [
         {
           "user_condition": {
-            "role": "admin"
+            "data.designation": "Admin"
           }
         },
         {

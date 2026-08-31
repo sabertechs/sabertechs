@@ -81,22 +81,22 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "data.designation": "Admin"
       }
     },
     "read": {
       "user_condition": {
-        "role": "admin"
+        "data.designation": "Admin"
       }
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "data.designation": "Admin"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "data.designation": "Admin"
       }
     }
   }

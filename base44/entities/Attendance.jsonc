@@ -68,7 +68,7 @@
         },
         {
           "user_condition": {
-            "role": "admin"
+            "data.designation": "Admin"
           }
         },
         {
@@ -93,7 +93,7 @@
     "update": {},
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "data.designation": "Admin"
       }
     }
   }
