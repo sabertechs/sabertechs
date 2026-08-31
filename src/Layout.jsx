@@ -59,7 +59,16 @@ export default function Layout({ children, currentPageName }) {
           return;
         }
         
-        const userData = await base44.auth.me();
+        let userData = await base44.auth.me();
+        // One-time platform bootstrap only. Employee/module authorization never uses role.
+        if (userData?.role === 'admin' && !userData?.data?.designation) {
+          try {
+            await base44.functions.invoke('migrateUserPermissionData', {});
+            userData = await base44.auth.me();
+          } catch (migrationError) {
+            console.warn('Permission data migration pending:', migrationError?.message);
+          }
+        }
         setUser(userData);
         
         const employees = await base44.entities.Employee.filter({ email: userData.email });
@@ -84,6 +93,9 @@ export default function Layout({ children, currentPageName }) {
             window.location.replace(createPageUrl(getDesignationDashboard(userData, regPerms)));
             return;
           }
+        } else if (userData?.data?.designation === 'Admin') {
+          // Platform owner has no Employee HR record; permission context lives on User.data.
+          setEmployeeData({ designation: 'Admin', email: userData.email, status: 'active' });
         } else {
           // No employee record - redirect to registration to complete profile
           if (currentPageName !== "Registration") {
