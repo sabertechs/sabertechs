@@ -5,7 +5,7 @@
  *
  * Way 1: user.data is the SOLE permission source (designation + employment_type).
  * The Employee entity is never queried for authorization. No per-employee
- * overrides. Action-based module.action keys with a legacy alias bridge.
+ * overrides. Only canonical action-based module.action keys are accepted.
  *
  * Usage:
  *   import { can } from '../../shared/permissions.ts';
@@ -29,11 +29,10 @@ function resolveCan(effectivePerms: string[], permissionKey: string): boolean {
 }
 
 /**
- * Returns the effective action-based permission keys for a user, or null if the
- * user is the platform admin (app owner) who has full access. Reads designation +
+ * Returns the effective action-based permission keys for a user. Reads designation +
  * employment_type from user.data — never queries the Employee entity.
  */
-export async function getUserPermissions(base44: any, user: any): Promise<string[] | null> {
+export async function getUserPermissions(base44: any, user: any): Promise<string[]> {
   if (!user) return [];
   // Admin is a designation, not an employee role. Platform account status is not
   // used to grant module permissions here.
