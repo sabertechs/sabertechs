@@ -6,9 +6,9 @@ import { getEffectivePermissions, isFreelancer, getDesignationLevel, resolveCan 
  * Hook that returns permission-checking utilities for the current user.
  *
  * Way 1: user.data is the SOLE permission source (designation + employment_type).
- * The Employee entity is never queried for authorization. The platform admin
- * (user.role === 'admin', the app owner) retains a full-access override — the
- * only role-based check that remains. No per-employee overrides.
+ * The Employee entity is never queried for authorization. No per-employee overrides.
+ * The platform owner's built-in account flag is used only to identify the app owner;
+ * employee/module access is always resolved from User.data.designation.
  *
  * can() accepts module.action keys (e.g. 'projects.create', 'attendance.team.edit').
  * A legacy alias bridge remains for backward compatibility but all call sites
@@ -30,7 +30,7 @@ export function usePermissions() {
       try {
         const me = await base44.auth.me();
         setUser(me);
-        setIsAdmin(me?.role === 'admin');
+        setIsAdmin(me?.data?.designation?.toLowerCase() === 'admin');
         const [dpRows, employees] = await Promise.all([
           base44.entities.DesignationPermission.list('display_order'),
           base44.entities.Employee.filter({ email: me.email }),
@@ -59,7 +59,7 @@ export function usePermissions() {
   );
 
   const can = useMemo(() => (permission) => {
-    if (isAdmin) return true; // platform admin (app owner) override
+    if (isAdmin) return true; // Admin designation has full access
     return resolveCan(permissions, permission);
   }, [permissions, isAdmin]);
 
