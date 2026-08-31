@@ -104,11 +104,7 @@ export const PERMISSIONS = {
 };
 
 // ── LEGACY ALIAS BRIDGE ────────────────────────────
-// Maps old module-only keys → new module.action key(s). can('old_key') resolves
-// to the new key(s) and returns true if ANY is in the effective set. This lets
-// unmigrated call sites keep working while pages are updated incrementally.
-// NOTE: Recruitment / Pipeline keys are intentionally absent — those modules
-// have been fully removed.
+// Deprecated compatibility map. No authorization decision should depend on it.
 export const LEGACY_ALIASES = {
   view_employees:          ['hr.employees.view'],
   manage_employees:        ['hr.employees.manage'],
@@ -213,25 +209,14 @@ export function getEffectivePermissions(obj, designationPermissions = []) {
       .flatMap(dp => dp.permissions || []);
   }
 
-  // Contractual employees (freelancers) always get their fixed modules
-  if (isFreelancer(obj)) {
-    perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
-  }
-
   return [...new Set(perms)];
 }
 
-// Resolve a can() check against an effective-permission set. Handles both new
-// module.action keys and legacy aliased keys. Exported so the frontend hook and
-// the backend shared resolver use the exact same logic.
+// Resolve only canonical module.action permission keys. Legacy aliases are
+// retained only as migration metadata and are never accepted by authorization.
 export function resolveCan(effectivePerms, permissionKey) {
   if (permissionKey == null) return false;
-  // Direct new-key match
-  if (effectivePerms.includes(permissionKey)) return true;
-  // Legacy alias bridge
-  const aliases = LEGACY_ALIASES[permissionKey];
-  if (aliases) return aliases.some(a => effectivePerms.includes(a));
-  return false;
+  return effectivePerms.includes(permissionKey);
 }
 
 // Get inherited permissions for a designation from all lower cascade levels.
