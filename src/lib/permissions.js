@@ -6,9 +6,8 @@
  * drives authorization. There are NO per-employee overrides.
  *
  * Permission keys are module.action strings (e.g. "projects.create",
- * "attendance.team.edit", "payroll.freelancer.upload"). A legacy alias bridge
- * maps old module-only keys (e.g. "manage_projects") to their new equivalents so
- * call sites can migrate incrementally without breaking the build.
+ * "attendance.team.edit", "payroll.freelancer.upload"). Only canonical keys
+ * are accepted by authorization.
  *
  * Hierarchy (low → high): Employee → Assistant Manager → Team Lead → Senior Manager → HR Head
  * Permissions cascade upward: a designation at level N inherits all permissions from levels 1..N.
@@ -103,42 +102,6 @@ export const PERMISSIONS = {
   'system.permission_inspector': { label: 'Permission Inspector', module: 'system',     description: 'Inspect & validate effective permissions' },
 };
 
-// ── LEGACY ALIAS BRIDGE ────────────────────────────
-// Deprecated compatibility map. No authorization decision should depend on it.
-export const LEGACY_ALIASES = {
-  view_employees:          ['hr.employees.view'],
-  manage_employees:        ['hr.employees.manage'],
-  view_offer_letters:      ['hr.offer_letters'],
-  manage_onboarding:       ['hr.onboarding'],
-  bg_verification:         ['hr.bg_verification'],
-  api_verification:        ['hr.api_verification'],
-  bulk_pan_verify:         ['hr.bulk_pan'],
-  view_freelancers:        ['freelancers.view'],
-  manage_freelancers:      ['freelancers.manage'],
-  upload_payroll:          ['payroll.freelancer.upload'],
-  view_payroll_records:    ['payroll.freelancer.records'],
-  view_all_payslips:       ['payroll.employee.view'],
-  manage_payslips:         ['payroll.employee.edit'],
-  self_attendance:         ['attendance.self.view', 'attendance.self.mark'],
-  manage_attendance:       ['attendance.team.view', 'attendance.team.edit'],
-  submit_expenses:         ['expenses.self.submit'],
-  approve_expenses:        ['expenses.team.approve'],
-  view_projects:           ['projects.view'],
-  manage_projects:         ['projects.create', 'projects.edit', 'projects.delete'],
-  view_project_analytics:  ['projects.analytics'],
-  manage_task_templates:   ['projects.task_templates'],
-  manage_assets:           ['assets.manage', 'assets.view', 'assets.create', 'assets.approve'],
-  manage_notifications:    ['comm.notifications'],
-  manage_policies:         ['comm.policies.manage'],
-  view_policies:           ['comm.policies.view'],
-  manage_company_feed:     ['feed.manage'],
-  view_reports:            ['reports.view'],
-  access_settings:         ['system.settings'],
-  access_control:          ['system.access_control'],
-  module_management:       ['system.module_management'],
-  view_team:               ['system.team.view'],
-};
-
 // ── DESIGNATION HIERARCHY ───────────────────────────
 export const DESIGNATION_HIERARCHY = [
   { name: 'Employee',           level: 1 },
@@ -169,10 +132,6 @@ export function isFreelancer(obj) {
   return readEmploymentType(obj) === 'contractual';
 }
 
-// Fixed permissions always granted to freelancers (contractual), independent of
-// Designation Access — ensures freelancers can always see their assigned projects.
-export const FREELANCER_FIXED_PERMISSIONS = ['projects.view'];
-
 export function getDesignationDashboard(obj, permissions = []) {
   if (isFreelancer(obj)) return 'FreelancerDashboard';
   if (permissions.includes('hr.employees.view')) return 'HRDashboard';
@@ -182,7 +141,7 @@ export function getDesignationDashboard(obj, permissions = []) {
 }
 
 // ── EFFECTIVE PERMISSIONS (designation cascade, user.data source) ──
-// No per-employee overrides. Cascade only + freelancer fixed set.
+// No per-employee overrides. Designation Access cascade only.
 export function getEffectivePermissions(obj, designationPermissions = []) {
   const designation = readDesignation(obj);
   if (!designation) return [];
