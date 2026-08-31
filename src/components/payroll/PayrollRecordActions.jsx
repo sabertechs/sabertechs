@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import {
 import { Pencil, Trash2 } from "lucide-react";
 
 export default function PayrollRecordActions({ record, onUpdated, onDeleted }) {
+  const { can } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -55,14 +57,20 @@ export default function PayrollRecordActions({ record, onUpdated, onDeleted }) {
     setDeleteOpen(false);
   };
 
+  if (!can('payroll.freelancer.records')) return null;
+
   return (
     <div className="flex items-center justify-end gap-1">
-      <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
-        <Pencil className="w-4 h-4 text-slate-500" />
-      </Button>
-      <Button variant="ghost" size="icon" onClick={() => setDeleteOpen(true)}>
-        <Trash2 className="w-4 h-4 text-red-500" />
-      </Button>
+      {can('payroll.freelancer.records') && (
+        <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
+          <Pencil className="w-4 h-4 text-slate-500" />
+        </Button>
+      )}
+      {can('payroll.freelancer.records') && (
+        <Button variant="ghost" size="icon" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="w-4 h-4 text-red-500" />
+        </Button>
+      )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
