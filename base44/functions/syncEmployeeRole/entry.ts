@@ -1,30 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
- * Syncs Employee → User (platform level): role, department, section_access.
- * Triggered by the "Sync Employee Role to Platform User" entity automation
- * on Employee create/update, or called directly with
- * { employee_email, role, department, section_access }.
+ * Syncs Employee → User.data permission context.
+ * Triggered by Employee create/update automation or called directly with
+ * { employee_email, designation, employment_type, department, section_access }.
+ * Designation and employment type are the only permission-driving fields.
  */
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
 
-        let email, role, department, section_access, designation, employment_type;
+        let email, department, section_access, designation, employment_type;
 
         if (body.data && body.data.email) {
-            // Entity automation payload
             email = body.data.email;
-            role = body.data.role;
             department = body.data.department;
             section_access = body.data.section_access;
             designation = body.data.designation;
             employment_type = body.data.employment_type;
         } else {
-            // Direct call
             email = body.employee_email;
-            role = body.role;
             department = body.department;
             section_access = body.section_access;
             designation = body.designation;
@@ -41,10 +37,6 @@ Deno.serve(async (req) => {
         }
 
         const user = users[0];
-
-        if (user.role === 'admin') {
-            return Response.json({ message: 'Skipped — user is platform admin', email });
-        }
 
         const newData = { ...(user.data || {}) };
         if (department !== undefined) newData.department = department;
