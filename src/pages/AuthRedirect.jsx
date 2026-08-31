@@ -18,21 +18,12 @@ export default function AuthRedirect() {
           return;
         }
 
-        // Admin (app owner) goes to HR dashboard via the explicit admin policy
-        if (user.role === 'admin') {
-          window.location.href = createPageUrl('HRDashboard');
-          return;
-        }
-
-        // Employees: dashboard comes from Designation Access (designation cascade)
-        const userEmail = user.email.toLowerCase().trim();
-        const employees = await base44.entities.Employee.filter({ email: userEmail });
-
-        if (employees.length > 0) {
-          const emp = employees[0];
-          const dpRows = await base44.entities.DesignationPermission.list('display_order');
-          const perms = getEffectivePermissions(emp, dpRows);
-          window.location.href = createPageUrl(getDesignationDashboard(emp, perms));
+        // Dashboard comes only from User.data.designation and Designation Access.
+        // The Employee entity is not used as an authorization source.
+        const dpRows = await base44.entities.DesignationPermission.list('display_order');
+        const perms = getEffectivePermissions(user, dpRows);
+        if (user?.data?.designation) {
+          window.location.href = createPageUrl(getDesignationDashboard(user, perms));
         } else {
           window.location.href = createPageUrl('Registration');
         }
