@@ -85,8 +85,8 @@ export default function Registration() {
         
         const userData = await base44.auth.me();
         
-        // Check if user is admin - admins don't need registration
-        if (userData.role === 'admin') {
+        // Users with Admin designation don't need employee registration.
+        if (userData?.data?.designation === 'Admin') {
           redirecting = true;
           window.location.replace(createPageUrl("HRDashboard"));
           return;
