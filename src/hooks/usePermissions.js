@@ -28,7 +28,17 @@ export function usePermissions() {
   useEffect(() => {
     async function load() {
       try {
-        const me = await base44.auth.me();
+        let me = await base44.auth.me();
+        // One-time bootstrap only: migrate existing platform-user permission data.
+        // After migration, all employee/module authorization uses User.data.designation.
+        if (me?.role === 'admin' && !me?.data?.designation) {
+          try {
+            await base44.functions.invoke('migrateUserPermissionData', {});
+            me = await base44.auth.me();
+          } catch (migrationError) {
+            console.warn('Permission data migration pending:', migrationError?.message);
+          }
+        }
         setUser(me);
         setIsAdmin(me?.data?.designation?.toLowerCase() === 'admin');
         const [dpRows, employees] = await Promise.all([
