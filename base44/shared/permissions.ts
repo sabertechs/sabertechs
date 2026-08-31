@@ -24,8 +24,8 @@ const DESIGNATION_HIERARCHY = [
 
 const FREELANCER_FIXED_PERMISSIONS = ['projects.view'];
 
-// Legacy alias bridge — mirrors src/lib/permissions.js LEGACY_ALIASES.
-const LEGACY_ALIASES: Record<string, string[]> = {
+// Legacy aliases are retained only as migration metadata. They are never accepted
+// by the backend authorization resolver.
   view_employees: ['hr.employees.view'],
   manage_employees: ['hr.employees.manage'],
   view_offer_letters: ['hr.offer_letters'],
@@ -61,10 +61,7 @@ const LEGACY_ALIASES: Record<string, string[]> = {
 
 function resolveCan(effectivePerms: string[], permissionKey: string): boolean {
   if (!permissionKey) return false;
-  if (effectivePerms.includes(permissionKey)) return true;
-  const aliases = LEGACY_ALIASES[permissionKey];
-  if (aliases) return aliases.some((a) => effectivePerms.includes(a));
-  return false;
+  return effectivePerms.includes(permissionKey);
 }
 
 /**
@@ -74,8 +71,8 @@ function resolveCan(effectivePerms: string[], permissionKey: string): boolean {
  */
 export async function getUserPermissions(base44: any, user: any): Promise<string[] | null> {
   if (!user) return [];
-  // Platform admin (app owner) override — the only role-based check that remains
-  if (user.role === 'admin') return null;
+  // Admin is a designation, not an employee role. Platform account status is not
+  // used to grant module permissions here.
 
   const designation = user?.data?.designation ?? null;
   const employmentType = user?.data?.employment_type ?? null;
@@ -106,17 +103,12 @@ export async function getUserPermissions(base44: any, user: any): Promise<string
       .flatMap((dp: any) => dp.permissions || []);
   }
 
-  // Contractual employees (freelancers) always get their fixed modules
-  if (employmentType === 'contractual') {
-    perms = [...perms, ...FREELANCER_FIXED_PERMISSIONS];
-  }
-
   return [...new Set(perms)];
 }
 
-/** Returns true if the user has the given permission key (or is platform admin). */
+/** Returns true only when the user's User.data.designation grants the canonical permission key. */
 export async function can(base44: any, user: any, permission: string): Promise<boolean> {
   const perms = await getUserPermissions(base44, user);
-  if (perms === null) return true; // platform admin
+  if (perms === null) return false;
   return resolveCan(perms, permission);
 }
