@@ -46,7 +46,7 @@ export default function PermissionInspector() {
 
   const selectedUser = users.find(u => u.email === selectedEmail);
   const selectedEmp = employees.find(e => e.email === selectedEmail);
-  const isAdmin = selectedUser?.role === "admin";
+  const isAdmin = selectedUser?.data?.designation?.toLowerCase() === "admin";
 
   const effective = useMemo(
     () => (selectedUser ? getEffectivePermissions(selectedUser, designations) : []),
@@ -136,7 +136,7 @@ export default function PermissionInspector() {
                   <div className="text-sm font-medium text-slate-800 truncate">{u.full_name || u.email}</div>
                   <div className="text-xs text-slate-500 truncate">{u.email}</div>
                   <div className="flex gap-1 mt-1">
-                    {u.role === "admin" && <Badge className="bg-red-100 text-red-700 text-[10px]">Admin</Badge>}
+                    {u.data?.designation?.toLowerCase() === "admin" && <Badge className="bg-red-100 text-red-700 text-[10px]">Admin</Badge>}
                     <Badge className="bg-slate-100 text-slate-600 text-[10px]">{u.data?.designation || "no designation"}</Badge>
                     {u.data?.employment_type === "contractual" && <Badge className="bg-amber-100 text-amber-700 text-[10px]">Freelancer</Badge>}
                   </div>
@@ -170,8 +170,8 @@ export default function PermissionInspector() {
                     <div className="font-semibold text-slate-800">{selectedUser.data?.employment_type || <span className="text-red-500">missing</span>}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500">Role</div>
-                    <div className="font-semibold text-slate-800">{selectedUser.role}</div>
+                    <div className="text-xs text-slate-500">Permission source</div>
+                    <div className="font-semibold text-slate-800">Designation Access</div>
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Freelancer?</div>
