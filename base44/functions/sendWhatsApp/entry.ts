@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
     try {
@@ -7,6 +8,10 @@ Deno.serve(async (req) => {
 
         if (!user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        // Sending WhatsApp to freelancers is a freelancer-management action.
+        if (!(await can(base44, user, 'freelancers.view'))) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const { phone, message, type = 'text', media_url, filename } = await req.json();

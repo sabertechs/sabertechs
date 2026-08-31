@@ -1,12 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Expense insights are a team-management/reporting function.
+    if (!(await can(base44, user, 'expenses.team.approve'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { employeeEmail, department, timeframe } = await req.json();

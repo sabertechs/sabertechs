@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { jsPDF } from 'npm:jspdf@2.5.2';
+import { can } from '../../shared/permissions.ts';
 
 /**
  * Generates a payslip PDF and emails it to the employee.
@@ -12,10 +13,16 @@ Deno.serve(async (req) => {
 
         let payslip;
 
-        // Entity automation payload
+        // Entity automation payload — runs as service role, no user check.
         if (body.event && body.data) {
             payslip = body.data;
         } else if (body.payslip_id) {
+            // Direct call — require employee-payroll edit permission.
+            const user = await base44.auth.me();
+            if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            if (!(await can(base44, user, 'payroll.employee.edit'))) {
+                return Response.json({ error: 'Forbidden' }, { status: 403 });
+            }
             const records = await base44.asServiceRole.entities.Payslip.filter({ id: body.payslip_id });
             if (records.length === 0) return Response.json({ error: 'Payslip not found' }, { status: 404 });
             payslip = records[0];

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -7,6 +8,10 @@ Deno.serve(async (req) => {
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Document review/rejection is an HR employee-management operation.
+    if (!(await can(base44, user, 'hr.employees.manage'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { employee_email, employee_name, rejected_documents } = await req.json();

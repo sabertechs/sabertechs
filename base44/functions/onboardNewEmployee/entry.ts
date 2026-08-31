@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -8,6 +9,17 @@ Deno.serve(async (req) => {
     // Support both direct call and entity automation payload
     const employeeId = payload?.employee_id || payload?.event?.entity_id || payload?.data?.id;
     const employeeData = payload?.data || null;
+    const isAutomation = !!payload?.event;
+
+    // Direct (non-automation) calls require HR employee-management permission.
+    // Automation triggers run as service role and skip the user check.
+    if (!isAutomation) {
+      const user = await base44.auth.me();
+      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      if (!(await can(base44, user, 'hr.employees.manage'))) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     if (!employeeId && !employeeData?.email) {
       return Response.json({ error: 'Missing employee data' }, { status: 400 });

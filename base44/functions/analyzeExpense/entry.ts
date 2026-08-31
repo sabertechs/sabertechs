@@ -1,12 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Expense analysis is allowed for self-submitters and team approvers.
+    const allowed = await can(base44, user, 'expenses.self.submit')
+      || await can(base44, user, 'expenses.team.approve');
+    if (!allowed) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { expenseId, description, amount, date, receiptUrl, employeeEmail } = await req.json();

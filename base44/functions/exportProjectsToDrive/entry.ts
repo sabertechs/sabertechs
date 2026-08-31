@@ -1,11 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import ExcelJS from 'npm:exceljs@4.4.0';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(await can(base44, user, 'projects.export'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Fetch all project-related data in parallel
     const [projects, applications, tasks, responses] = await Promise.all([

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -7,6 +8,10 @@ Deno.serve(async (req) => {
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Generating payslips is a protected employee-payroll operation.
+    if (!(await can(base44, user, 'payroll.employee.edit'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { month, year } = await req.json();

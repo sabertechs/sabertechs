@@ -223,7 +223,8 @@ export default function Layout({ children, currentPageName }) {
     if (can('system.settings')) items.push({ name: "Settings", icon: Settings, page: "Settings" });
     if (can('system.access_control')) items.push({ name: "Designation Access", icon: Shield, page: "DesignationPermissions" });
     if (can('system.module_management')) items.push({ name: "Module Management", icon: Settings, page: "ModuleManagement" });
-    if (can('system.permission_inspector')) items.push({ name: "Permission Inspector", icon: ShieldCheck, page: "PermissionInspector" });
+    // Permission Inspector removed from normal navigation — the migration is
+    // complete. The route stays in App.jsx for direct admin audit access.
 
     return items;
   }, [isAdmin, perms, isFreelancerUser, employeeData, moduleSettings, designationPermissions]);

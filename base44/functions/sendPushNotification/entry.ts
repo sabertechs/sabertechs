@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    // Designation Access is the sole source of truth — require manage_notifications
-    const allowed = await can(base44, user, 'manage_notifications');
+    // Designation Access is the sole source of truth — canonical key only.
+    const allowed = await can(base44, user, 'comm.notifications');
     if (!allowed) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }

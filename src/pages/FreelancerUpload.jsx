@@ -169,7 +169,17 @@ export default function FreelancerUpload() {
       return;
     }
 
-    const existingEmployees = await base44.entities.Employee.list();
+    // Paginate through ALL contractual employees — list() is capped at 1000, but
+    // there are 2600+ freelancers, so a single fetch misses older records and the
+    // duplicate check would let real duplicates through.
+    const existingEmployees = [];
+    let skip = 0;
+    while (true) {
+      const batch = await base44.entities.Employee.filter({ employment_type: 'contractual' }, '-created_date', 1000, skip);
+      existingEmployees.push(...batch);
+      if (batch.length < 1000) break;
+      skip += 1000;
+    }
     const existingEmails = new Set(existingEmployees.map(e => e.email?.toLowerCase().trim()));
     const existingPhones = new Set(existingEmployees.map(e => e.phone?.trim()).filter(Boolean));
     // Map aadhaar/pan → employee name for duplicate reporting

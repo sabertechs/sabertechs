@@ -170,8 +170,17 @@ export default function EmployeeUpload() {
       return;
     }
 
-    // Fetch existing employees to check for duplicates
-    const existingEmployees = await base44.entities.Employee.list();
+    // Fetch ALL existing employees to check for duplicates — list() is capped at
+    // 1000, but with 2600+ freelancers a single fetch misses older records, so a
+    // new permanent employee could duplicate an existing record undetected.
+    const existingEmployees = [];
+    let skip = 0;
+    while (true) {
+      const batch = await base44.entities.Employee.list('-created_date', 1000, skip);
+      existingEmployees.push(...batch);
+      if (batch.length < 1000) break;
+      skip += 1000;
+    }
     const existingEmails = new Set(existingEmployees.map(e => e.email?.toLowerCase().trim()));
     const existingPhones = new Set(existingEmployees.map(e => e.phone?.trim()).filter(Boolean));
 

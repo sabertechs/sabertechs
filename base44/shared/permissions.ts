@@ -71,6 +71,12 @@ export async function getUserPermissions(base44: any, user: any): Promise<string
 
 /** Returns true only when the user's User.data.designation grants the canonical permission key. */
 export async function can(base44: any, user: any, permission: string): Promise<boolean> {
+  if (!permission) return false;
+  // Admin designation (platform owner) has full access — mirrors the frontend
+  // usePermissions() admin bypass so the platform owner isn't locked out of
+  // backend-gated operations (Admin is outside the cascade hierarchy).
+  const designation = user?.data?.designation?.toLowerCase();
+  if (designation === 'admin') return true;
   const perms = await getUserPermissions(base44, user);
   return resolveCan(perms, permission);
 }

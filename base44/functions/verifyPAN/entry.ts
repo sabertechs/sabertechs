@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { can } from '../../shared/permissions.ts';
 
 const DEEPVUE_PAN_URL = 'https://production.deepvue.tech/v1/verification/panbasic';
 
@@ -9,6 +10,10 @@ Deno.serve(async (req) => {
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // PAN verification is an HR API verification operation.
+    if (!(await can(base44, user, 'hr.api_verification'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { pan_number, name } = await req.json();

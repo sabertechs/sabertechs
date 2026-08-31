@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import nodemailer from 'npm:nodemailer@6.9.7';
+import { can } from '../../shared/permissions.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -8,6 +9,10 @@ Deno.serve(async (req) => {
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Sending employee invites is an HR employee-management operation.
+    if (!(await can(base44, user, 'hr.employees.manage'))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { employee_name, employee_email } = await req.json();
