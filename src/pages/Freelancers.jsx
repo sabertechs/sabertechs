@@ -111,7 +111,19 @@ export default function Freelancers() {
     queryKey: ['freelancers', currentPage, sortField, sortOrder, buildQuery()],
     queryFn: async () => {
       const sortStr = sortOrder === 'desc' ? `-${sortField}` : sortField;
-      return await base44.entities.Employee.filter(buildQuery(), sortStr, 1000);
+      // There are 2600+ freelancers — a single capped fetch misses older records,
+      // which breaks search and hides duplicates the upload check correctly blocks.
+      // Page through the full result set so every freelancer is searchable.
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.Employee.filter(buildQuery(), sortStr, pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
     },
     staleTime: 5 * 60 * 1000,
   });
