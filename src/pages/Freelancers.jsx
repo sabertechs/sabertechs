@@ -789,10 +789,12 @@ export default function Freelancers() {
   const filteredEmployees = useMemo(() => {
     if (!search) return employees;
     const q = search.toLowerCase();
+    const digits = search.replace(/\D/g, '');
     return employees.filter(e =>
       e.full_name?.toLowerCase().includes(q) ||
       e.email?.toLowerCase().includes(q) ||
-      (e.phone || '').toLowerCase().includes(q)
+      (e.phone || '').toLowerCase().includes(q) ||
+      (digits && (e.phone || '').replace(/\D/g, '').includes(digits))
     );
   }, [employees, search]);
 
