@@ -7,8 +7,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Designation Access is the sole source of truth — require upload_payroll
-    const allowed = await can(base44, user, 'upload_payroll');
+    // Designation Access is the sole source of truth. Only the canonical
+    // freelancer payroll upload permission can authorize this endpoint.
+    const allowed = await can(base44, user, 'payroll.freelancer.upload');
     if (!allowed) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
