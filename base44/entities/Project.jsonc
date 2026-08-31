@@ -95,9 +95,46 @@
     "description"
   ],
   "rls": {
-    "read": {},
-    "create": {},
-    "update": {},
-    "delete": {}
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "data.designation": "Admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        }
+      ]
+    }
   }
 }
