@@ -818,14 +818,28 @@ export default function Freelancers() {
 
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
   
+  // Department/designation filter dropdowns must reflect ALL freelancers, not just
+  // the first 1000 — otherwise departments/designations that only exist on older
+  // records never appear as filter options. Page through the full set.
   const { data: allEmployeesForFilters = [] } = useQuery({
     queryKey: ['employees-filters'],
-    queryFn: () => base44.entities.Employee.list(),
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.Employee.filter({ employment_type: 'contractual' }, '-created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
     staleTime: 10 * 60 * 1000,
   });
 
-  const departments = useMemo(() => [...new Set(allEmployeesForFilters.filter(e => e.employment_type === 'contractual').map(e => e.department).filter(Boolean))], [allEmployeesForFilters]);
-  const designations = useMemo(() => [...new Set(allEmployeesForFilters.filter(e => e.employment_type === 'contractual').map(e => e.designation).filter(Boolean))], [allEmployeesForFilters]);
+  const departments = useMemo(() => [...new Set(allEmployeesForFilters.map(e => e.department).filter(Boolean))], [allEmployeesForFilters]);
+  const designations = useMemo(() => [...new Set(allEmployeesForFilters.map(e => e.designation).filter(Boolean))], [allEmployeesForFilters]);
 
   React.useEffect(() => {
     setCurrentPage(1);
