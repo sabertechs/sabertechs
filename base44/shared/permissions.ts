@@ -22,42 +22,6 @@ const DESIGNATION_HIERARCHY = [
   { name: 'HR Head', level: 5 },
 ];
 
-const FREELANCER_FIXED_PERMISSIONS = ['projects.view'];
-
-// Legacy aliases are retained only as migration metadata. They are never accepted
-// by the backend authorization resolver.
-  view_employees: ['hr.employees.view'],
-  manage_employees: ['hr.employees.manage'],
-  view_offer_letters: ['hr.offer_letters'],
-  manage_onboarding: ['hr.onboarding'],
-  bg_verification: ['hr.bg_verification'],
-  api_verification: ['hr.api_verification'],
-  bulk_pan_verify: ['hr.bulk_pan'],
-  view_freelancers: ['freelancers.view'],
-  manage_freelancers: ['freelancers.manage'],
-  upload_payroll: ['payroll.freelancer.upload'],
-  view_payroll_records: ['payroll.freelancer.records'],
-  view_all_payslips: ['payroll.employee.view'],
-  manage_payslips: ['payroll.employee.edit'],
-  self_attendance: ['attendance.self.view', 'attendance.self.mark'],
-  manage_attendance: ['attendance.team.view', 'attendance.team.edit'],
-  submit_expenses: ['expenses.self.submit'],
-  approve_expenses: ['expenses.team.approve'],
-  view_projects: ['projects.view'],
-  manage_projects: ['projects.create', 'projects.edit', 'projects.delete'],
-  view_project_analytics: ['projects.analytics'],
-  manage_task_templates: ['projects.task_templates'],
-  manage_assets: ['assets.manage', 'assets.view', 'assets.create', 'assets.approve'],
-  manage_notifications: ['comm.notifications'],
-  manage_policies: ['comm.policies.manage'],
-  view_policies: ['comm.policies.view'],
-  manage_company_feed: ['feed.manage'],
-  view_reports: ['reports.view'],
-  access_settings: ['system.settings'],
-  access_control: ['system.access_control'],
-  module_management: ['system.module_management'],
-  view_team: ['system.team.view'],
-};
 
 function resolveCan(effectivePerms: string[], permissionKey: string): boolean {
   if (!permissionKey) return false;
