@@ -73,6 +73,5 @@ export async function getUserPermissions(base44: any, user: any): Promise<string
 /** Returns true only when the user's User.data.designation grants the canonical permission key. */
 export async function can(base44: any, user: any, permission: string): Promise<boolean> {
   const perms = await getUserPermissions(base44, user);
-  if (perms === null) return false;
   return resolveCan(perms, permission);
 }
