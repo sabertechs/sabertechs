@@ -10,8 +10,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { month, freelancer_email } = body;
 
-    // Designation Access is the sole source of truth — require view_payroll_records
-    const allowed = await can(base44, user, 'view_payroll_records');
+    // Designation Access is the sole source of truth. Only canonical action keys
+    // are accepted. Non-freelancers may not use the freelancer records endpoint.
+    const allowed = await can(base44, user, 'payroll.freelancer.records');
     let records = [];
 
     if (allowed) {
@@ -23,11 +24,13 @@ Deno.serve(async (req) => {
         filterObj.project_month = month;
       }
       records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-date', 5000);
-    } else {
-      // Freelancer: can only see their own records
-      const filterObj = { proctor_email: user.email };
+    } else if (user?.data?.employment_type === 'contractual') {
+      // Contractual users (freelancers) may only see their own records.
+      const filterObj = { proctor_email: user.email.toLowerCase() };
       if (month) filterObj.project_month = month;
       records = await base44.asServiceRole.entities.FreelancerPayroll.filter(filterObj, '-date', 2000);
+    } else {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     console.log(`getPayrollRecords: user=${user.email} month=${month} → ${records.length} records`);
