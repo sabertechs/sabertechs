@@ -28,11 +28,16 @@ export default function PayrollRecordActions({ record, onUpdated, onDeleted }) {
     setSaving(true);
     try {
       const project_month = form.date ? form.date.substring(0, 7) : record.project_month;
-      await base44.entities.FreelancerPayroll.update(record.id, {
-        ...form,
-        payment: form.payment === '' ? 0 : Number(form.payment),
-        project_month,
+      const res = await base44.functions.invoke('manageFreelancerPayrollRecord', {
+        action: 'update',
+        id: record.id,
+        data: {
+          ...form,
+          payment: form.payment === '' ? 0 : Number(form.payment),
+          project_month,
+        },
       });
+      if (res.data?.error) throw new Error(res.data.error);
       onUpdated?.({ ...record, ...form, payment: Number(form.payment) || 0, project_month });
       setEditOpen(false);
     } finally {
@@ -41,7 +46,11 @@ export default function PayrollRecordActions({ record, onUpdated, onDeleted }) {
   };
 
   const handleDelete = async () => {
-    await base44.entities.FreelancerPayroll.delete(record.id);
+    const res = await base44.functions.invoke('manageFreelancerPayrollRecord', {
+      action: 'delete',
+      id: record.id,
+    });
+    if (res.data?.error) throw new Error(res.data.error);
     onDeleted?.(record.id);
     setDeleteOpen(false);
   };
