@@ -48,23 +48,18 @@ export default function ProjectManagement() {
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
-    queryFn: () => base44.entities.Project.list('-created_date'),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listProjects', {});
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data?.projects || [];
+    },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Generate sequential project code by finding the highest existing code number
-      const allProjects = await base44.entities.Project.list();
-      const maxCode = allProjects.reduce((max, project) => {
-        if (project.project_code) {
-          const codeNum = parseInt(project.project_code.replace('PRJ-', ''));
-          return codeNum > max ? codeNum : max;
-        }
-        return max;
-      }, 0);
-      const nextCode = `PRJ-${String(maxCode + 1).padStart(3, '0')}`;
-      
-      return base44.entities.Project.create({ ...data, project_code: nextCode });
+      const res = await base44.functions.invoke('manageProject', { action: 'create', data });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data?.project;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
@@ -78,7 +73,11 @@ export default function ProjectManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Project.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const res = await base44.functions.invoke('manageProject', { action: 'update', id, data });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data?.project;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
       setShowDialog(false);
@@ -92,7 +91,11 @@ export default function ProjectManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Project.delete(id),
+    mutationFn: async (id) => {
+      const res = await base44.functions.invoke('manageProject', { action: 'delete', id });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
       toast.success('Project deleted');
