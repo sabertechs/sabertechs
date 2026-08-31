@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { updateEntity, bulkUpdateEntities } from "@/lib/entityMutations";
 
 export default function BackgroundVerification() {
   const queryClient = useQueryClient();
@@ -35,7 +36,7 @@ export default function BackgroundVerification() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Employee', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['employees']);
       setSelectedEmployees([]);
@@ -51,7 +52,7 @@ export default function BackgroundVerification() {
     
     for (let i = 0; i < employeeIds.length; i++) {
       const id = employeeIds[i];
-      await base44.entities.Employee.update(id, { 
+      await updateEntity('Employee', id, { 
         bg_verification_status: 'approved',
         status: 'active'
       });
@@ -86,7 +87,7 @@ export default function BackgroundVerification() {
     
     for (let i = 0; i < employeeIds.length; i++) {
       const id = employeeIds[i];
-      await base44.entities.Employee.update(id, { bg_verification_status: 'rejected' });
+      await updateEntity('Employee', id, { bg_verification_status: 'rejected' });
       
       const emp = employees.find(e => e.id === id);
       if (emp) {

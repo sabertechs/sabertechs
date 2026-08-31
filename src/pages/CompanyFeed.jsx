@@ -33,6 +33,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const postTypeConfig = {
   update: { icon: Megaphone, color: "bg-blue-100 text-blue-600", label: "Update" },
@@ -109,7 +110,7 @@ export default function CompanyFeedPage() {
               p.event_date === format(new Date(), 'yyyy-MM-dd')
             );
             if (!existingBirthday) {
-              await base44.entities.CompanyPost.create({
+              await createEntity('CompanyPost', {
                 title: `🎂 Happy Birthday ${emp.full_name}!`,
                 content: `Wishing you a wonderful birthday filled with joy and happiness!`,
                 post_type: 'birthday',
@@ -136,7 +137,7 @@ export default function CompanyFeedPage() {
               p.event_date === format(new Date(), 'yyyy-MM-dd')
             );
             if (!existingAnniversary) {
-              await base44.entities.CompanyPost.create({
+              await createEntity('CompanyPost', {
                 title: `🎉 Happy ${yearsCompleted} Year Work Anniversary ${emp.full_name}!`,
                 content: `Congratulations on completing ${yearsCompleted} year${yearsCompleted > 1 ? 's' : ''} with us! Thank you for your dedication and hard work.`,
                 post_type: 'anniversary',
@@ -155,7 +156,7 @@ export default function CompanyFeedPage() {
   }, [employees, posts, canManageFeed]);
 
   const createPostMutation = useMutation({
-    mutationFn: (data) => base44.entities.CompanyPost.create(data),
+    mutationFn: (data) => createEntity('CompanyPost', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['companyPosts']);
       setShowCreateDialog(false);
@@ -166,7 +167,7 @@ export default function CompanyFeedPage() {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ postId, comment, isWish }) => {
-      await base44.entities.PostComment.create({
+      await createEntity('PostComment', {
         post_id: postId,
         commenter_email: user?.email,
         commenter_name: user?.full_name,
@@ -175,7 +176,7 @@ export default function CompanyFeedPage() {
       });
       const post = posts.find(p => p.id === postId);
       if (post) {
-        await base44.entities.CompanyPost.update(postId, {
+        await updateEntity('CompanyPost', postId, {
           comments_count: (post.comments_count || 0) + 1
         });
       }

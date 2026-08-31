@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -61,7 +62,7 @@ export default function PayslipManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Payslip.create(data),
+    mutationFn: (data) => createEntity('Payslip', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['payslips']);
       setShowCreateDialog(false);
@@ -70,7 +71,7 @@ export default function PayslipManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Payslip.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Payslip', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['payslips']);
       setShowCreateDialog(false);
@@ -80,7 +81,7 @@ export default function PayslipManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Payslip.delete(id),
+    mutationFn: (id) => deleteEntity('Payslip', id),
     onSuccess: () => queryClient.invalidateQueries(['payslips'])
   });
 

@@ -54,6 +54,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SendWhatsAppDialog from "@/components/whatsapp/SendWhatsAppDialog";
+import { createEntity, updateEntity, deleteEntity, bulkUpdateEntities, bulkDeleteEntities } from "@/lib/entityMutations";
 
 export default function Freelancers() {
   const queryClient = useQueryClient();
@@ -161,7 +162,7 @@ export default function Freelancers() {
   );
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.create(data),
+    mutationFn: (data) => createEntity('Employee', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['freelancers'] });
       setShowAddDialog(false);
@@ -170,7 +171,7 @@ export default function Freelancers() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Employee', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['freelancers'] });
       setShowAddDialog(false);
@@ -180,7 +181,7 @@ export default function Freelancers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Employee.delete(id),
+    mutationFn: (id) => deleteEntity('Employee', id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['freelancers'] })
   });
 
@@ -195,9 +196,8 @@ export default function Freelancers() {
       employment_type: "contractual",
       date_of_joining: format(new Date(), 'yyyy-MM-dd'),
       work_type: "online",
-      status: "active",
-      role: "employee"
-    });
+      status: "active"
+      });
   };
 
   const handleEdit = (employee) => {
@@ -857,9 +857,7 @@ export default function Freelancers() {
   const handleBulkStatusUpdate = async () => {
     if (!bulkStatus || selectedEmployees.length === 0) return;
     
-    for (const empId of selectedEmployees) {
-      await base44.entities.Employee.update(empId, { status: bulkStatus });
-    }
+    await bulkUpdateEntities('Employee', selectedEmployees, { status: bulkStatus });
     
     queryClient.invalidateQueries(['freelancers']);
     setSelectedEmployees([]);
@@ -1083,9 +1081,7 @@ export default function Freelancers() {
                   variant="outline"
                   onClick={async () => {
                     if (confirm(`Delete ${selectedEmployees.length} selected freelancer(s)?`)) {
-                      for (const empId of selectedEmployees) {
-                        await base44.entities.Employee.delete(empId);
-                      }
+                      await bulkDeleteEntities('Employee', selectedEmployees);
                       queryClient.invalidateQueries(['freelancers']);
                       setSelectedEmployees([]);
                       toast.success('Selected freelancers deleted');

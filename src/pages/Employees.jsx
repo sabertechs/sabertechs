@@ -60,6 +60,7 @@ import SalaryBreakdown from "@/components/salary/SalaryBreakdown";
 import DocumentReviewDialog from "@/components/employees/DocumentReviewDialog";
 import AssignChecklistDialog from "@/components/onboarding/AssignChecklistDialog";
 import { getDesignationLevel } from "@/lib/permissions";
+import { createEntity, updateEntity, deleteEntity, bulkUpdateEntities, bulkDeleteEntities } from "@/lib/entityMutations";
 
 export default function Employees() {
   const queryClient = useQueryClient();
@@ -157,7 +158,7 @@ export default function Employees() {
   const settingsDesignations = useMemo(() => designationPermissions.map(dp => ({ id: dp.id, name: dp.designation_name })), [designationPermissions]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.create(data),
+    mutationFn: (data) => createEntity('Employee', data),
     onSuccess: (newEmployee) => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
@@ -173,7 +174,7 @@ export default function Employees() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Employee.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Employee', id, data),
     onSuccess: (updatedEmployee) => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowAddDialog(false);
@@ -190,7 +191,7 @@ export default function Employees() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Employee.delete(id),
+    mutationFn: (id) => deleteEntity('Employee', id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] })
   });
 
@@ -347,7 +348,7 @@ export default function Employees() {
   const handleApproveDocument = async (docKey) => {
     try {
       const currentStatus = docReviewEmployee.document_review_status || {};
-      await base44.entities.Employee.update(docReviewEmployee.id, {
+      await updateEntity('Employee', docReviewEmployee.id, {
         document_review_status: {
           ...currentStatus,
           [docKey]: 'approved'
@@ -365,7 +366,7 @@ export default function Employees() {
       const currentStatus = docReviewEmployee.document_review_status || {};
       const currentReasons = docReviewEmployee.document_rejection_reasons || {};
       
-      await base44.entities.Employee.update(docReviewEmployee.id, {
+      await updateEntity('Employee', docReviewEmployee.id, {
         document_review_status: {
           ...currentStatus,
           [docKey]: 'rejected'
@@ -1106,9 +1107,7 @@ export default function Employees() {
   const handleBulkStatusUpdate = async () => {
     if (!bulkStatus || selectedEmployees.length === 0) return;
     
-    for (const empId of selectedEmployees) {
-      await base44.entities.Employee.update(empId, { status: bulkStatus });
-    }
+    await bulkUpdateEntities('Employee', selectedEmployees, { status: bulkStatus });
     
     queryClient.invalidateQueries(['employees']);
     setSelectedEmployees([]);
@@ -2029,7 +2028,7 @@ export default function Employees() {
                       employee={selectedEmployee}
                       onSave={async (salaryData) => {
                         try {
-                          await base44.entities.Employee.update(selectedEmployee.id, salaryData);
+                          await updateEntity('Employee', selectedEmployee.id, salaryData);
                           queryClient.invalidateQueries(['employees']);
                           toast.success(`✅ Salary structure updated for ${selectedEmployee.full_name}`, {
                             duration: 4000
@@ -2224,9 +2223,7 @@ export default function Employees() {
                                   <Button 
                                     onClick={async () => {
                                       setDeletingAll(true);
-                                      for (const emp of employees) {
-                                        await base44.entities.Employee.delete(emp.id);
-                                      }
+                                      await bulkDeleteEntities('Employee', employees.map(e => e.id));
                                       queryClient.invalidateQueries(['employees']);
                                       setDeletingAll(false);
                                       setShowDeleteAllDialog(false);

@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import CityAutocomplete from "@/components/forms/CityAutocomplete";
 import { INDIAN_STATES } from "@/components/data/indiaData";
 import { getDesignationDashboard } from "@/lib/permissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const InputWithError = function({ label, value, onChange, error, type = "text", placeholder, id, ...props }) { return (
   <div className="space-y-2">
@@ -404,26 +405,26 @@ export default function Registration() {
           delete updatedRejectionReasons.profile_photo;
         }
         
-        await base44.entities.Employee.update(existing.id, {
+        await updateEntity('Employee', existing.id, {
           ...employeeData,
           employee_id: existing.employee_id || newEmployeeId,
           employment_type: existing.employment_type || "contractual",
           status: "pending",
           document_review_status: updatedDocStatus,
           document_rejection_reasons: updatedRejectionReasons
-        });
+        }, { context: 'self' });
         
         // Redirect based on their designation
         const dashboard = getDesignationDashboard(existing, []);
         navigate(createPageUrl(dashboard));
       } else {
         // Create new freelancer
-        await base44.entities.Employee.create({
+        await createEntity('Employee', {
           ...employeeData,
           employee_id: newEmployeeId,
           employment_type: "contractual",
           status: "pending"
-        });
+        }, { context: 'self' });
         navigate(createPageUrl("FreelancerDashboard"));
       }
     } catch (error) {

@@ -17,6 +17,7 @@ import {
 import { useDesignationPermissions } from "@/hooks/useDesignationPermissions";
 import PermissionToggleGroups from "@/components/designations/PermissionToggleGroups";
 import { PERMISSIONS, getInheritedPermissions } from "@/lib/permissions";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function DesignationPermissions() {
   const queryClient = useQueryClient();
@@ -39,14 +40,14 @@ export default function DesignationPermissions() {
     employees.filter(e => e.designation?.toLowerCase() === designationName?.toLowerCase()).length;
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.DesignationPermission.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('DesignationPermission', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['designation-permissions']);
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.DesignationPermission.create(data),
+    mutationFn: (data) => createEntity('DesignationPermission', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['designation-permissions']);
       setShowAddDialog(false);
@@ -57,7 +58,7 @@ export default function DesignationPermissions() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.DesignationPermission.delete(id),
+    mutationFn: (id) => deleteEntity('DesignationPermission', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['designation-permissions']);
       queryClient.invalidateQueries(['employees']);
@@ -94,7 +95,7 @@ export default function DesignationPermissions() {
     // Update all employees with the old designation to the new name
     const affected = employees.filter(e => e.designation?.toLowerCase() === oldName?.toLowerCase());
     if (affected.length > 0) {
-      await Promise.all(affected.map(e => base44.entities.Employee.update(e.id, { designation: editName.trim() })));
+      await Promise.all(affected.map(e => updateEntity('Employee', e.id, { designation: editName.trim() })));
       queryClient.invalidateQueries(['employees']);
     }
     setSaving(false);
@@ -122,7 +123,7 @@ export default function DesignationPermissions() {
     const fallbackName = employeeRow?.designation_name || 'Employee';
     const affected = employees.filter(e => e.designation?.toLowerCase() === removingDesignation.designation_name?.toLowerCase());
     if (affected.length > 0) {
-      await Promise.all(affected.map(e => base44.entities.Employee.update(e.id, { designation: fallbackName })));
+      await Promise.all(affected.map(e => updateEntity('Employee', e.id, { designation: fallbackName })));
       queryClient.invalidateQueries(['employees']);
     }
     await deleteMutation.mutateAsync(removingDesignation.id);

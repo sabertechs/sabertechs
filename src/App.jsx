@@ -2,7 +2,6 @@ import './App.css'
 import FreelancerPayrollUpload from './pages/FreelancerPayrollUpload';
 import Reports from './pages/Reports';
 import DesignationPermissions from './pages/DesignationPermissions';
-import PermissionInspector from './pages/PermissionInspector';
 
 import FreelancerPayrollView from './pages/FreelancerPayrollView';
 import AdminPayrollView from './pages/AdminPayrollView';
@@ -81,7 +80,6 @@ const AuthenticatedApp = () => {
 
         <Route path="/Reports" element={<LayoutWrapper currentPageName="Reports"><Reports /></LayoutWrapper>} />
         <Route path="/DesignationPermissions" element={<LayoutWrapper currentPageName="DesignationPermissions"><DesignationPermissions /></LayoutWrapper>} />
-        <Route path="/PermissionInspector" element={<LayoutWrapper currentPageName="PermissionInspector"><PermissionInspector /></LayoutWrapper>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

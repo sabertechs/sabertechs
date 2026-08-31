@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function MyExpenses() {
   const queryClient = useQueryClient();
@@ -78,7 +79,7 @@ export default function MyExpenses() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const expense = await base44.entities.Expense.create(data);
+      const expense = await createEntity('Expense', data, { context: 'self' });
       
       // Run AI analysis in background
       try {
@@ -110,7 +111,7 @@ export default function MyExpenses() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return await base44.entities.Expense.update(id, data);
+      return await updateEntity('Expense', id, data, { context: 'self' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['expenses']);

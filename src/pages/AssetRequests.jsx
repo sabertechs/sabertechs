@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const categories = [
   { value: "laptop", label: "Laptop" },
@@ -83,12 +84,12 @@ export default function AssetRequests() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.AssetRequest.create({
+    mutationFn: (data) => createEntity('AssetRequest', {
       ...data,
       requester_email: user.email,
       requester_name: user.full_name,
       department: employee?.department
-    }),
+    }, { context: 'self' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assetRequests'] });
       setShowAddDialog(false);
@@ -98,7 +99,7 @@ export default function AssetRequests() {
 
   const approveMutation = useMutation({
     mutationFn: async (status) => {
-      await base44.entities.AssetRequest.update(selectedRequest.id, {
+      await updateEntity('AssetRequest', selectedRequest.id, {
         status,
         approved_by: user.email,
         approved_date: format(new Date(), 'yyyy-MM-dd'),

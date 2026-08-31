@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
 import { addDays } from "date-fns";
+import { createEntity } from "@/lib/entityMutations";
 
 export default function AssignChecklistDialog({ employee }) {
   const queryClient = useQueryClient();
@@ -31,7 +32,7 @@ export default function AssignChecklistDialog({ employee }) {
         notes: ""
       }));
 
-      return base44.entities.OnboardingChecklist.create({
+      return createEntity('OnboardingChecklist', {
         employee_email: employee.email,
         employee_name: employee.full_name,
         template_id: template.id,

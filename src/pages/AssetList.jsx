@@ -61,6 +61,7 @@ import {
 import AssetAssignDialog from "@/components/assets/AssetAssignDialog";
 import AssetViewDialog from "@/components/assets/AssetViewDialog";
 import QRScanner from "@/components/assets/QRScanner";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const categoryIcons = {
   laptop: Laptop,
@@ -139,7 +140,7 @@ export default function AssetList() {
   }, []);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Asset.create(data),
+    mutationFn: (data) => createEntity('Asset', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       setShowAddDialog(false);
@@ -148,7 +149,7 @@ export default function AssetList() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Asset.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Asset', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       setShowAddDialog(false);
@@ -158,7 +159,7 @@ export default function AssetList() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Asset.delete(id),
+    mutationFn: (id) => deleteEntity('Asset', id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       setShowDeleteDialog(false);

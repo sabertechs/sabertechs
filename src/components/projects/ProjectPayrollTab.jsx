@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DollarSign, Download, CheckCircle, Clock, Search, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { updateEntity, bulkUpdateEntities } from "@/lib/entityMutations";
 
 export default function ProjectPayrollTab({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -22,7 +23,7 @@ export default function ProjectPayrollTab({ projectId, project }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payment_status }) => base44.entities.ProjectApplication.update(id, { payment_status }),
+    mutationFn: ({ id, payment_status }) => updateEntity('ProjectApplication', id, { payment_status }),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectApplications', projectId]);
       toast.success('Payment status updated');
@@ -38,9 +39,7 @@ export default function ProjectPayrollTab({ projectId, project }) {
   const toggleAll = () => setSelectedIds(selectedIds.length === filtered.length ? [] : filtered.map(a => a.id));
 
   const markSelectedPaid = async () => {
-    for (const id of selectedIds) {
-      await base44.entities.ProjectApplication.update(id, { payment_status: 'paid' });
-    }
+    await bulkUpdateEntities('ProjectApplication', selectedIds, { payment_status: 'paid' });
     queryClient.invalidateQueries(['projectApplications', projectId]);
     toast.success(`${selectedIds.length} payment(s) marked as paid`);
     setSelectedIds([]);

@@ -66,6 +66,9 @@ export const ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
 
   // Freelancer payroll
   FreelancerPayroll:     { create: 'payroll.freelancer.upload', update: 'payroll.freelancer.records', delete: 'payroll.freelancer.records' },
+
+  // Task responses (freelancer submissions)
+  TaskResponse:        { create: 'projects.edit', update: 'projects.edit', delete: 'projects.edit' },
 };
 
 // ── Self-service permissions (context='self') ─────────────
@@ -74,12 +77,13 @@ export const ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
 export const SELF_ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
   Attendance:          { create: 'attendance.self.mark', update: 'attendance.self.mark' },
   Expense:             { create: 'expenses.self.submit', update: 'expenses.self.submit' },
-  Employee:            { update: null }, // self-registration / profile update
+  Employee:            { create: null, update: null }, // self-registration / profile update
   OnboardingChecklist: { update: null }, // employee completes own checklist
   Notification:        { update: null, delete: null }, // mark own as read / delete own
   ProjectApplication:  { create: null }, // freelancer applies
   AssetRequest:        { create: null }, // any user requests asset
   PostComment:         { create: null }, // any user comments
+  TaskResponse:        { create: null, update: null }, // freelancer submits/updates own response
 };
 
 // ── Ownership field for self-service verification ─────────
@@ -92,8 +96,9 @@ export const SELF_OWNERSHIP_FIELD: Record<string, string> = {
   OnboardingChecklist: 'employee_email',
   Notification: 'recipient_email',
   ProjectApplication: 'freelancer_email',
-  AssetRequest: 'employee_email',
-  PostComment: 'employee_email',
+  AssetRequest: 'requester_email',
+  PostComment: 'commenter_email',
+  TaskResponse: 'freelancer_email',
 };
 
 export function getPermission(entity: string, action: string, context?: string): string | null | undefined {

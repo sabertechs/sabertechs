@@ -10,6 +10,7 @@ import {
   UserPlus, Newspaper, Clock, DollarSign, Receipt, Megaphone, BarChart2,
 } from "lucide-react";
 import { MODULES } from "@/lib/permissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 // Icons mapped by module ID — auto-discovered from MODULES config
 const MODULE_ICONS = {
@@ -87,11 +88,11 @@ export default function ModuleManagement() {
       }));
 
       if (settings?.id) {
-        await base44.entities.AppSettings.update(settings.id, {
+        await updateEntity('AppSettings', settings.id, {
           setting_value: moduleArray
         });
       } else {
-        await base44.entities.AppSettings.create({
+        await createEntity('AppSettings', {
           setting_key: 'enabled_modules',
           setting_value: moduleArray,
           description: 'Controls which modules are enabled in the application'

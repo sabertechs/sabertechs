@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function OfferLetterManagement() {
   const queryClient = useQueryClient();
@@ -47,7 +48,7 @@ export default function OfferLetterManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.OfferLetter.create(data),
+    mutationFn: (data) => createEntity('OfferLetter', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['offerLetters']);
       setShowCreateDialog(false);
@@ -56,7 +57,7 @@ export default function OfferLetterManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.OfferLetter.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('OfferLetter', id, data),
     onSuccess: () => queryClient.invalidateQueries(['offerLetters'])
   });
 
@@ -102,7 +103,7 @@ export default function OfferLetterManagement() {
       const letter = offerLetters.find(l => l.id === letterId);
       if (letter) {
         // Update status
-        await base44.entities.OfferLetter.update(letterId, { status: 'sent' });
+        await updateEntity('OfferLetter', letterId, { status: 'sent' });
 
         // Create in-app notification
         await base44.entities.Notification.create({

@@ -44,6 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const categories = [
   { value: "hr", label: "HR Policies" },
@@ -90,7 +91,7 @@ export default function PolicyManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.CompanyPolicy.create(data),
+    mutationFn: (data) => createEntity('CompanyPolicy', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
       resetForm();
@@ -98,7 +99,7 @@ export default function PolicyManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CompanyPolicy.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('CompanyPolicy', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
       resetForm();
@@ -106,7 +107,7 @@ export default function PolicyManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.CompanyPolicy.delete(id),
+    mutationFn: (id) => deleteEntity('CompanyPolicy', id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
       setDeleteDialog(null);

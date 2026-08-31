@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, Type, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const TASK_TYPE_ICONS = {
   file_upload: FileText,
@@ -55,7 +56,7 @@ export default function TaskTemplates() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.TaskTemplate.create(data),
+    mutationFn: (data) => createEntity('TaskTemplate', data),
     onSuccess: () => {
       queryClient.invalidateQueries(["taskTemplates"]);
       setShowDialog(false);
@@ -65,7 +66,7 @@ export default function TaskTemplates() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.TaskTemplate.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('TaskTemplate', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(["taskTemplates"]);
       setShowDialog(false);
@@ -75,7 +76,7 @@ export default function TaskTemplates() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.TaskTemplate.delete(id),
+    mutationFn: (id) => deleteEntity('TaskTemplate', id),
     onSuccess: () => {
       queryClient.invalidateQueries(["taskTemplates"]);
       toast.success("Template deleted");
@@ -83,7 +84,7 @@ export default function TaskTemplates() {
   });
 
   const duplicateMutation = useMutation({
-    mutationFn: (template) => base44.entities.TaskTemplate.create({
+    mutationFn: (template) => createEntity('TaskTemplate', {
       ...template,
       id: undefined,
       template_name: `${template.template_name} (Copy)`

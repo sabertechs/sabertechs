@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { X, Info, AlertTriangle, CheckCircle, AlertCircle, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { updateEntity } from "@/lib/entityMutations";
 
 const typeConfig = {
   info: { icon: Info, color: "bg-blue-500", bgColor: "bg-blue-50", textColor: "text-blue-700" },
@@ -43,7 +44,7 @@ export default function NotificationPopup({ userEmail }) {
 
       // Mark as read in DB right away to prevent repeat across sessions/reloads
       try {
-        await base44.entities.Notification.update(newNotification.id, { is_read: true });
+        await updateEntity('Notification', newNotification.id, { is_read: true }, { context: 'self' });
       } catch (e) {
         // continue showing popup even if update fails
       }

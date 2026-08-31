@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function AssetAssignDialog({ asset, open, onClose }) {
   const queryClient = useQueryClient();
@@ -29,7 +30,7 @@ export default function AssetAssignDialog({ asset, open, onClose }) {
   const assignMutation = useMutation({
     mutationFn: async () => {
       // Update asset
-      await base44.entities.Asset.update(asset.id, {
+      await updateEntity('Asset', asset.id, {
         status: 'assigned',
         assigned_to_email: selectedEmployee.email,
         assigned_to_name: selectedEmployee.full_name,
@@ -37,7 +38,7 @@ export default function AssetAssignDialog({ asset, open, onClose }) {
       });
       
       // Create assignment record
-      await base44.entities.AssetAssignment.create({
+      await createEntity('AssetAssignment', {
         asset_id: asset.id,
         asset_name: asset.name,
         employee_email: selectedEmployee.email,

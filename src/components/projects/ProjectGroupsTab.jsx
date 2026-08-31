@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function ProjectGroupsTab({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -29,7 +30,7 @@ export default function ProjectGroupsTab({ projectId, project }) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProjectGroup.create(data),
+    mutationFn: (data) => createEntity('ProjectGroup', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectGroups']);
       setShowDialog(false);
@@ -39,7 +40,7 @@ export default function ProjectGroupsTab({ projectId, project }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ProjectGroup.delete(id),
+    mutationFn: (id) => deleteEntity('ProjectGroup', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectGroups']);
       toast.success('Group deleted');
@@ -47,7 +48,7 @@ export default function ProjectGroupsTab({ projectId, project }) {
   });
 
   const updateMembersMutation = useMutation({
-    mutationFn: ({ id, members }) => base44.entities.ProjectGroup.update(id, { members }),
+    mutationFn: ({ id, members }) => updateEntity('ProjectGroup', id, { members }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries(['projectGroups']);
       // Refresh managing group state

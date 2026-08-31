@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import CityAutocomplete from "@/components/forms/CityAutocomplete";
 import { INDIAN_STATES } from "@/components/data/indiaData";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function EmployeeOnboarding() {
   const navigate = useNavigate();
@@ -186,7 +187,7 @@ export default function EmployeeOnboarding() {
     
     setSaving(true);
     try {
-      await base44.entities.Employee.update(employee.id, {
+      await updateEntity('Employee', employee.id, {
         ...formData,
         pan_number: formData.pan_number.toUpperCase(),
         aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),

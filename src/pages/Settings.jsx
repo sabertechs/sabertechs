@@ -37,6 +37,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const DEFAULT_DEPARTMENTS = [
   { id: "admin", name: "Admin" },
@@ -115,9 +116,9 @@ export default function Settings() {
     mutationFn: async ({ key, value }) => {
       const existing = appSettings.find(s => s.setting_key === key);
       if (existing) {
-        return base44.entities.AppSettings.update(existing.id, { setting_value: value });
+        return updateEntity('AppSettings', existing.id, { setting_value: value });
       } else {
-        return base44.entities.AppSettings.create({ setting_key: key, setting_value: value });
+        return createEntity('AppSettings', { setting_key: key, setting_value: value });
       }
     },
     onSuccess: () => {
@@ -128,7 +129,7 @@ export default function Settings() {
 
   // Holiday mutations
   const createHolidayMutation = useMutation({
-    mutationFn: (data) => base44.entities.Holiday.create(data),
+    mutationFn: (data) => createEntity('Holiday', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['holidays']);
       setShowAddDialog(false);
@@ -137,7 +138,7 @@ export default function Settings() {
   });
 
   const updateHolidayMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Holiday.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Holiday', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['holidays']);
       setShowAddDialog(false);
@@ -147,7 +148,7 @@ export default function Settings() {
   });
 
   const deleteHolidayMutation = useMutation({
-    mutationFn: (id) => base44.entities.Holiday.delete(id),
+    mutationFn: (id) => deleteEntity('Holiday', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['holidays']);
       toast.success('Holiday deleted');

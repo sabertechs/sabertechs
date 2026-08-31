@@ -43,6 +43,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function NotificationCenter() {
   const queryClient = useQueryClient();
@@ -82,7 +83,7 @@ export default function NotificationCenter() {
   const designations = [...new Set(employees.map(e => e.designation).filter(Boolean))];
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ScheduledNotification.create(data),
+    mutationFn: (data) => createEntity('ScheduledNotification', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       resetForm();
@@ -92,7 +93,7 @@ export default function NotificationCenter() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ScheduledNotification.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('ScheduledNotification', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       resetForm();
@@ -102,7 +103,7 @@ export default function NotificationCenter() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ScheduledNotification.delete(id),
+    mutationFn: (id) => deleteEntity('ScheduledNotification', id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
       toast.success('Notification deleted');
@@ -236,7 +237,7 @@ export default function NotificationCenter() {
       }
 
       // Save to scheduled notifications as sent
-      await base44.entities.ScheduledNotification.create({
+      await createEntity('ScheduledNotification', {
         ...formData,
         target_value: formData.target_type === 'specific' ? formData.target_values.join(',') : formData.target_value,
         status: "sent",
@@ -281,7 +282,7 @@ export default function NotificationCenter() {
   };
 
   const cancelScheduled = async (notification) => {
-    await base44.entities.ScheduledNotification.update(notification.id, { status: 'cancelled' });
+    await updateEntity('ScheduledNotification', notification.id, { status: 'cancelled' });
     queryClient.invalidateQueries({ queryKey: ['scheduledNotifications'] });
     toast.success('Notification cancelled');
   };

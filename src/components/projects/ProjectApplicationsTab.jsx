@@ -20,13 +20,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function ProjectApplicationsTab({ projectId, applications, status }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.ProjectApplication.update(id, { status }),
+    mutationFn: ({ id, status }) => updateEntity('ProjectApplication', id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectApplications']);
       toast.success('Application status updated');
@@ -34,7 +35,7 @@ export default function ProjectApplicationsTab({ projectId, applications, status
   });
 
   const updateRatingMutation = useMutation({
-    mutationFn: ({ id, rating }) => base44.entities.ProjectApplication.update(id, { rating }),
+    mutationFn: ({ id, rating }) => updateEntity('ProjectApplication', id, { rating }),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectApplications']);
     }

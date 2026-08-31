@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function AttendanceManagement() {
   const queryClient = useQueryClient();
@@ -59,7 +60,7 @@ export default function AttendanceManagement() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Attendance.create(data),
+    mutationFn: (data) => createEntity('Attendance', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['attendance']);
       setShowAddDialog(false);
@@ -68,7 +69,7 @@ export default function AttendanceManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Attendance.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Attendance', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['attendance']);
       setShowAddDialog(false);
@@ -78,7 +79,7 @@ export default function AttendanceManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Attendance.delete(id),
+    mutationFn: (id) => deleteEntity('Attendance', id),
     onSuccess: () => queryClient.invalidateQueries(['attendance'])
   });
 

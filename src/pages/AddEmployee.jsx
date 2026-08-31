@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Check, Loader2, UserPlus, Link as LinkIcon } from "lucide-react";
+import { createEntity } from "@/lib/entityMutations";
 
 const DEFAULT_DEPARTMENTS = [
   { id: "admin", name: "Admin" },
@@ -107,7 +108,7 @@ export default function AddEmployee() {
         employeeData.salary = parseFloat(formData.salary);
       }
       
-      await base44.entities.Employee.create(employeeData);
+      await createEntity('Employee', employeeData);
 
       const link = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}#/EmployeeOnboarding?token=${token}`;
       setOnboardingLink(link);

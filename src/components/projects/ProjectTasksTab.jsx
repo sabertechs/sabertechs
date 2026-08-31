@@ -14,6 +14,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { format, differenceInDays, addDays } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function ProjectTasksTab({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -78,13 +79,13 @@ export default function ProjectTasksTab({ projectId, project }) {
         const members = grp?.members || [];
         if (members.length === 0) {
           // No members yet — create single group task as fallback
-          return base44.entities.ProjectTask.create(baseTask);
+          return createEntity('ProjectTask', baseTask);
         }
 
         // Find application info for name lookup
         const tasks = await Promise.all(members.map(email => {
           const app = applications.find(a => a.freelancer_email === email);
-          return base44.entities.ProjectTask.create({
+          return createEntity('ProjectTask', {
             ...baseTask,
             assigned_to: email,
             assigned_to_name: app?.freelancer_name || email,
@@ -107,7 +108,7 @@ export default function ProjectTasksTab({ projectId, project }) {
       }
 
       // Individual assignment
-      const task = await base44.entities.ProjectTask.create(baseTask);
+      const task = await createEntity('ProjectTask', baseTask);
       if (data.assigned_to) {
         await base44.entities.Notification.create({
           recipient_email: data.assigned_to,
@@ -130,7 +131,7 @@ export default function ProjectTasksTab({ projectId, project }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ProjectTask.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('ProjectTask', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
       setShowDialog(false);
@@ -141,7 +142,7 @@ export default function ProjectTasksTab({ projectId, project }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ProjectTask.delete(id),
+    mutationFn: (id) => deleteEntity('ProjectTask', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
       toast.success('Task deleted');
@@ -244,7 +245,7 @@ export default function ProjectTasksTab({ projectId, project }) {
       const dueDate = task.due_days_offset > 0
         ? format(addDays(projectStartDate, task.due_days_offset), 'yyyy-MM-dd')
         : project?.start_date || '';
-      await base44.entities.ProjectTask.create({
+      await createEntity('ProjectTask', {
         title: task.title,
         description: task.description || '',
         task_type: task.task_type || 'text_entry',

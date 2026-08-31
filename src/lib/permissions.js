@@ -99,7 +99,6 @@ export const PERMISSIONS = {
   'system.access_control':   { label: 'Access Control',         module: 'system',        description: 'Manage designation access' },
   'system.module_management': { label: 'Module Management',     module: 'system',        description: 'Enable/disable app modules' },
   'system.team.view':        { label: 'View Team',              module: 'system',        description: 'See team member directory' },
-  'system.permission_inspector': { label: 'Permission Inspector', module: 'system',     description: 'Inspect & validate effective permissions' },
 };
 
 // ── DESIGNATION HIERARCHY ───────────────────────────
@@ -266,7 +265,6 @@ export const PAGE_PERMISSIONS = {
   AccessControl: 'system.access_control',
   ModuleManagement: 'system.module_management',
   TeamView: 'system.team.view',
-  PermissionInspector: 'system.permission_inspector',
   TestEmail: 'system.access_control',
   PushNotificationTest: 'system.access_control',
 };

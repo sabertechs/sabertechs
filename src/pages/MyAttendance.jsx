@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function MyAttendance() {
   const queryClient = useQueryClient();
@@ -94,7 +95,7 @@ export default function MyAttendance() {
     setMarking(true);
     try {
       const now = format(new Date(), 'HH:mm');
-      await base44.entities.Attendance.create({
+      await createEntity('Attendance', {
         employee_email: user.email,
         employee_id: employee?.employee_id,
         date: today,
@@ -102,7 +103,7 @@ export default function MyAttendance() {
         status: 'present',
         marked_by: user.email,
         marked_by_role: 'self'
-      });
+      }, { context: 'self' });
       queryClient.invalidateQueries(['attendance']);
       toast.success('Check-in recorded successfully');
     } catch (error) {
@@ -117,10 +118,10 @@ export default function MyAttendance() {
     try {
       const now = format(new Date(), 'HH:mm');
       const workingHours = calculateWorkingHours(todayAttendance.check_in, now);
-      await base44.entities.Attendance.update(todayAttendance.id, {
+      await updateEntity('Attendance', todayAttendance.id, {
         check_out: now,
         working_hours: workingHours
-      });
+      }, { context: 'self' });
       queryClient.invalidateQueries(['attendance']);
       toast.success('Check-out recorded successfully');
     } catch (error) {

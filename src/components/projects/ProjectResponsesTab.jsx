@@ -12,6 +12,7 @@ import JSZip from "jszip";
 
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function ProjectResponsesTab({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ export default function ProjectResponsesTab({ projectId, project }) {
     approvedResponses.forEach(async (r) => {
       const task = tasks.find(t => t.id === r.task_id);
       if (task && (task.status !== 'completed' || task.progress_percentage !== 100)) {
-        await base44.entities.ProjectTask.update(task.id, { status: 'completed', progress_percentage: 100 });
+      await updateEntity('ProjectTask', task.id, { status: 'completed', progress_percentage: 100 });
         queryClient.invalidateQueries(['projectTasks']);
       }
     });
@@ -57,12 +58,12 @@ export default function ProjectResponsesTab({ projectId, project }) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, notes, taskId }) => {
-      await base44.entities.TaskResponse.update(id, { status, admin_notes: notes });
+      await updateEntity('TaskResponse', id, { status, admin_notes: notes });
       // Only mark task completed when explicitly approved AND no other pending submissions exist for same task
       if (status === 'approved' && taskId) {
         const pendingForTask = responses.filter(r => r.id !== id && r.task_id === taskId && r.status === 'submitted');
         if (pendingForTask.length === 0) {
-          await base44.entities.ProjectTask.update(taskId, { status: 'completed', progress_percentage: 100 });
+          await updateEntity('ProjectTask', taskId, { status: 'completed', progress_percentage: 100 });
         }
       }
     },

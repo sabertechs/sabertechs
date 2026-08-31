@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function ExpenseApproval() {
   const queryClient = useQueryClient();
@@ -59,7 +60,7 @@ export default function ExpenseApproval() {
   }, [allExpenses, user]);
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Expense.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Expense', id, data),
     onSuccess: async (_, { id, data }) => {
       queryClient.invalidateQueries(['expenses']);
       

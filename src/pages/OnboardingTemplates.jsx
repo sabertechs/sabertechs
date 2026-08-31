@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Plus, Trash2, Edit, CheckCircle2 } from "lucide-react";
+import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const TASK_CATEGORIES = [
   { value: "paperwork", label: "Paperwork" },
@@ -53,7 +54,7 @@ export default function OnboardingTemplates() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.OnboardingTemplate.create(data),
+    mutationFn: (data) => createEntity('OnboardingTemplate', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['onboarding-templates'] });
       setShowDialog(false);
@@ -62,7 +63,7 @@ export default function OnboardingTemplates() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.OnboardingTemplate.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('OnboardingTemplate', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['onboarding-templates'] });
       setShowDialog(false);
@@ -71,7 +72,7 @@ export default function OnboardingTemplates() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.OnboardingTemplate.delete(id),
+    mutationFn: (id) => deleteEntity('OnboardingTemplate', id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['onboarding-templates'] })
   });
 

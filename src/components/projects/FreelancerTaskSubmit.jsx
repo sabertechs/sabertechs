@@ -11,6 +11,7 @@ import { Upload, MapPin, FileText, Image as ImageIcon, Hash, Type, Loader2, Chec
 import { downloadFile } from "./downloadFile";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function FreelancerTaskSubmit({ task, existingResponse, userEmail, userName, projectId, onClose }) {
   const queryClient = useQueryClient();
@@ -176,15 +177,15 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     mutationFn: async (payload) => {
       if (existingResponse) {
         // Always update the existing response record — never create duplicates
-        return base44.entities.TaskResponse.update(existingResponse.id, {
+        return updateEntity('TaskResponse', existingResponse.id, {
           ...payload,
           status: 'submitted',
           submission_date: new Date().toISOString(),
           admin_notes: '' // clear previous rejection note on resubmit
-        });
+        }, { context: 'self' });
       }
       // No prior response exists — create a fresh one
-      return base44.entities.TaskResponse.create({
+      return createEntity('TaskResponse', {
         task_id: task.id,
         project_id: projectId,
         freelancer_email: userEmail,
@@ -192,7 +193,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
         ...payload,
         status: 'submitted',
         submission_date: new Date().toISOString()
-      });
+      }, { context: 'self' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myTaskResponses']);
