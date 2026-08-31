@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   PERMISSIONS, PAGE_PERMISSIONS, MODULES,
-  getEffectivePermissions, getInheritedPermissions, isFreelancer, resolveCan, LEGACY_ALIASES,
+  getEffectivePermissions, getInheritedPermissions, isFreelancer, resolveCan,
 } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,8 +79,8 @@ export default function PermissionInspector() {
     return Object.entries(PAGE_PERMISSIONS).map(([page, required]) => {
       const reqs = Array.isArray(required) ? required : [required];
       const allowed = isAdmin || reqs.some(r => resolveCan(effective, r));
-      const usesLegacyKey = reqs.some(r => !PERMISSIONS[r] && LEGACY_ALIASES[r]);
-      const unmapped = reqs.some(r => !PERMISSIONS[r] && !LEGACY_ALIASES[r]);
+      const usesLegacyKey = false;
+      const unmapped = reqs.some(r => !PERMISSIONS[r]);
       return { page, reqs, allowed, usesLegacyKey, unmapped };
     });
   }, [selectedUser, effective, isAdmin]);
