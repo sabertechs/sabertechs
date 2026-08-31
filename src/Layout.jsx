@@ -80,17 +80,10 @@ export default function Layout({ children, currentPageName }) {
 
           // If on Registration page but employee exists with active status, redirect to appropriate dashboard
           if (currentPageName === "Registration" && emp.status === 'active') {
-            if (userData.role === 'admin') {
-              window.location.replace(createPageUrl("HRDashboard"));
-            } else {
-              const regPerms = getEffectivePermissions(userData, designationPermissions);
-              window.location.replace(createPageUrl(getDesignationDashboard(userData, regPerms)));
-            }
+            const regPerms = getEffectivePermissions(userData, designationPermissions);
+            window.location.replace(createPageUrl(getDesignationDashboard(userData, regPerms)));
             return;
           }
-        } else if (userData.role === 'admin') {
-          // Admin users don't need employee record - treat as HR
-          setEmployeeData({ designation: 'hr_head', email: userData.email });
         } else {
           // No employee record - redirect to registration to complete profile
           if (currentPageName !== "Registration") {
@@ -140,7 +133,7 @@ export default function Layout({ children, currentPageName }) {
     staleTime: 10 * 60 * 1000,
   });
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.data?.designation?.toLowerCase() === 'admin';
   // Way 1: permission source is user.data (designation + employment_type), not the Employee record.
   const perms = useMemo(() => getEffectivePermissions(user, designationPermissions), [user, designationPermissions]);
   const isFreelancerUser = useMemo(() => isFreelancer(user), [user]);
@@ -151,9 +144,7 @@ export default function Layout({ children, currentPageName }) {
     const isModuleEnabled = (moduleId) => !moduleSettings || moduleSettings[moduleId] !== false;
 
     // Dashboard
-    const dashboardPage = isAdmin
-      ? 'HRDashboard'
-      : getDesignationDashboard(user, perms);
+    const dashboardPage = getDesignationDashboard(user, perms);
     items.push({ name: "Dashboard", icon: LayoutDashboard, page: dashboardPage });
 
     // Freelancer self-service
@@ -252,7 +243,7 @@ export default function Layout({ children, currentPageName }) {
       ? requiredPerm.some(p => can(p))
       : can(requiredPerm);
     if (!allowed) {
-      const dashboard = isAdmin ? 'HRDashboard' : getDesignationDashboard(employeeData, perms);
+      const dashboard = getDesignationDashboard(user, perms);
       return <Navigate to={createPageUrl(dashboard)} replace />;
     }
   }
@@ -263,7 +254,7 @@ export default function Layout({ children, currentPageName }) {
                   <NotificationPopup userEmail={user?.email} />
 
                   {/* Background processor for scheduled notifications */}
-                  {(isAdmin || can('comm.notifications')) && (
+                  {can('comm.notifications') && (
                     <ScheduledNotificationProcessor />
                   )}
       
@@ -342,7 +333,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <div className="flex-1 min-w-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-sm font-semibold text-slate-800 truncate">{user?.full_name || 'User'}</p>
-                <p className="text-xs text-slate-500 capitalize">{(employeeData?.designation || (isAdmin ? 'Admin' : 'Employee')).replace('_', ' ')}</p>
+                <p className="text-xs text-slate-500 capitalize">{(user?.data?.designation || 'Employee').replace('_', ' ')}</p>
               </div>
             </div>
           </div>
