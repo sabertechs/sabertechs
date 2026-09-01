@@ -29,16 +29,6 @@ export function usePermissions() {
     async function load() {
       try {
         let me = await base44.auth.me();
-        // One-time bootstrap only: migrate existing platform-user permission data.
-        // After migration, all employee/module authorization uses User.data.designation.
-        if (me?.role === 'admin' && !me?.data?.designation) {
-          try {
-            await base44.functions.invoke('migrateUserPermissionData', {});
-            me = await base44.auth.me();
-          } catch (migrationError) {
-            console.warn('Permission data migration pending:', migrationError?.message);
-          }
-        }
         setUser(me);
         setIsAdmin(me?.data?.designation?.toLowerCase() === 'admin');
         const [dpRows, employees] = await Promise.all([
@@ -64,7 +54,7 @@ export function usePermissions() {
 
   const freelancer = useMemo(() => isFreelancer(user), [user]);
   const designationLevel = useMemo(
-    () => getDesignationLevel(user?.data?.designation ?? user?.designation),
+    () => getDesignationLevel(user?.data?.designation),
     [user]
   );
 
