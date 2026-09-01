@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
         if (emp.employment_type) next.employment_type = emp.employment_type;
         if (emp.department) next.department = emp.department;
         if (emp.section_access !== undefined) next.section_access = emp.section_access;
-      } else if (user.role === 'admin' && !next.designation) {
+      } else if (caller?.data?.designation?.toLowerCase() === 'admin' && !next.designation) {
         next.designation = 'Admin';
         next.employment_type = next.employment_type || 'permanent';
       }
