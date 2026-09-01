@@ -46,7 +46,14 @@ Deno.serve(async (req) => {
 
     // null = any authenticated user (self-service). Non-null = require permission.
     if (permission !== null) {
-      if (!(await can(base44, user, permission))) {
+      const canResult = await can(base44, user, permission);
+      console.log('[manageRecord auth]', {
+        entity, action, permission,
+        userEmail: user?.email,
+        userDesignation: user?.data?.designation,
+        canResult
+      });
+      if (!canResult) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
