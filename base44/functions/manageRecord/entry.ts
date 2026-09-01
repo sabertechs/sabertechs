@@ -37,7 +37,18 @@ Deno.serve(async (req) => {
 
     // Map bulk actions to base action for permission lookup
     const baseAction = (action.startsWith('bulk') ? action.replace('bulk', '').toLowerCase() : action) as 'create' | 'update' | 'delete';
-    const permission = getPermission(entity, baseAction, context);
+    let permission = getPermission(entity, baseAction, context);
+
+    // Freelancer bulk-upload creates Employee records with employment_type=contractual.
+    // Authorize these with 'freelancers.manage' (the FreelancerUpload page permission)
+    // instead of 'hr.employees.manage', so users who can access the page can actually
+    // create the records.
+    if (entity === 'Employee' && baseAction === 'create') {
+      const records = Array.isArray(data) ? data : [data];
+      if (records.some((r: any) => r?.employment_type === 'contractual')) {
+        permission = 'freelancers.manage';
+      }
+    }
 
     // undefined = entity not in permission map at all
     if (permission === undefined) {
@@ -46,14 +57,7 @@ Deno.serve(async (req) => {
 
     // null = any authenticated user (self-service). Non-null = require permission.
     if (permission !== null) {
-      const canResult = await can(base44, user, permission);
-      console.log('[manageRecord auth]', {
-        entity, action, permission,
-        userEmail: user?.email,
-        userDesignation: user?.data?.designation,
-        canResult
-      });
-      if (!canResult) {
+      if (!(await can(base44, user, permission))) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
     }

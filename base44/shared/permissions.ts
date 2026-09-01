@@ -75,8 +75,10 @@ export async function can(base44: any, user: any, permission: string): Promise<b
   // Admin designation (platform owner) has full access — mirrors the frontend
   // usePermissions() admin bypass so the platform owner isn't locked out of
   // backend-gated operations (Admin is outside the cascade hierarchy).
+  // Fallback to user.role === 'admin' in case user.data.designation is not
+  // populated in the backend function context.
   const designation = user?.data?.designation?.toLowerCase();
-  if (designation === 'admin') return true;
+  if (designation === 'admin' || user?.role === 'admin') return true;
   const perms = await getUserPermissions(base44, user);
   return resolveCan(perms, permission);
 }

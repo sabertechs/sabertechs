@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import {
@@ -16,12 +16,39 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
 import { createEntity } from "@/lib/entityMutations";
+import UploadHistoryList from "@/components/uploads/UploadHistoryList";
 
 export default function FreelancerUpload() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResult, setUploadResult] = useState(null);
   const [errorLog, setErrorLog] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
+
+  const logUploadHistory = useCallback(async (fileName, result) => {
+    try {
+      await base44.entities.UploadHistory.create({
+        upload_type: "freelancer",
+        file_name: fileName,
+        uploaded_by_email: currentUser?.email || "unknown",
+        uploaded_by_name: currentUser?.full_name || currentUser?.data?.full_name || currentUser?.email || "Unknown",
+        upload_timestamp: new Date().toISOString(),
+        total_records: result.total,
+        success_count: result.success,
+        failed_count: result.failed,
+        skipped_count: result.skipped,
+      });
+      setHistoryRefreshKey((k) => k + 1);
+    } catch (e) {
+      // best-effort audit log; don't block the UI
+      console.error("Failed to log upload history:", e?.message || e);
+    }
+  }, [currentUser]);
 
   const sampleData = [
     {
@@ -340,15 +367,17 @@ export default function FreelancerUpload() {
       setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
     }
 
-    setErrorLog(errors);
-    setUploadResult({
+    const finalResult = {
       success: successCount,
       failed: failedCount,
       skipped: skippedCount,
       total: rows.length
-    });
+    };
+    setErrorLog(errors);
+    setUploadResult(finalResult);
     setUploading(false);
     e.target.value = '';
+    await logUploadHistory(file.name, finalResult);
   };
 
   const downloadErrorLog = () => {
@@ -557,6 +586,9 @@ export default function FreelancerUpload() {
           </CardContent>
         </Card>
       )}
+
+      {/* Upload History */}
+      <UploadHistoryList uploadType="freelancer" refreshKey={historyRefreshKey} />
     </div>
   );
 }

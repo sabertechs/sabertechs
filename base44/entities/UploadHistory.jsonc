@@ -1,0 +1,56 @@
+{
+  "name": "UploadHistory",
+  "type": "object",
+  "properties": {
+    "upload_type": {
+      "type": "string",
+      "description": "Type of upload (e.g. freelancer, employee, payroll)"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Name of the uploaded file"
+    },
+    "uploaded_by_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the user who performed the upload"
+    },
+    "uploaded_by_name": {
+      "type": "string",
+      "description": "Full name of the user who performed the upload"
+    },
+    "upload_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the upload was performed (ISO 8601 UTC)"
+    },
+    "total_records": {
+      "type": "number",
+      "default": 0
+    },
+    "success_count": {
+      "type": "number",
+      "default": 0
+    },
+    "failed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "skipped_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "upload_type",
+    "file_name",
+    "uploaded_by_email",
+    "upload_timestamp"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {}
+  }
+}

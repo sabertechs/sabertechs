@@ -83,6 +83,9 @@ export const ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
 
   // Device tokens (push notifications)
   DeviceToken:         { create: null, update: null, delete: null },
+
+  // Upload history (audit log — any authenticated user can create/read)
+  UploadHistory:       { create: null, update: null, delete: null },
 };
 
 // ── Self-service permissions (context='self') ─────────────
