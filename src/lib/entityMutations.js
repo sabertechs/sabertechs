@@ -36,6 +36,10 @@ export function deleteEntity(entity, id, options = {}) {
   return callManageRecord({ entity, action: 'delete', id, context: options.context });
 }
 
+export function bulkCreateEntities(entity, data, options = {}) {
+  return callManageRecord({ entity, action: 'bulkCreate', data, context: options.context });
+}
+
 export function bulkUpdateEntities(entity, ids, data, options = {}) {
   return callManageRecord({ entity, action: 'bulkUpdate', ids, data, context: options.context });
 }

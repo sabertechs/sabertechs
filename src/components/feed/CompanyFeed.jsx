@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const postTypeConfig = {
   update: { icon: Megaphone, color: "bg-blue-100 text-blue-600", label: "Update" },
@@ -47,17 +48,17 @@ export default function CompanyFeed({ user, limit = 5 }) {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ postId, comment, isWish }) => {
-      await base44.entities.PostComment.create({
+      await createEntity('PostComment', {
         post_id: postId,
         commenter_email: user?.email,
         commenter_name: user?.full_name,
         comment,
         is_wish: isWish
-      });
+      }, { context: 'self' });
       // Update comment count
       const post = posts.find(p => p.id === postId);
       if (post) {
-        await base44.entities.CompanyPost.update(postId, {
+        await updateEntity('CompanyPost', postId, {
           comments_count: (post.comments_count || 0) + 1
         });
       }

@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Save, Video } from "lucide-react";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function LMSConfiguration() {
   const queryClient = useQueryClient();
@@ -59,12 +60,12 @@ export default function LMSConfiguration() {
       
       if (settings.length > 0) {
         console.log('Updating existing setting:', settings[0].id);
-        return base44.entities.AppSettings.update(settings[0].id, {
+        return updateEntity('AppSettings', settings[0].id, {
           setting_value: wrappedData
         });
       } else {
         console.log('Creating new setting');
-        return base44.entities.AppSettings.create({
+        return createEntity('AppSettings', {
           setting_key: 'lms_config',
           setting_value: wrappedData,
           description: 'LMS video and test configuration'

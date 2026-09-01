@@ -308,7 +308,7 @@ export default function ProjectTasksTab({ projectId, project }) {
   };
 
   const unassignMutation = useMutation({
-    mutationFn: ({ id }) => base44.entities.ProjectTask.update(id, { assigned_to: '', assigned_to_name: '', group_id: '' }),
+    mutationFn: ({ id }) => updateEntity('ProjectTask', id, { assigned_to: '', assigned_to_name: '', group_id: '' }),
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
       toast.success('Assignment removed');

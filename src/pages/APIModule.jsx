@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Plus, Eye, CheckCircle, XCircle, Clock, TestTube, Settings, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function APIModule() {
   const queryClient = useQueryClient();
@@ -73,7 +74,7 @@ export default function APIModule() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.APIVerification.create(data),
+    mutationFn: (data) => createEntity('APIVerification', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apiVerifications'] });
       setShowAddDialog(false);
@@ -84,7 +85,7 @@ export default function APIModule() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.APIVerification.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('APIVerification', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apiVerifications'] });
       setShowViewDialog(false);

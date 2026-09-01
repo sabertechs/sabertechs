@@ -37,6 +37,7 @@ import GameLeaderboard from "@/components/games/GameLeaderboard";
 import PlayerCard from "@/components/games/PlayerCard";
 import { getDepartmentTheme, getPlayerTitle, getPlayerFrame } from "@/components/games/DepartmentThemes";
 import { usePermissions } from "@/hooks/usePermissions";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const GAMES = [
   { id: 'reaction', name: 'Reaction Speed', icon: Zap, color: 'from-orange-500 to-red-500', desc: 'Test your reflexes!' },
@@ -100,7 +101,7 @@ export default function OfficeOpsArena() {
     const today = new Date().toISOString().split('T')[0];
     
     if (!gamePlayer) {
-      const newPlayer = await base44.entities.GamePlayer.create({
+      const newPlayer = await createEntity('GamePlayer', {
         employee_email: user.email,
         display_name: employee.full_name,
         department: employee.department,
@@ -109,18 +110,18 @@ export default function OfficeOpsArena() {
         total_score: 0,
         games_played: 0,
         consecutive_plays: 0
-      });
+      }, { context: 'self' });
       queryClient.invalidateQueries({ queryKey: ['gamePlayer'] });
       return newPlayer;
     }
     
     if (gamePlayer.last_token_regen !== today) {
-      await base44.entities.GamePlayer.update(gamePlayer.id, {
+      await updateEntity('GamePlayer', gamePlayer.id, {
         tokens_left: settings?.tokens_per_day || 10,
         last_token_regen: today,
         consecutive_plays: 0,
         cooldown_until: null
-      });
+      }, { context: 'self' });
       queryClient.invalidateQueries({ queryKey: ['gamePlayer'] });
     }
     
@@ -158,7 +159,7 @@ export default function OfficeOpsArena() {
     setCurrentView("home");
     
     try {
-      await base44.entities.GameScore.create({
+      await createEntity('GameScore', {
         player_email: user.email,
         player_name: employee?.full_name || user.full_name,
         department: employee?.department,
@@ -166,7 +167,7 @@ export default function OfficeOpsArena() {
         score: result.score,
         reaction_time_ms: result.avgReactionTime,
         duration_seconds: 30
-      });
+      }, { context: 'self' });
 
       const newConsecutive = (gamePlayer?.consecutive_plays || 0) + 1;
       const maxConsec = settings?.max_consecutive_plays || 5;
@@ -191,7 +192,7 @@ export default function OfficeOpsArena() {
       }
 
       if (gamePlayer?.id) {
-        await base44.entities.GamePlayer.update(gamePlayer.id, updateData);
+        await updateEntity('GamePlayer', gamePlayer.id, updateData, { context: 'self' });
       }
 
       queryClient.invalidateQueries({ queryKey: ['gamePlayer'] });
@@ -208,9 +209,9 @@ export default function OfficeOpsArena() {
     try {
       const existing = await base44.entities.GameSettings.filter({ setting_key: 'global' });
       if (existing.length > 0) {
-        await base44.entities.GameSettings.update(existing[0].id, adminSettings);
+        await updateEntity('GameSettings', existing[0].id, adminSettings);
       } else {
-        await base44.entities.GameSettings.create({ setting_key: 'global', ...adminSettings });
+        await createEntity('GameSettings', { setting_key: 'global', ...adminSettings });
       }
       queryClient.invalidateQueries({ queryKey: ['gameSettings'] });
       setShowAdminDialog(false);

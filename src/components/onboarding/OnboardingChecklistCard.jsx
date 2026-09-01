@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function OnboardingChecklistCard({ checklist, userEmail }) {
   const queryClient = useQueryClient();
@@ -16,7 +17,7 @@ export default function OnboardingChecklistCard({ checklist, userEmail }) {
   const [taskNotes, setTaskNotes] = useState("");
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.OnboardingChecklist.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('OnboardingChecklist', id, data, { context: 'self' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['onboarding-checklist'] });
     }

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle, Award } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { createEntity } from "@/lib/entityMutations";
 
 export default function TestInterface({ test, onComplete }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -76,13 +77,13 @@ export default function TestInterface({ test, onComplete }) {
     // Save to database
     try {
       const user = await base44.auth.me();
-      await base44.entities.TestResult.create({
+      await createEntity('TestResult', {
         employee_email: user.email,
         employee_name: user.full_name,
         test_id: test.id || "lms_test",
         test_title: test.title || "LMS Test",
         ...resultData
-      });
+      }, { context: 'self' });
       toast.success("Test submitted successfully!");
     } catch (error) {
       console.error("Error saving test result:", error);

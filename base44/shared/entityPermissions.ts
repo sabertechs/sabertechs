@@ -69,6 +69,20 @@ export const ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
 
   // Task responses (freelancer submissions)
   TaskResponse:        { create: 'projects.edit', update: 'projects.edit', delete: 'projects.edit' },
+
+  // LMS
+  TestResult:          { create: 'lms.manage', update: 'lms.manage', delete: 'lms.manage' },
+
+  // Leave types (admin-managed)
+  LeaveType:           { create: 'attendance.team.edit', update: 'attendance.team.edit', delete: 'attendance.team.edit' },
+
+  // Games (open to all employees)
+  GamePlayer:          { create: null, update: null, delete: null },
+  GameScore:           { create: null, update: null, delete: null },
+  GameSettings:        { create: 'system.settings', update: 'system.settings', delete: 'system.settings' },
+
+  // Device tokens (push notifications)
+  DeviceToken:         { create: null, update: null, delete: null },
 };
 
 // ── Self-service permissions (context='self') ─────────────
@@ -84,6 +98,10 @@ export const SELF_ENTITY_PERMISSIONS: Record<string, ActionPerm> = {
   AssetRequest:        { create: null }, // any user requests asset
   PostComment:         { create: null }, // any user comments
   TaskResponse:        { create: null, update: null }, // freelancer submits/updates own response
+  TestResult:          { create: null }, // employee takes test
+  GamePlayer:          { create: null, update: null }, // employee plays games
+  GameScore:           { create: null }, // employee scores
+  DeviceToken:         { create: null, update: null }, // device registration
 };
 
 // ── Ownership field for self-service verification ─────────
@@ -99,6 +117,10 @@ export const SELF_OWNERSHIP_FIELD: Record<string, string> = {
   AssetRequest: 'requester_email',
   PostComment: 'commenter_email',
   TaskResponse: 'freelancer_email',
+  TestResult: 'employee_email',
+  GamePlayer: 'employee_email',
+  GameScore: 'player_email',
+  DeviceToken: 'user_id',
 };
 
 export function getPermission(entity: string, action: string, context?: string): string | null | undefined {

@@ -30,13 +30,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing entity or action' }, { status: 400 });
     }
 
-    const validActions = ['create', 'update', 'delete', 'bulkUpdate', 'bulkDelete'];
+    const validActions = ['create', 'update', 'delete', 'bulkCreate', 'bulkUpdate', 'bulkDelete'];
     if (!validActions.includes(action)) {
       return Response.json({ error: `Invalid action: ${action}` }, { status: 400 });
     }
 
     // Map bulk actions to base action for permission lookup
-    const baseAction = action.replace('bulk', '').toLowerCase() as 'create' | 'update' | 'delete';
+    const baseAction = (action.startsWith('bulk') ? action.replace('bulk', '').toLowerCase() : action) as 'create' | 'update' | 'delete';
     const permission = getPermission(entity, baseAction, context);
 
     // undefined = entity not in permission map at all
@@ -84,6 +84,12 @@ Deno.serve(async (req) => {
         break;
       case 'delete':
         result = await entityApi.delete(id);
+        break;
+      case 'bulkCreate':
+        if (!data || !Array.isArray(data)) {
+          return Response.json({ error: 'data array required for bulkCreate' }, { status: 400 });
+        }
+        result = await entityApi.bulkCreate(data);
         break;
       case 'bulkUpdate':
         // ids + data: apply same data to all ids

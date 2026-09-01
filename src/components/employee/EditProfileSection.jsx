@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function EditProfileSection({ employee, onUpdate }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -44,7 +45,7 @@ export default function EditProfileSection({ employee, onUpdate }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Employee.update(employee.id, data),
+    mutationFn: (data) => updateEntity('Employee', employee.id, data, { context: 'self' }),
     onSuccess: () => {
       toast.success("Profile updated successfully!");
       setShowEditDialog(false);

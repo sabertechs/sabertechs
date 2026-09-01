@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, Play, Download, RefreshCw, CheckCircle, XCircle, Clock, FileSpreadsheet, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
 const DELAY_MS = 17000; // 17 seconds between each PAN check
@@ -141,7 +142,7 @@ export default function BulkPANVerification() {
 
     // Create all records as pending first
     const createPromises = parsedPANs.map((pan) =>
-      base44.entities.BulkPANVerification.create({
+      createEntity('BulkPANVerification', {
         pan_number: pan,
         batch_id: batchId,
         batch_name: name,
@@ -160,7 +161,7 @@ export default function BulkPANVerification() {
       setProgress(Math.round((i / createdRecords.length) * 100));
 
       // Mark as processing
-      await base44.entities.BulkPANVerification.update(record.id, { status: "processing" });
+      await updateEntity('BulkPANVerification', record.id, { status: "processing" });
       queryClient.invalidateQueries(["bulkPANVerification"]);
 
       try {
@@ -171,7 +172,7 @@ export default function BulkPANVerification() {
         const res = response.data;
         if (res.success) {
           const d = res.data || {};
-          await base44.entities.BulkPANVerification.update(record.id, {
+          await updateEntity('BulkPANVerification', record.id, {
             status: "success",
             full_name: d.full_name || "",
             date_of_birth: d.dob || "",
@@ -190,14 +191,14 @@ export default function BulkPANVerification() {
             verified_at: new Date().toISOString(),
           });
         } else {
-          await base44.entities.BulkPANVerification.update(record.id, {
+          await updateEntity('BulkPANVerification', record.id, {
             status: "failed",
             error_message: res.error || "Verification failed",
             verified_at: new Date().toISOString(),
           });
         }
       } catch (err) {
-        await base44.entities.BulkPANVerification.update(record.id, {
+        await updateEntity('BulkPANVerification', record.id, {
           status: "failed",
           error_message: err.message || "Unknown error",
           verified_at: new Date().toISOString(),

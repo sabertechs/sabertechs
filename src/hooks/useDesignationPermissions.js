@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { bulkCreateEntities } from '@/lib/entityMutations';
 import { useEffect, useRef } from 'react';
 
 let hasSeeded = false;
@@ -48,7 +49,6 @@ const SEED_DESIGNATIONS = [
     permissions: [
       'comm.policies.manage', 'feed.manage',
       'system.settings', 'system.access_control', 'system.module_management',
-      'system.permission_inspector',
       'assets.manage', 'assets.view', 'assets.create', 'assets.approve',
     ],
     is_system: true,
@@ -84,7 +84,7 @@ export function useDesignationPermissions() {
       const existingNames = new Set(designations.map(d => d.designation_name?.toLowerCase()));
       const missing = SEED_DESIGNATIONS.filter(s => !existingNames.has(s.designation_name.toLowerCase()));
       if (missing.length > 0) {
-        base44.entities.DesignationPermission.bulkCreate(missing)
+        bulkCreateEntities('DesignationPermission', missing)
           .then(() => queryClient.invalidateQueries(['designation-permissions']))
           .catch(() => { seedingRef.current = false; hasSeeded = false; });
       }

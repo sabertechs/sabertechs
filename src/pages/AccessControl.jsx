@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PERMISSIONS, getEffectivePermissions } from "@/lib/permissions";
 import { useDesignationPermissions } from "@/hooks/useDesignationPermissions";
+import { updateEntity } from "@/lib/entityMutations";
 
 export default function AccessControl() {
   const queryClient = useQueryClient();
@@ -25,7 +26,7 @@ export default function AccessControl() {
 
   const handleDesignationChange = async (empId, newDesignation) => {
     try {
-      await base44.entities.Employee.update(empId, { designation: newDesignation });
+      await updateEntity('Employee', empId, { designation: newDesignation });
       queryClient.invalidateQueries(['employees-access']);
       toast.success(`Designation updated to "${newDesignation}" — permissions updated automatically`);
     } catch {

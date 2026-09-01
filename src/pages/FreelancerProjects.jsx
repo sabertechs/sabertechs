@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Calendar, IndianRupee, Users, CheckCircle, Clock, ListTodo } from "lucide-react";
 import { toast } from "sonner";
 import FreelancerTasksView from "@/components/projects/FreelancerTasksView";
+import { createEntity } from "@/lib/entityMutations";
 
 export default function FreelancerProjects() {
   const [user, setUser] = useState(null);
@@ -48,14 +49,14 @@ export default function FreelancerProjects() {
       const employees = await base44.entities.Employee.filter({ email: user.email });
       const employee = employees[0];
       
-      return base44.entities.ProjectApplication.create({
+      return createEntity('ProjectApplication', {
         project_id: project.id,
         project_name: project.name,
         freelancer_email: user.email,
         freelancer_name: user.full_name,
         freelancer_phone: employee?.phone || '',
         status: 'pending'
-      });
+      }, { context: 'self' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myApplications']);

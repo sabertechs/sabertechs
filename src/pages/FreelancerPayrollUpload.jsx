@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
+import { deleteEntity } from "@/lib/entityMutations";
 
 function downloadSample() {
   const headers = ['Date (YYYY-MM-DD)', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
@@ -254,7 +255,7 @@ export default function FreelancerPayrollUpload() {
       }
       let deleted = 0;
       for (let i = 0; i < toDelete.length; i++) {
-        await base44.entities.FreelancerPayroll.delete(toDelete[i].id);
+        await deleteEntity('FreelancerPayroll', toDelete[i].id);
         deleted++;
         setDeleteProgress(Math.round((deleted / toDelete.length) * 100));
       }

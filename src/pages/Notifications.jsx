@@ -6,6 +6,7 @@ import { Bell, Check, CheckCheck, Trash2, Info, AlertCircle, CheckCircle, Clock 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 export default function Notifications() {
   const queryClient = useQueryClient();
@@ -26,12 +27,12 @@ export default function Notifications() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Notification.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('Notification', id, data, { context: 'self' }),
     onSuccess: () => queryClient.invalidateQueries(['notifications'])
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notification.delete(id),
+    mutationFn: (id) => deleteEntity('Notification', id, { context: 'self' }),
     onSuccess: () => queryClient.invalidateQueries(['notifications'])
   });
 
@@ -41,7 +42,7 @@ export default function Notifications() {
 
   const markAllAsRead = async () => {
     for (const notif of notifications.filter(n => !n.is_read)) {
-      await base44.entities.Notification.update(notif.id, { is_read: true });
+      await updateEntity('Notification', notif.id, { is_read: true }, { context: 'self' });
     }
     queryClient.invalidateQueries(['notifications']);
   };

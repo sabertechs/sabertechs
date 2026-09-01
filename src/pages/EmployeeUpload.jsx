@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
+import { createEntity } from "@/lib/entityMutations";
 
 export default function EmployeeUpload() {
   const [uploading, setUploading] = useState(false);
@@ -243,7 +244,7 @@ export default function EmployeeUpload() {
         
         while (retries > 0 && !success) {
           try {
-            await base44.entities.Employee.create({
+            await createEntity('Employee', {
               full_name: data.full_name?.trim(),
               father_name: data.father_name?.trim() || '',
               email: data.email?.trim().toLowerCase(),

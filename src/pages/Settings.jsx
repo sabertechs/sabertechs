@@ -157,7 +157,7 @@ export default function Settings() {
 
   // Leave type mutations
   const createLeaveTypeMutation = useMutation({
-    mutationFn: (data) => base44.entities.LeaveType.create(data),
+    mutationFn: (data) => createEntity('LeaveType', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['leaveTypes']);
       setShowAddDialog(false);
@@ -166,7 +166,7 @@ export default function Settings() {
   });
 
   const updateLeaveTypeMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.LeaveType.update(id, data),
+    mutationFn: ({ id, data }) => updateEntity('LeaveType', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['leaveTypes']);
       setShowAddDialog(false);
@@ -176,7 +176,7 @@ export default function Settings() {
   });
 
   const deleteLeaveTypeMutation = useMutation({
-    mutationFn: (id) => base44.entities.LeaveType.delete(id),
+    mutationFn: (id) => deleteEntity('LeaveType', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['leaveTypes']);
       toast.success('Leave type deleted');

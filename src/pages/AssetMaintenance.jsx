@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 
 export default function AssetMaintenance() {
   const queryClient = useQueryClient();
@@ -61,7 +62,7 @@ export default function AssetMaintenance() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      await base44.entities.MaintenanceLog.create({
+      await createEntity('MaintenanceLog', {
         ...data,
         cost: data.cost ? parseFloat(data.cost) : null
       });
@@ -69,7 +70,7 @@ export default function AssetMaintenance() {
       if (data.status === 'in_progress') {
         const asset = assets.find(a => a.id === data.asset_id);
         if (asset) {
-          await base44.entities.Asset.update(data.asset_id, { status: 'in_repair' });
+          await updateEntity('Asset', data.asset_id, { status: 'in_repair' });
         }
       }
     },
@@ -83,15 +84,15 @@ export default function AssetMaintenance() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ logId, status, assetId }) => {
-      await base44.entities.MaintenanceLog.update(logId, { 
+      await updateEntity('MaintenanceLog', logId, { 
         status,
         end_date: status === 'completed' ? format(new Date(), 'yyyy-MM-dd') : null
       });
       
       if (status === 'completed') {
-        await base44.entities.Asset.update(assetId, { status: 'available' });
+        await updateEntity('Asset', assetId, { status: 'available' });
       } else if (status === 'in_progress') {
-        await base44.entities.Asset.update(assetId, { status: 'in_repair' });
+        await updateEntity('Asset', assetId, { status: 'in_repair' });
       }
     },
     onSuccess: () => {
