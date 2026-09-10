@@ -123,10 +123,22 @@ export default function Employees() {
     account_holder_name: ""
   });
 
-  // Fetch only permanent employees
+  // Fetch all employees — list() has a default cap (~100 records), so page
+  // through the full set to ensure every permanent employee is visible.
   const { data: allEmployees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => base44.entities.Employee.list('-created_date'),
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.Employee.filter({}, '-created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
     staleTime: 5 * 60 * 1000,
   });
 
