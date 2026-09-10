@@ -222,7 +222,7 @@ export default function Freelancers() {
       father_name: employee.father_name || "",
       email: employee.email || "",
       phone: employee.phone || "",
-      department: normalizeToSetting(employee.department, settingsDepartments),
+      department: normalizeToSetting(employee.department, departmentOptions),
       designation: normalizeToSetting(employee.designation, permissionDesignations),
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
@@ -848,6 +848,18 @@ export default function Freelancers() {
   const departments = useMemo(() => [...new Set(allEmployeesForFilters.map(e => e.department).filter(Boolean))], [allEmployeesForFilters]);
   const designations = useMemo(() => [...new Set(allEmployeesForFilters.map(e => e.designation).filter(Boolean))], [allEmployeesForFilters]);
 
+  // Department dropdown for the Add/Edit dialog: prefer the canonical list from
+  // AppSettings, but fall back to departments derived from existing freelancer
+  // records when AppSettings RLS blocks the query (only Admin/HR Head can read
+  // AppSettings, but Senior Managers can also add freelancers).
+  const departmentOptions = useMemo(() => {
+    const fromSettings = settingsDepartments.map(d => ({ id: d.id, name: d.name }));
+    const fromData = departments
+      .filter(d => !fromSettings.some(s => s.name.toLowerCase() === d.toLowerCase()))
+      .map(d => ({ id: d, name: d }));
+    return [...fromSettings, ...fromData];
+  }, [settingsDepartments, departments]);
+
   React.useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
@@ -1347,10 +1359,10 @@ export default function Freelancers() {
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {settingsDepartments.map(dept => (
+                  {departmentOptions.map(dept => (
                     <SelectItem key={dept.id} value={dept.name} className="capitalize">{dept.name}</SelectItem>
                   ))}
-                  {formData.department && !settingsDepartments.some(d => d.name === formData.department) && (
+                  {formData.department && !departmentOptions.some(d => d.name === formData.department) && (
                     <SelectItem value={formData.department} className="capitalize">{formData.department}</SelectItem>
                   )}
                 </SelectContent>
