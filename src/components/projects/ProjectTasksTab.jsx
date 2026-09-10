@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { format, differenceInDays, addDays } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
+import GroupTaskCard from "./GroupTaskCard";
 
 export default function ProjectTasksTab({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export default function ProjectTasksTab({ projectId, project }) {
   const [editingTask, setEditingTask] = useState(null);
   const [showSubTaskDialog, setShowSubTaskDialog] = useState(false);
   const [parentTask, setParentTask] = useState(null);
+  const [editingGroupIds, setEditingGroupIds] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -61,6 +63,12 @@ export default function ProjectTasksTab({ projectId, project }) {
   const { data: groups = [] } = useQuery({
     queryKey: ['projectGroups', projectId],
     queryFn: () => base44.entities.ProjectGroup.filter({ project_id: projectId }),
+    enabled: !!projectId
+  });
+
+  const { data: responses = [] } = useQuery({
+    queryKey: ['taskResponses', projectId],
+    queryFn: () => base44.entities.TaskResponse.filter({ project_id: projectId }, '-created_date'),
     enabled: !!projectId
   });
 
@@ -131,11 +139,18 @@ export default function ProjectTasksTab({ projectId, project }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateEntity('ProjectTask', id, data),
+    mutationFn: async ({ id, data, ids }) => {
+      if (ids && ids.length > 1) {
+        await Promise.all(ids.map(tid => updateEntity('ProjectTask', tid, data)));
+      } else {
+        await updateEntity('ProjectTask', id, data);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
       setShowDialog(false);
       setEditingTask(null);
+      setEditingGroupIds([]);
       resetForm();
       toast.success('Task updated');
     }
@@ -146,6 +161,16 @@ export default function ProjectTasksTab({ projectId, project }) {
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
       toast.success('Task deleted');
+    }
+  });
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: async (ids) => {
+      await Promise.all(ids.map(id => deleteEntity('ProjectTask', id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['projectTasks']);
+      toast.success('Group task deleted for all members');
     }
   });
 
@@ -192,6 +217,7 @@ export default function ProjectTasksTab({ projectId, project }) {
     });
     setEditingTask(null);
     setParentTask(null);
+    setEditingGroupIds([]);
   };
 
   const openAddDialog = () => {
@@ -216,6 +242,25 @@ export default function ProjectTasksTab({ projectId, project }) {
     setShowDialog(true);
   };
 
+  const openEditGroupDialog = (taskGroup) => {
+    const first = taskGroup[0];
+    setEditingTask(first);
+    setEditingGroupIds(taskGroup.map(t => t.id));
+    setFormData({
+      title: first.title,
+      description: first.description || '',
+      task_type: first.task_type,
+      due_date: first.due_date || '',
+      is_required: first.is_required ?? true,
+      assigned_to: '',
+      group_id: first.group_id || '',
+      depends_on_task_id: first.depends_on_task_id || '',
+      priority: first.priority || 'medium',
+      progress_percentage: first.progress_percentage || 0
+    });
+    setShowDialog(true);
+  };
+
   const openSubTaskDialog = (task) => {
     resetForm();
     setParentTask(task);
@@ -224,7 +269,13 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const handleSubmit = () => {
     if (editingTask) {
-      updateMutation.mutate({ id: editingTask.id, data: formData });
+      if (editingGroupIds.length > 1) {
+        // Group edit: preserve per-member assignment, update shared fields only
+        const { assigned_to, assigned_to_name, ...sharedFields } = formData;
+        updateMutation.mutate({ id: editingTask.id, data: sharedFields, ids: editingGroupIds });
+      } else {
+        updateMutation.mutate({ id: editingTask.id, data: formData });
+      }
     } else {
       const taskData = parentTask 
         ? { ...formData, parent_task_id: parentTask.id }
@@ -320,6 +371,18 @@ export default function ProjectTasksTab({ projectId, project }) {
   const getSubTasks = (taskId) => tasks.filter(t => t.parent_task_id === taskId);
   const getDependentTask = (taskId) => tasks.find(t => t.id === taskId);
 
+  // Split main tasks into individual vs group tasks; group tasks sharing the
+  // same title + group are consolidated into a single card showing per-member status.
+  const individualTasks = mainTasks.filter(t => !t.group_id);
+  const groupTaskMap = mainTasks
+    .filter(t => t.group_id)
+    .reduce((acc, t) => {
+      const key = `${t.title}__${t.group_id}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(t);
+      return acc;
+    }, {});
+
   return (
     <>
       <Card className="border-0 shadow-sm">
@@ -347,7 +410,8 @@ export default function ProjectTasksTab({ projectId, project }) {
                 No tasks created yet
               </div>
             ) : (
-              mainTasks.map((task) => {
+              <>
+              {individualTasks.map((task) => {
                 const Icon = taskIcons[task.task_type];
                 const subTasks = getSubTasks(task.id);
                 const dependsOnTask = task.depends_on_task_id ? getDependentTask(task.depends_on_task_id) : null;
@@ -520,7 +584,21 @@ export default function ProjectTasksTab({ projectId, project }) {
                     )}
                   </div>
                 );
-              })
+              })}
+              {Object.entries(groupTaskMap).map(([key, taskGroup]) => {
+                const grp = groups.find(g => g.id === taskGroup[0].group_id);
+                return (
+                  <GroupTaskCard
+                    key={key}
+                    taskGroup={taskGroup}
+                    groupName={grp?.group_name || 'Group'}
+                    responses={responses}
+                    onEdit={(group) => openEditGroupDialog(group)}
+                    onDelete={(ids) => deleteGroupMutation.mutate(ids)}
+                  />
+                );
+              })}
+              </>
             )}
           </div>
         </CardContent>
@@ -597,7 +675,7 @@ export default function ProjectTasksTab({ projectId, project }) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingTask ? 'Edit Task' : parentTask ? `Add Sub-task to "${parentTask.title}"` : 'Add Task'}
+              {editingTask ? (editingGroupIds.length > 1 ? `Edit Group Task (${editingGroupIds.length} members)` : 'Edit Task') : parentTask ? `Add Sub-task to "${parentTask.title}"` : 'Add Task'}
             </DialogTitle>
           </DialogHeader>
 
