@@ -109,7 +109,11 @@ export default function Freelancers() {
   }, [statusFilter, bgvFilter, departmentFilter, designationFilter, joiningDateFrom, joiningDateTo]);
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
-    queryKey: ['freelancers', currentPage, sortField, sortOrder, buildQuery()],
+    // currentPage is NOT in the queryKey — the queryFn fetches the full dataset
+    // regardless of page (pagination is client-side). Including it caused a full
+    // re-fetch on every page/sort/filter change, blanking the table and breaking
+    // search during the refetch window.
+    queryKey: ['freelancers', sortField, sortOrder, buildQuery()],
     queryFn: async () => {
       const sortStr = sortOrder === 'desc' ? `-${sortField}` : sortField;
       // There are 2600+ freelancers — a single capped fetch misses older records,
@@ -127,6 +131,9 @@ export default function Freelancers() {
       return all;
     },
     staleTime: 5 * 60 * 1000,
+    // Keep previous data visible during refetch so the table never blanks out
+    // and search continues to work while a new fetch is in flight.
+    placeholderData: (prev) => prev,
   });
 
   const { data: offerLetters = [] } = useQuery({
