@@ -12,6 +12,7 @@ import ProjectTasksTab from "@/components/projects/ProjectTasksTab";
 import ProjectGroupsTab from "@/components/projects/ProjectGroupsTab";
 import ProjectResponsesTab from "@/components/projects/ProjectResponsesTab";
 import ProjectPayrollTab from "@/components/projects/ProjectPayrollTab";
+import CentreAttendanceTab from "@/components/projects/CentreAttendanceTab";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -196,6 +197,7 @@ export default function ProjectDetails() {
           <TabsTrigger value="accepted">Accepted Applications</TabsTrigger>
           <TabsTrigger value="groups">Groups</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="responses">Responses</TabsTrigger>
           <TabsTrigger value="payroll">Payroll</TabsTrigger>
         </TabsList>
@@ -214,6 +216,10 @@ export default function ProjectDetails() {
 
         <TabsContent value="tasks">
           <ProjectTasksTab projectId={projectId} project={project} />
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <CentreAttendanceTab projectId={projectId} project={project} />
         </TabsContent>
 
         <TabsContent value="responses">

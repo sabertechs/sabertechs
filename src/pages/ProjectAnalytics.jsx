@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { Briefcase, CheckCircle, Clock, AlertTriangle, TrendingUp, IndianRupee, MapPin, Trophy, TrendingDown } from "lucide-react";
+import { Briefcase, CheckCircle, Clock, AlertTriangle, TrendingUp, IndianRupee, MapPin, Trophy, TrendingDown, Users, XCircle, Camera } from "lucide-react";
 
 const STATUS_COLORS = {
   draft: "#94a3b8",
@@ -43,6 +43,23 @@ export default function ProjectAnalytics() {
   const { data: allTasks = [] } = useQuery({
     queryKey: ["allProjectTasks"],
     queryFn: () => base44.entities.ProjectTask.list("-created_date", 1000),
+  });
+
+  // Fetch all task responses (paginated to bypass ~100 record cap)
+  const { data: allResponses = [] } = useQuery({
+    queryKey: ["allTaskResponses"],
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.TaskResponse.filter({}, "-created_date", pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
   });
 
   // Apply filters
@@ -134,6 +151,64 @@ export default function ProjectAnalytics() {
     { name: "On Time", value: metrics.completedOnTime, fill: "#22c55e" },
     { name: "Overdue", value: metrics.completedOverdue, fill: "#ef4444" },
   ].filter((d) => d.value > 0);
+
+  // --- Manpower & Centre Attendance ---
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  // Identify image_upload (selfie/attendance) task IDs per project
+  const attendanceTaskIdsByProject = useMemo(() => {
+    const map = {};
+    allTasks.forEach(t => {
+      if (t.task_type === 'image_upload') {
+        if (!map[t.project_id]) map[t.project_id] = [];
+        map[t.project_id].push(t.id);
+      }
+    });
+    return map;
+  }, [allTasks]);
+
+  // Accepted applications grouped by project
+  const acceptedByProject = useMemo(() => {
+    const map = {};
+    applications.forEach(a => {
+      if (a.status === 'accepted') {
+        if (!map[a.project_id]) map[a.project_id] = [];
+        map[a.project_id].push(a);
+      }
+    });
+    return map;
+  }, [applications]);
+
+  // Today's attendance per project (for filtered projects with assigned freelancers)
+  const attendanceByProject = useMemo(() => {
+    return filtered.map(p => {
+      const assigned = acceptedByProject[p.id] || [];
+      const taskIds = attendanceTaskIdsByProject[p.id] || [];
+      const checkedInEmails = new Set();
+      allResponses.forEach(r => {
+        if (taskIds.includes(r.task_id) && r.submission_date &&
+            format(new Date(r.submission_date), 'yyyy-MM-dd') === todayStr) {
+          checkedInEmails.add(r.freelancer_email);
+        }
+      });
+      const checkedIn = assigned.filter(a => checkedInEmails.has(a.freelancer_email));
+      return {
+        id: p.id,
+        name: p.name.length > 20 ? p.name.slice(0, 20) + '…' : p.name,
+        fullName: p.name,
+        location: p.location,
+        assigned: assigned.length,
+        checkedIn: checkedIn.length,
+        absent: assigned.length - checkedIn.length,
+        rate: assigned.length > 0 ? Math.round((checkedIn.length / assigned.length) * 100) : 0,
+      };
+    }).filter(p => p.assigned > 0);
+  }, [filtered, acceptedByProject, attendanceTaskIdsByProject, allResponses, todayStr]);
+
+  const totalAssignedToday = attendanceByProject.reduce((s, p) => s + p.assigned, 0);
+  const totalCheckedInToday = attendanceByProject.reduce((s, p) => s + p.checkedIn, 0);
+  const totalAbsentToday = attendanceByProject.reduce((s, p) => s + p.absent, 0);
+  const overallAttendanceRate = totalAssignedToday > 0 ? Math.round((totalCheckedInToday / totalAssignedToday) * 100) : 0;
 
   // Task metrics per project
   const tasksByProject = useMemo(() => {
@@ -467,6 +542,104 @@ export default function ProjectAnalytics() {
           </Card>
         </div>
       </div>
+
+      {/* Manpower & Centre Attendance */}
+      {attendanceByProject.length > 0 && (
+        <>
+          {/* Attendance stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-50">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Total Assigned Today</p>
+                  <p className="text-xl font-bold text-slate-800">{totalAssignedToday}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-50">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Checked In Today</p>
+                  <p className="text-xl font-bold text-slate-800">{totalCheckedInToday}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-50">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Not Checked In</p>
+                  <p className="text-xl font-bold text-slate-800">{totalAbsentToday}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-50">
+                  <Camera className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Overall Attendance</p>
+                  <p className="text-xl font-bold text-slate-800">{overallAttendanceRate}%</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Per-project attendance table */}
+          <Card className="border border-slate-200">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-indigo-500" />
+                <CardTitle className="text-base font-semibold text-slate-700">Centre Attendance — Today ({format(new Date(), 'MMM d, yyyy')})</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50">
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Project</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Location</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Assigned</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Checked In</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Absent</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceByProject.map(p => (
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="px-3 py-2 font-medium text-slate-800">{p.fullName}</td>
+                        <td className="px-3 py-2 text-slate-600">{p.location || '—'}</td>
+                        <td className="px-3 py-2 text-slate-600">{p.assigned}</td>
+                        <td className="px-3 py-2 text-green-600 font-medium">{p.checkedIn}</td>
+                        <td className="px-3 py-2 text-red-500 font-medium">{p.absent}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-slate-100 rounded-full w-20">
+                              <div className="h-2 rounded-full" style={{ width: `${p.rate}%`, backgroundColor: p.rate >= 75 ? "#22c55e" : p.rate >= 40 ? "#f59e0b" : "#ef4444" }} />
+                            </div>
+                            <span className="font-semibold text-slate-700">{p.rate}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* Tasks: Remaining vs Completed per Project */}
       {taskCompletionData.length > 0 && (
