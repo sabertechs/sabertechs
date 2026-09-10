@@ -21,12 +21,9 @@ export default function ProjectDetails() {
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');
 
-  const { data: project } = useQuery({
+  const { data: project, isLoading: projectLoading, error: projectError } = useQuery({
     queryKey: ['project', projectId],
-    queryFn: async () => {
-      const projects = await base44.entities.Project.filter({ id: projectId });
-      return projects[0];
-    },
+    queryFn: () => base44.entities.Project.get(projectId),
     enabled: !!projectId
   });
 
@@ -61,8 +58,17 @@ export default function ProjectDetails() {
   const completedTasksCount = tasks.filter(t => t.status === 'completed').length;
   const remainingTasksCount = tasks.filter(t => t.status !== 'completed' && t.status !== 'archived').length;
 
+  if (!projectId) {
+    return <div className="p-8 text-center text-slate-500">No project ID provided in the URL.</div>;
+  }
+  if (projectLoading) {
+    return <div className="p-8 text-center text-slate-500">Loading...</div>;
+  }
+  if (projectError) {
+    return <div className="p-8 text-center text-red-500">Error loading project: {projectError.message}</div>;
+  }
   if (!project) {
-    return <div className="p-8 text-center">Loading...</div>;
+    return <div className="p-8 text-center text-slate-500">Project not found.</div>;
   }
 
   return (
