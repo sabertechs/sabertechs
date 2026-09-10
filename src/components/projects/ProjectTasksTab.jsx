@@ -106,37 +106,34 @@ export default function ProjectTasksTab({ projectId, project }) {
       };
 
       if (data.group_id && !data.assigned_to) {
-        // Create one task per group member
+        // Create a SINGLE shared group task — all group members see it via the
+        // group_id filter in FreelancerTasksView. Each member submits their own
+        // TaskResponse with their freelancer_email, so per-member status is
+        // tracked via TaskResponse records (not per-member task copies).
         const grp = groups.find(g => g.id === data.group_id);
         const members = grp?.members || [];
-        if (members.length === 0) {
-          // No members yet — create single group task as fallback
-          return createEntity('ProjectTask', baseTask);
-        }
 
-        // Find application info for name lookup
-        const tasks = await Promise.all(members.map(email => {
-          const app = applications.find(a => a.freelancer_email === email);
-          return createEntity('ProjectTask', {
-            ...baseTask,
-            assigned_to: email,
-            assigned_to_name: app?.freelancer_name || email,
-            group_id: data.group_id,
-          });
-        }));
+        const task = await createEntity('ProjectTask', {
+          ...baseTask,
+          assigned_to: '',
+          assigned_to_name: '',
+          group_id: data.group_id,
+        });
 
         // Notify all group members
-        await Promise.all(members.map(email =>
-          base44.entities.Notification.create({
-            recipient_email: email,
-            title: 'New Task Assigned',
-            message: `You have been assigned task: ${data.title} in project ${project.name}`,
-            type: 'info',
-            link: `/FreelancerProjects`
-          })
-        ));
+        if (members.length > 0) {
+          await Promise.all(members.map(email =>
+            base44.entities.Notification.create({
+              recipient_email: email,
+              title: 'New Task Assigned',
+              message: `You have been assigned task: ${data.title} in project ${project.name}`,
+              type: 'info',
+              link: `/FreelancerProjects`
+            })
+          ));
+        }
 
-        return tasks;
+        return task;
       }
 
       // Individual assignment
@@ -157,8 +154,7 @@ export default function ProjectTasksTab({ projectId, project }) {
       setShowDialog(false);
       setShowSubTaskDialog(false);
       resetForm();
-      const count = Array.isArray(result) ? result.length : 1;
-      toast.success(count > 1 ? `${count} tasks created (one per group member)` : 'Task created');
+      toast.success('Task created');
     }
   });
 
@@ -616,7 +612,9 @@ export default function ProjectTasksTab({ projectId, project }) {
                     key={key}
                     taskGroup={taskGroup}
                     groupName={grp?.group_name || 'Group'}
+                    groupMembers={grp?.members || []}
                     responses={responses}
+                    applications={applications}
                     onEdit={(group) => openEditGroupDialog(group)}
                     onDelete={(ids) => deleteGroupMutation.mutate(ids)}
                   />

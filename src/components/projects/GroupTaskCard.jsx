@@ -13,19 +13,33 @@ const taskTypeIcons = {
   text_entry: Type
 };
 
-export default function GroupTaskCard({ taskGroup, groupName, responses, onEdit, onDelete }) {
+export default function GroupTaskCard({ taskGroup, groupName, groupMembers, responses, applications, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
 
   const firstTask = taskGroup[0];
-  const total = taskGroup.length;
+  const allTaskIds = taskGroup.map(t => t.id);
 
-  const getMemberStatus = (task) => {
-    const taskResponses = responses
-      .filter(r => r.task_id === task.id)
+  // Build member list:
+  // - Old format (per-member copies): one task per member, extract emails from tasks
+  // - New format (single shared task): get members from the ProjectGroup entity
+  const memberEmails = taskGroup.length > 1
+    ? taskGroup.map(t => t.assigned_to).filter(Boolean)
+    : (groupMembers || []);
+
+  const getMemberName = (email) => {
+    const task = taskGroup.find(t => t.assigned_to === email);
+    if (task?.assigned_to_name) return task.assigned_to_name;
+    const app = applications?.find(a => a.freelancer_email === email);
+    return app?.freelancer_name || email;
+  };
+
+  const getMemberStatus = (email) => {
+    const memberResponses = responses
+      .filter(r => allTaskIds.includes(r.task_id) && r.freelancer_email === email)
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    if (taskResponses.length === 0)
+    if (memberResponses.length === 0)
       return { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: Clock };
-    const latest = taskResponses[0];
+    const latest = memberResponses[0];
     if (latest.status === 'approved')
       return { label: 'Completed', color: 'bg-green-100 text-green-700', icon: CheckCircle };
     if (latest.status === 'resubmit_required')
@@ -33,7 +47,12 @@ export default function GroupTaskCard({ taskGroup, groupName, responses, onEdit,
     return { label: 'Submitted', color: 'bg-blue-100 text-blue-700', icon: Upload };
   };
 
-  const memberStatuses = taskGroup.map(t => ({ task: t, ...getMemberStatus(t) }));
+  const total = memberEmails.length;
+  const memberStatuses = memberEmails.map(email => ({
+    email,
+    name: getMemberName(email),
+    ...getMemberStatus(email)
+  }));
   const completed = memberStatuses.filter(m => m.label === 'Completed').length;
   const submitted = memberStatuses.filter(m => m.label === 'Submitted').length;
   const resubmit = memberStatuses.filter(m => m.label === 'Resubmit Required').length;
@@ -127,15 +146,15 @@ export default function GroupTaskCard({ taskGroup, groupName, responses, onEdit,
       {expanded && (
         <div className="bg-slate-50 border-t border-slate-200 px-4 py-3">
           <div className="space-y-2">
-            {memberStatuses.map(({ task, label, color, icon: StatusIcon }) => (
-              <div key={task.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200">
+            {memberStatuses.map(({ email, name, label, color, icon: StatusIcon }) => (
+              <div key={email} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm font-semibold">
-                    {(task.assigned_to_name || task.assigned_to || '?')[0]?.toUpperCase()}
+                    {(name || email || '?')[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{task.assigned_to_name || task.assigned_to}</p>
-                    <p className="text-xs text-slate-500">{task.assigned_to}</p>
+                    <p className="text-sm font-medium">{name || email}</p>
+                    <p className="text-xs text-slate-500">{email}</p>
                   </div>
                 </div>
                 <Badge className={color}>
@@ -144,6 +163,9 @@ export default function GroupTaskCard({ taskGroup, groupName, responses, onEdit,
                 </Badge>
               </div>
             ))}
+            {memberStatuses.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-2">No members in this group</p>
+            )}
           </div>
         </div>
       )}
