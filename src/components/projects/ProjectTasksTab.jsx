@@ -40,9 +40,22 @@ export default function ProjectTasksTab({ projectId, project }) {
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [importProgress, setImportProgress] = useState({ active: false, current: 0, total: 0, templateName: '' });
 
+  // Group tasks create one record per member, so a project can easily exceed the default
+  // filter limit (~100). Paginate through the full set so every member's task is included.
   const { data: tasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
-    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }, 'created_date'),
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.ProjectTask.filter({ project_id: projectId }, 'created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
     enabled: !!projectId
   });
 
@@ -68,7 +81,18 @@ export default function ProjectTasksTab({ projectId, project }) {
 
   const { data: responses = [] } = useQuery({
     queryKey: ['taskResponses', projectId],
-    queryFn: () => base44.entities.TaskResponse.filter({ project_id: projectId }, '-created_date'),
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.TaskResponse.filter({ project_id: projectId }, '-created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
     enabled: !!projectId
   });
 

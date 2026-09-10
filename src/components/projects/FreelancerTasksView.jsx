@@ -20,10 +20,23 @@ const taskTypeIcons = {
 export default function FreelancerTasksView({ projectId, userEmail, userName }) {
   const [selectedTask, setSelectedTask] = useState(null);
 
-  // Fetch all tasks for the project - we'll filter client-side to handle group/unassigned tasks
+  // Fetch all tasks for the project - we'll filter client-side to handle group/unassigned tasks.
+  // Group tasks create one record per member, so a project can easily exceed the default
+  // filter limit (~100). Paginate through the full set so every member's task is included.
   const { data: allTasks = [] } = useQuery({
     queryKey: ['projectTasks', projectId],
-    queryFn: () => base44.entities.ProjectTask.filter({ project_id: projectId }),
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.ProjectTask.filter({ project_id: projectId }, 'created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
     enabled: !!projectId && !!userEmail
   });
 
