@@ -72,6 +72,29 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
     return taskResponses.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
   };
 
+  // Deduplicate by title — legacy group-task creation made one copy per member;
+  // the new code makes a single shared task. When duplicate records exist,
+  // show only one: prefer the copy that has this user's response, then the
+  // newest copy.
+  const visibleTasks = (() => {
+    const byTitle = new Map();
+    for (const t of tasks) {
+      const existing = byTitle.get(t.title);
+      if (!existing) {
+        byTitle.set(t.title, t);
+        continue;
+      }
+      const exResp = getResponse(existing.id);
+      const newResp = getResponse(t.id);
+      if (newResp && !exResp) {
+        byTitle.set(t.title, t);
+      } else if (newResp && exResp && new Date(t.created_date) > new Date(existing.created_date)) {
+        byTitle.set(t.title, t);
+      }
+    }
+    return Array.from(byTitle.values());
+  })();
+
   const getStatusInfo = (response) => {
     if (!response) return { label: 'Pending', color: 'bg-amber-100 text-amber-700', icon: Clock };
     if (response.status === 'approved') return { label: 'Approved', color: 'bg-green-100 text-green-700', icon: CheckCircle };
@@ -79,7 +102,7 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
     return { label: 'Submitted', color: 'bg-blue-100 text-blue-700', icon: Clock };
   };
 
-  if (tasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
         <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
@@ -91,7 +114,7 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
   return (
     <>
       <div className="space-y-3">
-        {tasks.map((task) => {
+        {visibleTasks.map((task) => {
           const response = getResponse(task.id);
           const statusInfo = getStatusInfo(response);
           const Icon = taskTypeIcons[task.task_type] || FileText;
