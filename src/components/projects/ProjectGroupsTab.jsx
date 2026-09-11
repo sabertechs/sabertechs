@@ -153,7 +153,7 @@ export default function ProjectGroupsTab({ projectId, project }) {
 
       {/* Manage Members Dialog */}
       <Dialog open={!!managingGroup} onOpenChange={(open) => !open && setManagingGroup(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Manage Members — {managingGroup?.group_name}</DialogTitle>
           </DialogHeader>
