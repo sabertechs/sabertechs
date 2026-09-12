@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Briefcase, CheckCircle, Clock, AlertTriangle, TrendingUp, IndianRupee, MapPin, Trophy, TrendingDown, Users, XCircle, Camera } from "lucide-react";
 
@@ -361,20 +362,20 @@ export default function ProjectAnalytics() {
         <div className="flex flex-wrap gap-4 items-end">
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">From Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-40"
+              onChange={setDateFrom}
+              placeholder="From date"
+              className="w-44"
             />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">To Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-40"
+              onChange={setDateTo}
+              placeholder="To date"
+              className="w-44"
             />
           </div>
           <div className="space-y-1">
