@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Edit, Eye, Trash2, FileText, Search, ChevronLeft, ChevronRight, AlertCircle, CloudUpload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +26,8 @@ export default function ProjectManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [errors, setErrors] = useState({});
@@ -242,7 +245,18 @@ export default function ProjectManagement() {
       project.project_code?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
+    let matchesDate = true;
+    if (dateFrom || dateTo) {
+      const projectStart = project.start_date ? parseISO(project.start_date) : null;
+      const projectEnd = project.end_date ? parseISO(project.end_date) : null;
+      if (!projectStart && !projectEnd) {
+        matchesDate = false;
+      } else {
+        if (dateFrom && projectEnd && projectEnd < parseISO(dateFrom)) matchesDate = false;
+        if (dateTo && projectStart && projectStart > parseISO(dateTo)) matchesDate = false;
+      }
+    }
+    return matchesSearch && matchesStatus && matchesPriority && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
@@ -364,8 +378,10 @@ export default function ProjectManagement() {
             <SelectItem value="low">Low</SelectItem>
           </SelectContent>
         </Select>
-        {(searchQuery || statusFilter !== 'all' || priorityFilter !== 'all') && (
-          <Button variant="ghost" size="sm" className="text-slate-500" onClick={() => { setSearchQuery(''); setStatusFilter('all'); setPriorityFilter('all'); setCurrentPage(1); }}>
+        <DatePicker value={dateFrom} onChange={(v) => { setDateFrom(v); setCurrentPage(1); }} placeholder="From date" className="w-40" />
+        <DatePicker value={dateTo} onChange={(v) => { setDateTo(v); setCurrentPage(1); }} placeholder="To date" className="w-40" />
+        {(searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="text-slate-500" onClick={() => { setSearchQuery(''); setStatusFilter('all'); setPriorityFilter('all'); setDateFrom(''); setDateTo(''); setCurrentPage(1); }}>
             Clear Filters
           </Button>
         )}
