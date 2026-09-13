@@ -291,6 +291,11 @@
         },
         {
           "user_condition": {
+            "email": "dav4uonly@gmail.com"
+          }
+        },
+        {
+          "user_condition": {
             "data.designation": "Admin"
           }
         },
