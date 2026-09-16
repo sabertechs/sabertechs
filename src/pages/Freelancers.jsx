@@ -88,7 +88,7 @@ export default function Freelancers() {
     designation: "",
     employment_type: "contractual",
     date_of_joining: format(new Date(), 'yyyy-MM-dd'),
-    work_type: "online",
+    work_type: "both",
     status: "active"
   });
 
@@ -208,7 +208,7 @@ export default function Freelancers() {
       designation: "",
       employment_type: "contractual",
       date_of_joining: format(new Date(), 'yyyy-MM-dd'),
-      work_type: "online",
+      work_type: "both",
       status: "active"
       });
   };
@@ -232,7 +232,7 @@ export default function Freelancers() {
       designation: normalizeToSetting(employee.designation, permissionDesignations),
       employment_type: employee.employment_type || "contractual",
       date_of_joining: employee.date_of_joining || format(new Date(), 'yyyy-MM-dd'),
-      work_type: employee.work_type || "online",
+      work_type: employee.work_type || "both",
       status: employee.status || "active"
     });
     setShowAddDialog(true);

@@ -30,7 +30,27 @@ export default function FreelancerProjects() {
     queryFn: () => base44.entities.Project.list('-created_date'),
   });
 
-  const openProjects = allProjects.filter(p => p.status === 'open');
+  // Fetch the freelancer's own Employee record to read their work_type, which
+  // determines which project work_modes they can see and apply to.
+  const { data: myEmployee } = useQuery({
+    queryKey: ['myEmployeeRecord', user?.email],
+    queryFn: async () => {
+      const emps = await base44.entities.Employee.filter({ email: user?.email });
+      return emps[0] || null;
+    },
+    enabled: !!user?.email,
+  });
+
+  const openProjects = allProjects.filter(p => {
+    if (p.status !== 'open') return false;
+    const myWorkType = myEmployee?.work_type;
+    // "both" (or unset) freelancers can see all projects; otherwise only
+    // projects whose work_mode matches the freelancer's work_type.
+    if (!myWorkType || myWorkType === 'both') return true;
+    if (myWorkType === 'online') return p.work_mode === 'online';
+    if (myWorkType === 'center_based') return p.work_mode === 'center_based';
+    return true;
+  });
   const projects = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return openProjects;
