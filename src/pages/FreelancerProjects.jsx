@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isAfter, isBefore } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Calendar, IndianRupee, Users, CheckCircle, Clock, ListTodo } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Users, CheckCircle, Clock, ListTodo, Search } from "lucide-react";
 import { toast } from "sonner";
 import FreelancerTasksView from "@/components/projects/FreelancerTasksView";
 import { createEntity } from "@/lib/entityMutations";
 
 export default function FreelancerProjects() {
   const [user, setUser] = useState(null);
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -28,7 +30,16 @@ export default function FreelancerProjects() {
     queryFn: () => base44.entities.Project.list('-created_date'),
   });
 
-  const projects = allProjects.filter(p => p.status === 'open');
+  const openProjects = allProjects.filter(p => p.status === 'open');
+  const projects = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return openProjects;
+    return openProjects.filter(p =>
+      p.name?.toLowerCase().includes(q) ||
+      p.location?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q)
+    );
+  }, [openProjects, search]);
 
   const { data: myApplications = [] } = useQuery({
     queryKey: ['myApplications', user?.email],
@@ -102,6 +113,15 @@ export default function FreelancerProjects() {
 
           <TabsContent value="browse">
             <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search projects by name, location, or description..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               {projects.length === 0 ? (
                 <Card className="p-8 text-center">
                   <Clock className="w-16 h-16 mx-auto text-slate-300 mb-4" />

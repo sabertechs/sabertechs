@@ -163,11 +163,24 @@ export default function ProjectTasksTab({ projectId, project }) {
       if (ids && ids.length > 1) {
         await Promise.all(ids.map(tid => updateEntity('ProjectTask', tid, data)));
       } else {
+        const oldTask = tasks.find(t => t.id === id);
+        const oldAssignee = oldTask?.assigned_to;
         await updateEntity('ProjectTask', id, data);
+        // If the individual assignee changed, remove the previous assignee's
+        // submissions so the task fully moves to the new assignee and the old
+        // assignee no longer sees any trace of it.
+        if (oldAssignee && data.assigned_to && oldAssignee !== data.assigned_to) {
+          try {
+            const oldResponses = await base44.entities.TaskResponse.filter({ task_id: id, freelancer_email: oldAssignee });
+            await Promise.all(oldResponses.map(r => base44.entities.TaskResponse.delete(r.id)));
+          } catch (e) { /* best-effort cleanup */ }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['projectTasks']);
+      queryClient.invalidateQueries(['myTaskResponses']);
+      queryClient.invalidateQueries(['taskResponses']);
       setShowDialog(false);
       setEditingTask(null);
       setEditingGroupIds([]);

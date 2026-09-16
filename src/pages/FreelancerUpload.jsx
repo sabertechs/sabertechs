@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
-import { createEntity } from "@/lib/entityMutations";
+import { createEntity, updateEntity } from "@/lib/entityMutations";
 import UploadHistoryList from "@/components/uploads/UploadHistoryList";
 
 export default function FreelancerUpload() {
@@ -209,6 +209,9 @@ export default function FreelancerUpload() {
       skip += 1000;
     }
     const existingEmails = new Set(existingEmployees.map(e => e.email?.toLowerCase().trim()));
+    const existingByEmailMap = new Map(
+      existingEmployees.map(e => [e.email?.toLowerCase().trim(), e]).filter(([k]) => k)
+    );
     const existingPhones = new Set(existingEmployees.map(e => e.phone?.trim()).filter(Boolean));
     // Map aadhaar/pan → employee name for duplicate reporting
     const existingAadhaar = new Map(
@@ -222,6 +225,7 @@ export default function FreelancerUpload() {
     let successCount = 0;
     let failedCount = 0;
     let skippedCount = 0;
+    let updatedCount = 0;
 
     const batchSize = 3;
     const delayBetweenBatches = 3000;
@@ -239,15 +243,55 @@ export default function FreelancerUpload() {
       const emailLower = data.email?.toLowerCase().trim();
       const phoneTrimmed = data.phone?.trim();
       
-      if (emailLower && existingEmails.has(emailLower)) {
-        errors.push({
-          line: lineNumber,
-          email: data.email || 'N/A',
-          name: data.full_name || 'N/A',
-          errors: ['Freelancer with this email already exists - skipped'],
-          skipped: true
-        });
-        skippedCount++;
+      if (emailLower && existingByEmailMap.has(emailLower)) {
+        // UPDATE existing freelancer (upsert) so fields like work_type are refreshed
+        const existing = existingByEmailMap.get(emailLower);
+        const validationErrors = validateRow(data, lineNumber);
+        if (validationErrors.length > 0) {
+          errors.push({ line: lineNumber, email: data.email || 'N/A', name: data.full_name || 'N/A', errors: validationErrors });
+          failedCount++;
+          setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
+          continue;
+        }
+        let retries = 3;
+        let success = false;
+        while (retries > 0 && !success) {
+          try {
+            await updateEntity('Employee', existing.id, {
+              full_name: data.full_name?.trim(),
+              father_name: data.father_name?.trim() || '',
+              phone: data.phone?.trim(),
+              date_of_birth: parseDate(data.date_of_birth),
+              gender: data.gender?.toLowerCase() || null,
+              address: data.address?.trim() || '',
+              locality: data.locality?.trim() || '',
+              city: data.city?.trim() || '',
+              state: data.state?.trim() || '',
+              pincode: data.pincode?.trim() || '',
+              aadhaar_number: data.aadhaar_number?.replace(/\s/g, '') || '',
+              pan_number: data.pan_number?.toUpperCase() || '',
+              department: data.department?.trim() || '',
+              designation: data.designation?.trim() || '',
+              date_of_joining: parseDate(data.date_of_joining),
+              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              status: data.status?.toLowerCase() || existing.status || 'pending',
+            });
+            updatedCount++;
+            success = true;
+          } catch (err) {
+            retries--;
+            if (err.message?.toLowerCase().includes('rate limit') && retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 5000 * (4 - retries)));
+            } else if (retries === 0) {
+              errors.push({ line: lineNumber, email: data.email || 'N/A', name: data.full_name || 'N/A', errors: [err.message || 'Failed to update freelancer record'] });
+              failedCount++;
+            }
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, delayBetweenRecords));
+        if ((i + 1) % batchSize === 0) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+        }
         setUploadProgress(Math.round(((i + 1) / rows.length) * 100));
         continue;
       }
@@ -369,6 +413,7 @@ export default function FreelancerUpload() {
 
     const finalResult = {
       success: successCount,
+      updated: updatedCount,
       failed: failedCount,
       skipped: skippedCount,
       total: rows.length
@@ -506,7 +551,12 @@ export default function FreelancerUpload() {
                   <div className="bg-green-50 rounded-lg p-3 text-center">
                     <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
                     <p className="text-lg font-bold text-green-700">{uploadResult.success}</p>
-                    <p className="text-xs text-green-600">Successful</p>
+                    <p className="text-xs text-green-600">New</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3 text-center">
+                    <CheckCircle className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-blue-700">{uploadResult.updated || 0}</p>
+                    <p className="text-xs text-blue-600">Updated</p>
                   </div>
                   <div className="bg-amber-50 rounded-lg p-3 text-center">
                     <AlertCircle className="w-5 h-5 text-amber-600 mx-auto mb-1" />

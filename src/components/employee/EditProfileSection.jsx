@@ -205,7 +205,7 @@ export default function EditProfileSection({ employee, onUpdate }) {
                 <Label>PAN Number</Label>
                 <Input
                   value={formData.pan_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, pan_number: e.target.value.toUpperCase().slice(0, 10) }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pan_number: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) }))}
                   placeholder="10-character PAN"
                   maxLength={10}
                 />

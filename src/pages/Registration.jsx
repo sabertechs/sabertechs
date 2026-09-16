@@ -661,7 +661,7 @@ export default function Registration() {
                     <Label>PAN Number * (10 characters)</Label>
                     <Input
                       value={formData.pan_number}
-                      onChange={(e) => handleChange("pan_number", e.target.value.toUpperCase().slice(0, 10))}
+                      onChange={(e) => handleChange("pan_number", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
                       placeholder="ABCDE1234F"
                       className={errors.pan_number ? "border-red-500" : ""}
                       maxLength={10}

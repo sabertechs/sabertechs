@@ -307,13 +307,11 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
             </div>
           )}
 
-          {isAlreadyApproved && (
-            <div className="bg-green-50 text-green-700 rounded-lg px-3 py-2 text-sm font-medium mb-2">
-              ✅ Previously approved. You can still submit additional files below.
+          {isAlreadyApproved ? (
+            <div className="bg-green-50 text-green-700 rounded-lg px-3 py-6 text-center text-sm font-medium">
+              ✅ This task has been approved by the supervisor. No further uploads or modifications are allowed.
             </div>
-          )}
-
-          {(
+          ) : (
             <>
               {task.task_type === 'text_entry' && (
                 <div className="space-y-2">
@@ -501,11 +499,17 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
-            {submitMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            {isResubmitRequired ? 'Resubmit' : isAlreadyApproved ? 'Submit Additional' : existingResponse ? 'Resubmit' : 'Submit'}
-          </Button>
+          {isAlreadyApproved ? (
+            <Button variant="outline" onClick={onClose} className="w-full">Close</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button onClick={handleSubmit} disabled={submitMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
+                {submitMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                {isResubmitRequired ? 'Resubmit' : existingResponse ? 'Resubmit' : 'Submit'}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
