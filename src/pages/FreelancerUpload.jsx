@@ -142,6 +142,19 @@ export default function FreelancerUpload() {
     return res.ok ? null : res.error;
   };
 
+  // Normalizes the work_type value from the upload file. Accepts British and
+  // American spellings, with spaces/hyphens/underscores: "Centre Based",
+  // "Center Based", "centre_based", "online", "both", etc. Unknown or missing
+  // values default to "both" so freelancers are never locked out of centre-based
+  // projects by a parsing miss.
+  const normalizeWorkType = (val) => {
+    if (!val) return 'both';
+    const v = val.toString().toLowerCase().trim().replace(/[\s-]+/g, '_');
+    if (v === 'centre_based' || v === 'center_based') return 'center_based';
+    if (v === 'online' || v === 'both') return v;
+    return 'both';
+  };
+
   const validateRow = (row, lineNumber) => {
     const errors = [];
     
@@ -273,7 +286,7 @@ export default function FreelancerUpload() {
               department: data.department?.trim() || '',
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
-              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: normalizeWorkType(data.work_type),
               status: data.status?.toLowerCase() || existing.status || 'pending',
             });
             updatedCount++;
@@ -377,7 +390,7 @@ export default function FreelancerUpload() {
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
               employment_type: 'contractual',
-              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: normalizeWorkType(data.work_type),
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
@@ -500,7 +513,7 @@ export default function FreelancerUpload() {
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
                 <li>• department, designation, date_of_joining (DD/MM/YYYY)</li>
-                <li>• <strong>work_type</strong> (online/center_based/both)</li>
+                <li>• <strong>work_type</strong> (online/centre_based/both — accepts "Centre Based", "Center Based")</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
             </div>
