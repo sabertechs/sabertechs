@@ -188,8 +188,14 @@ export default function Freelancers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteEntity('Employee', id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['freelancers'] })
+    // Soft-delete: deactivate instead of removing the record so the freelancer's
+    // Aadhaar/PAN/documents are preserved and can be restored by editing the
+    // status back to active.
+    mutationFn: (id) => updateEntity('Employee', id, { status: 'inactive' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['freelancers'] });
+      toast.success('Freelancer deactivated — details preserved');
+    }
   });
 
   const resetForm = () => {
@@ -1099,17 +1105,17 @@ export default function Freelancers() {
                   size="sm" 
                   variant="outline"
                   onClick={async () => {
-                    if (confirm(`Delete ${selectedEmployees.length} selected freelancer(s)?`)) {
-                      await bulkDeleteEntities('Employee', selectedEmployees);
+                    if (confirm(`Deactivate ${selectedEmployees.length} selected freelancer(s)? Their details will be preserved and can be re-activated later.`)) {
+                      await bulkUpdateEntities('Employee', selectedEmployees, { status: 'inactive' });
                       queryClient.invalidateQueries(['freelancers']);
                       setSelectedEmployees([]);
-                      toast.success('Selected freelancers deleted');
+                      toast.success('Selected freelancers deactivated');
                     }
                   }}
                   className="border-red-300 text-red-700 hover:bg-red-100"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
-                  Delete Selected
+                  Deactivate Selected
                 </Button>
                 <Button 
                   size="sm" 
@@ -1253,8 +1259,15 @@ export default function Freelancers() {
                             Download All (ZIP)
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (confirm(`Deactivate "${emp.full_name}"? Their details (Aadhaar, PAN, documents) will be preserved and can be re-activated later by editing the status back to Active.`)) {
+                                deleteMutation.mutate(emp.id);
+                              }
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Deactivate
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
