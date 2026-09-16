@@ -154,14 +154,25 @@ export default function ProjectAnalytics() {
   ].filter((d) => d.value > 0);
 
   // --- Manpower & Centre Attendance ---
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  // Attendance respects the date-range filter. When no range is set, it counts
+  // all submissions (all-time) so historical check-ins remain visible.
+  const attendanceRangeLabel = dateFrom || dateTo
+    ? `${dateFrom || 'Start'} → ${dateTo || 'Today'}`
+    : 'All Time';
+  const inAttendanceRange = (submissionDate) => {
+    if (!submissionDate) return false;
+    const d = format(new Date(submissionDate), 'yyyy-MM-dd');
+    if (dateFrom && d < dateFrom) return false;
+    if (dateTo && d > dateTo) return false;
+    return true;
+  };
 
-  // Identify image_upload (selfie/attendance) task IDs per project
+  // Identify attendance task IDs per project: tasks whose title indicates a
+  // selfie / attendance / geotag check-in (any task type).
   const attendanceTaskIdsByProject = useMemo(() => {
     const map = {};
     allTasks.forEach(t => {
-      // Attendance = any image upload, or a task named "Geotag Selfie" (case-insensitive)
-      if (t.task_type === 'image_upload' || (t.title && t.title.trim().toLowerCase() === 'geotag selfie')) {
+      if (/selfie|attendance|geotag/i.test(t.title || '')) {
         if (!map[t.project_id]) map[t.project_id] = [];
         map[t.project_id].push(t.id);
       }
@@ -188,8 +199,7 @@ export default function ProjectAnalytics() {
       const taskIds = attendanceTaskIdsByProject[p.id] || [];
       const checkedInEmails = new Set();
       allResponses.forEach(r => {
-        if (taskIds.includes(r.task_id) && r.submission_date &&
-            format(new Date(r.submission_date), 'yyyy-MM-dd') === todayStr) {
+        if (taskIds.includes(r.task_id) && inAttendanceRange(r.submission_date)) {
           checkedInEmails.add(r.freelancer_email);
         }
       });
@@ -205,7 +215,7 @@ export default function ProjectAnalytics() {
         rate: assigned.length > 0 ? Math.round((checkedIn.length / assigned.length) * 100) : 0,
       };
     }).filter(p => p.assigned > 0);
-  }, [filtered, acceptedByProject, attendanceTaskIdsByProject, allResponses, todayStr]);
+  }, [filtered, acceptedByProject, attendanceTaskIdsByProject, allResponses, dateFrom, dateTo]);
 
   const totalAssignedToday = attendanceByProject.reduce((s, p) => s + p.assigned, 0);
   const totalCheckedInToday = attendanceByProject.reduce((s, p) => s + p.checkedIn, 0);
@@ -556,7 +566,7 @@ export default function ProjectAnalytics() {
                   <Users className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Total Assigned Today</p>
+                  <p className="text-xs text-slate-500">Total Assigned</p>
                   <p className="text-xl font-bold text-slate-800">{totalAssignedToday}</p>
                 </div>
               </CardContent>
@@ -567,7 +577,7 @@ export default function ProjectAnalytics() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Checked In Today</p>
+                  <p className="text-xs text-slate-500">Checked In</p>
                   <p className="text-xl font-bold text-slate-800">{totalCheckedInToday}</p>
                 </div>
               </CardContent>
@@ -601,7 +611,7 @@ export default function ProjectAnalytics() {
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <Camera className="w-5 h-5 text-indigo-500" />
-                <CardTitle className="text-base font-semibold text-slate-700">Centre Attendance — Today ({format(new Date(), 'MMM d, yyyy')})</CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-700">Centre Attendance — {attendanceRangeLabel}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
