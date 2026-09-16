@@ -814,7 +814,12 @@ export default function Freelancers() {
   const filteredEmployees = useMemo(() => {
     if (!search) return employees;
     const q = search.toLowerCase();
-    const digits = search.replace(/\D/g, '');
+    // Only treat the query as a phone-number fragment when it contains no
+    // letters — otherwise digits inside an email (e.g. "9021" in
+    // "asmitadoke9021@gmail.com") would match every phone containing "9021"
+    // and flood the results with irrelevant rows.
+    const isNumericQuery = !/[a-z]/i.test(search);
+    const digits = isNumericQuery ? search.replace(/\D/g, '') : '';
     return employees.filter(e =>
       e.full_name?.toLowerCase().includes(q) ||
       e.email?.toLowerCase().includes(q) ||
