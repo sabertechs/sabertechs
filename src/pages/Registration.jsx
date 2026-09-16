@@ -533,7 +533,7 @@ export default function Registration() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="center_based">Center Based</SelectItem>
+                        <SelectItem value="center_based">Centre Based</SelectItem>
                         <SelectItem value="both">Both</SelectItem>
                       </SelectContent>
                     </Select>

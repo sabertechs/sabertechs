@@ -416,7 +416,7 @@ export default function ProjectManagement() {
                   </td>
                   <td className="px-4 py-4">
                     <Badge className={project.work_mode === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}>
-                      {project.work_mode === 'online' ? 'Online' : 'Center Based'}
+                      {project.work_mode === 'online' ? 'Online' : 'Centre Based'}
                     </Badge>
                   </td>
                   <td className="px-4 py-4">
@@ -559,7 +559,7 @@ export default function ProjectManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="center_based">Center Based</SelectItem>
+                <SelectItem value="center_based">Centre Based</SelectItem>
               </SelectContent>
             </Select>
           </div>
