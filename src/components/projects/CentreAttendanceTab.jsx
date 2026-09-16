@@ -59,8 +59,12 @@ export default function CentreAttendanceTab({ projectId, project }) {
     enabled: !!projectId
   });
 
-  // Auto-detect selfie/attendance tasks (image_upload type)
-  const attendanceTasks = useMemo(() => allTasks.filter(t => t.task_type === 'image_upload'), [allTasks]);
+  // Auto-detect selfie/attendance tasks: any image upload, or a task named
+  // "Geotag Selfie" (case-insensitive) regardless of its task_type.
+  const attendanceTasks = useMemo(
+    () => allTasks.filter(t => t.task_type === 'image_upload' || (t.title && t.title.trim().toLowerCase() === 'geotag selfie')),
+    [allTasks]
+  );
 
   useEffect(() => {
     if (!selectedTaskId && attendanceTasks.length > 0) {
@@ -134,7 +138,7 @@ export default function CentreAttendanceTab({ projectId, project }) {
             <Camera className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-slate-700">No Attendance Task Found</h3>
             <p className="text-sm text-slate-500 mt-1">
-              Create an image upload task (e.g. "Selfie") in the Tasks tab to start tracking centre attendance.
+              Create an image upload task or a task named "Geotag Selfie" in the Tasks tab to start tracking centre attendance.
             </p>
           </div>
         </CardContent>

@@ -160,7 +160,8 @@ export default function ProjectAnalytics() {
   const attendanceTaskIdsByProject = useMemo(() => {
     const map = {};
     allTasks.forEach(t => {
-      if (t.task_type === 'image_upload') {
+      // Attendance = any image upload, or a task named "Geotag Selfie" (case-insensitive)
+      if (t.task_type === 'image_upload' || (t.title && t.title.trim().toLowerCase() === 'geotag selfie')) {
         if (!map[t.project_id]) map[t.project_id] = [];
         map[t.project_id].push(t.id);
       }
