@@ -390,7 +390,7 @@ export default function ProjectAnalytics() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Work Mode</Label>
+            <Label className="text-xs text-slate-500">Work Type</Label>
             <Select value={workMode} onValueChange={setWorkMode}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -514,7 +514,7 @@ export default function ProjectAnalytics() {
         <div className="space-y-4">
           <Card className="border border-slate-200">
             <CardHeader className="pb-1">
-              <CardTitle className="text-base font-semibold text-slate-700">Work Mode Split</CardTitle>
+              <CardTitle className="text-base font-semibold text-slate-700">Work Type Split</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={90}>

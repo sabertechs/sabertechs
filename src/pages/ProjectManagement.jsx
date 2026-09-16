@@ -396,7 +396,7 @@ export default function ProjectManagement() {
               <tr>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">ID</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">NAME</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">WORK MODE</th>
+                <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">WORK TYPE</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">STATUS</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">SUPERVISOR</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold text-slate-600">PRIORITY</th>
@@ -552,7 +552,7 @@ export default function ProjectManagement() {
           </div>
 
           <div className="space-y-2">
-            <Label>Work Mode *</Label>
+            <Label>Work Type *</Label>
             <Select value={formData.work_mode} onValueChange={(v) => setFormData({ ...formData, work_mode: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select work mode" />
