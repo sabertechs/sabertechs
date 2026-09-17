@@ -248,6 +248,7 @@ export default function Registration() {
     if (!formData.father_name.trim()) newErrors.father_name = "Father's name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (formData.phone && formData.phone.replace(/\D/g, '').length !== 10) newErrors.phone = "Phone must be exactly 10 digits";
     if (!formData.date_of_birth) newErrors.date_of_birth = "Date of birth is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.work_type) newErrors.work_type = "Work type is required";
@@ -381,6 +382,7 @@ export default function Registration() {
       const employeeData = {
         ...formData,
         email: formData.email.toLowerCase().trim(),
+        phone: formData.phone.replace(/\D/g, '').slice(-10),
         pan_number: formData.pan_number.toUpperCase(),
         aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
         bank_ifsc: formData.bank_ifsc.toUpperCase(),
@@ -417,19 +419,19 @@ export default function Registration() {
           ...employeeData,
           employee_id: existing.employee_id || newEmployeeId,
           employment_type: existing.employment_type || "contractual",
-          status: "inactive",
+          status: "pending",
           document_review_status: updatedDocStatus,
           document_rejection_reasons: updatedRejectionReasons
         }, { context: 'self' });
         
         setSubmitted(true);
       } else {
-        // Create new freelancer — inactive until admin verifies and activates
+        // Create new freelancer — pending until admin verifies and activates
         await createEntity('Employee', {
           ...employeeData,
           employee_id: newEmployeeId,
           employment_type: "contractual",
-          status: "inactive"
+          status: "pending"
         }, { context: 'self' });
         setSubmitted(true);
       }

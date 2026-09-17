@@ -66,9 +66,13 @@ export default function Layout({ children, currentPageName }) {
         if (employees.length > 0) {
           const emp = employees[0];
           
-          // Check if employee status is pending and not HR/manager
+          // Check if employee status is pending and not HR/manager.
+          // Self-registered freelancers who completed registration (have a profile
+          // photo / aadhaar) stay "pending" until an admin activates them — they
+          // should NOT be redirected back to the Registration form.
           const managerialDesignations = ['hr head', 'senior manager'];
-          if (emp.status === 'pending' && !managerialDesignations.includes(emp.designation?.toLowerCase())) {
+          const hasRegistrationData = emp.profile_photo || emp.aadhaar_document;
+          if (emp.status === 'pending' && !hasRegistrationData && !managerialDesignations.includes(emp.designation?.toLowerCase())) {
             // Redirect pending employees to registration to complete profile
             if (currentPageName !== "Registration") {
               window.location.href = createPageUrl("Registration");
@@ -239,9 +243,10 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Self-registered freelancers are inactive until an admin verifies and
+  // Self-registered freelancers are pending until an admin verifies and
   // activates them. Block app access and show an awaiting-approval screen.
-  if (employeeData?.status === 'inactive' && !isAdmin) {
+  // (Also covers legacy "inactive" records.)
+  if ((employeeData?.status === 'pending' || employeeData?.status === 'inactive') && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-4">

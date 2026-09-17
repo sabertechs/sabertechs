@@ -30,7 +30,8 @@ import {
   MapPin,
   Briefcase,
   MessageCircle,
-  Mail
+  Mail,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -355,6 +356,18 @@ export default function Employees() {
       toast.error('Failed to send invitation');
     }
     setSendingInvite(null);
+  };
+
+  const [syncingPerm, setSyncingPerm] = useState(null);
+  const syncPermissions = async (employee) => {
+    setSyncingPerm(employee.id);
+    try {
+      await base44.functions.invoke('syncUserPermissions', { email: employee.email });
+      toast.success(`Permissions synced for ${employee.full_name}`);
+    } catch (error) {
+      toast.error('Failed to sync permissions: ' + (error.message || 'Unknown error'));
+    }
+    setSyncingPerm(null);
   };
 
   const handleApproveDocument = async (docKey) => {
@@ -1438,6 +1451,9 @@ export default function Employees() {
                       {sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />} Resend Invite
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}><MessageCircle className="w-4 h-4 mr-2 text-green-600" /> WhatsApp</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => syncPermissions(emp)} disabled={syncingPerm === emp.id}>
+                      {syncingPerm === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2 text-blue-600" />} Sync Permissions
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => deleteMutation.mutate(emp.id)} className="text-red-600"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
                   </DropdownMenuContent>
@@ -1507,6 +1523,9 @@ export default function Employees() {
                           <DropdownMenuItem onClick={() => handleEdit(emp)}><Edit className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => sendInvite(emp)} disabled={sendingInvite === emp.id}>{sendingInvite === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />} Resend Invite</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setWhatsAppEmployee(emp); setShowWhatsAppDialog(true); }}><MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Send WhatsApp</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => syncPermissions(emp)} disabled={syncingPerm === emp.id}>
+                            {syncingPerm === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2 text-blue-600" />} Sync Permissions
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}><AssignChecklistDialog employee={emp} /></DropdownMenuItem>
                           {(emp.aadhaar_document || emp.pan_document || emp.profile_photo) && (
                             <DropdownMenuItem onClick={() => { setDocReviewEmployee(emp); setShowDocReviewDialog(true); }}><ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Review Documents</DropdownMenuItem>

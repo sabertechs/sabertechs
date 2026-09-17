@@ -161,6 +161,7 @@ export default function FreelancerUpload() {
     if (!row.email?.trim()) errors.push("Email is required");
     if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) errors.push("Invalid email format");
     if (!row.phone?.trim()) errors.push("Phone is required");
+    if (row.phone && row.phone.replace(/\D/g, '').length !== 10) errors.push("Phone must be exactly 10 digits");
     
     if (row.aadhaar_number && !/^\d{12}$/.test(row.aadhaar_number.replace(/\s/g, ''))) {
       errors.push("Aadhaar must be 12 digits");
@@ -272,7 +273,7 @@ export default function FreelancerUpload() {
             await updateEntity('Employee', existing.id, {
               full_name: data.full_name?.trim(),
               father_name: data.father_name?.trim() || '',
-              phone: data.phone?.trim(),
+              phone: data.phone?.replace(/\D/g, '').slice(-10),
               date_of_birth: parseDate(data.date_of_birth),
               gender: data.gender?.toLowerCase() || null,
               address: data.address?.trim() || '',
@@ -375,7 +376,7 @@ export default function FreelancerUpload() {
               full_name: data.full_name?.trim(),
               father_name: data.father_name?.trim() || '',
               email: data.email?.trim().toLowerCase(),
-              phone: data.phone?.trim(),
+              phone: data.phone?.replace(/\D/g, '').slice(-10),
               date_of_birth: parseDate(data.date_of_birth),
               gender: data.gender?.toLowerCase() || null,
               address: data.address?.trim() || '',
