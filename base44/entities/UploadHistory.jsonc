@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Name of the uploaded file"
     },
+    "file_uri": {
+      "type": "string",
+      "description": "Private-storage URI of the original uploaded file, for admin download"
+    },
     "uploaded_by_email": {
       "type": "string",
       "format": "email",

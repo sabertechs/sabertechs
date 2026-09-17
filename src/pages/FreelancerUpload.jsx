@@ -30,11 +30,12 @@ export default function FreelancerUpload() {
     base44.auth.me().then(setCurrentUser).catch(() => {});
   }, []);
 
-  const logUploadHistory = useCallback(async (fileName, result) => {
+  const logUploadHistory = useCallback(async (fileName, result, fileUri) => {
     try {
       await base44.entities.UploadHistory.create({
         upload_type: "freelancer",
         file_name: fileName,
+        file_uri: fileUri || null,
         uploaded_by_email: currentUser?.email || "unknown",
         uploaded_by_name: currentUser?.full_name || currentUser?.data?.full_name || currentUser?.email || "Unknown",
         upload_timestamp: new Date().toISOString(),
@@ -200,6 +201,16 @@ export default function FreelancerUpload() {
     setUploadProgress(0);
     setUploadResult(null);
     setErrorLog([]);
+
+    // Store the original CSV in private storage so admins can download it later
+    // to inspect data-entry mistakes. Private because CSVs contain Aadhaar/PAN.
+    let uploadedFileUri = null;
+    try {
+      const uploadRes = await base44.integrations.Core.UploadPrivateFile({ file });
+      uploadedFileUri = uploadRes.file_uri;
+    } catch (e) {
+      console.error("Failed to store uploaded file:", e?.message || e);
+    }
 
     const text = await file.text();
     const rows = parseCSV(text);
@@ -435,7 +446,7 @@ export default function FreelancerUpload() {
     setUploadResult(finalResult);
     setUploading(false);
     e.target.value = '';
-    await logUploadHistory(file.name, finalResult);
+    await logUploadHistory(file.name, finalResult, uploadedFileUri);
   };
 
   const downloadErrorLog = () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { History, FileText, User, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { History, FileText, User, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Download, Loader2 } from "lucide-react";
 
 /**
  * Displays the most recent freelancer upload history entries with file name,
@@ -11,6 +11,14 @@ import { History, FileText, User, Calendar, Clock, CheckCircle, XCircle, AlertCi
 export default function UploadHistoryList({ uploadType = "freelancer", refreshKey = 0 }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me()
+      .then(u => setIsAdmin(u?.data?.designation?.toLowerCase() === 'admin'))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +57,23 @@ export default function UploadHistoryList({ uploadType = "freelancer", refreshKe
     } catch { return "-"; }
   };
 
+  const handleDownload = async (h) => {
+    try {
+      setDownloadingId(h.id);
+      const res = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: h.file_uri });
+      const a = document.createElement('a');
+      a.href = res.signed_url;
+      a.download = h.file_name || 'uploaded_file.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error("Download failed:", e?.message || e);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader>
@@ -77,6 +102,7 @@ export default function UploadHistoryList({ uploadType = "freelancer", refreshKe
                   <th className="py-2 px-3 font-medium">Date</th>
                   <th className="py-2 px-3 font-medium">Time</th>
                   <th className="py-2 px-3 font-medium text-center">Results</th>
+                  {isAdmin && <th className="py-2 px-3 font-medium text-center">File</th>}
                 </tr>
               </thead>
               <tbody>
@@ -109,6 +135,26 @@ export default function UploadHistoryList({ uploadType = "freelancer", refreshKe
                         </Badge>
                       </div>
                     </td>
+                    {isAdmin && (
+                      <td className="py-3 px-3 text-center">
+                        {h.file_uri ? (
+                          <button
+                            onClick={() => handleDownload(h)}
+                            disabled={downloadingId === h.id}
+                            className="p-2 rounded-lg hover:bg-purple-50 text-purple-600 disabled:opacity-50"
+                            title="Download original file"
+                          >
+                            {downloadingId === h.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
