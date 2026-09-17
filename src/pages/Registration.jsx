@@ -381,7 +381,7 @@ export default function Registration() {
       
       const employeeData = {
         ...formData,
-        email: formData.email.toLowerCase().trim(),
+        email: userEmail,
         phone: formData.phone.replace(/\D/g, '').slice(-10),
         pan_number: formData.pan_number.toUpperCase(),
         aadhaar_number: formData.aadhaar_number.replace(/\s/g, ''),
@@ -437,7 +437,8 @@ export default function Registration() {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      const msg = error?.message || 'Unknown error';
+      alert('Registration failed: ' + msg);
     } finally {
       setLoading(false);
     }
@@ -539,7 +540,16 @@ export default function Registration() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <InputWithError label="Full Name" field="full_name" value={formData.full_name} onChange={(e) => handleChange("full_name", e.target.value)} error={errors.full_name} placeholder="Enter your full name" />
                   <InputWithError label="Father's Name" field="father_name" value={formData.father_name} onChange={(e) => handleChange("father_name", e.target.value)} error={errors.father_name} placeholder="Enter father's name" />
-                  <InputWithError label="Email" field="email" value={formData.email} onChange={(e) => handleChange("email", e.target.value)} error={errors.email} type="email" placeholder="your.email@company.com" />
+                  <div className="space-y-2">
+                    <Label>Email *</Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      disabled
+                      className="bg-slate-100 text-slate-500 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-slate-400">Email is linked to your login and cannot be changed.</p>
+                  </div>
                   <InputWithError label="Phone" field="phone" value={formData.phone} onChange={(e) => handleChange("phone", e.target.value)} error={errors.phone} placeholder="+91 XXXXX XXXXX" />
                   <InputWithError label="Date of Birth" field="date_of_birth" value={formData.date_of_birth} onChange={(e) => handleChange("date_of_birth", e.target.value)} error={errors.date_of_birth} type="date" />
                   <div className="space-y-2">
