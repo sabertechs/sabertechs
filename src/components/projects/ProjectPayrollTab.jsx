@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +16,74 @@ export default function ProjectPayrollTab({ projectId, project }) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
 
-  const { data: applications = [], isLoading } = useQuery({
+  const { data: rawApplications = [], isLoading } = useQuery({
     queryKey: ['projectApplications', projectId],
     queryFn: () => base44.entities.ProjectApplication.filter({ project_id: projectId, status: 'accepted' }),
     enabled: !!projectId
   });
+
+  // Client-side safety filter: only accepted applications belong in payroll.
+  // Guards against any rejected records that slip through the API filter.
+  const applications = useMemo(
+    () => rawApplications.filter(a => a.status === 'accepted'),
+    [rawApplications]
+  );
+
+  // Fetch project tasks to identify attendance tasks (Selfie / Attendance / Geotag)
+  const { data: allTasks = [] } = useQuery({
+    queryKey: ['projectTasks', projectId],
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.ProjectTask.filter({ project_id: projectId }, 'created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
+    enabled: !!projectId
+  });
+
+  // Fetch all task responses for the project (paginated)
+  const { data: responses = [] } = useQuery({
+    queryKey: ['taskResponses', projectId],
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      const pageSize = 1000;
+      while (true) {
+        const batch = await base44.entities.TaskResponse.filter({ project_id: projectId }, '-created_date', pageSize, skip);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        skip += pageSize;
+      }
+      return all;
+    },
+    enabled: !!projectId
+  });
+
+  // Identify attendance task IDs
+  const attendanceTaskIds = useMemo(
+    () => allTasks.filter(t => /selfie|attendance|geotag/i.test(t.title || '')).map(t => t.id),
+    [allTasks]
+  );
+
+  const projectStartDate = project?.start_date ? format(new Date(project.start_date), 'yyyy-MM-dd') : null;
+
+  // Determine attendance status for a freelancer on the project start date
+  const getAttendanceStatus = (email) => {
+    if (!projectStartDate || attendanceTaskIds.length === 0) return 'N/A';
+    const hasResponse = responses.some(r =>
+      attendanceTaskIds.includes(r.task_id) &&
+      r.freelancer_email === email &&
+      r.submission_date &&
+      format(new Date(r.submission_date), 'yyyy-MM-dd') === projectStartDate
+    );
+    return hasResponse ? 'Present' : 'Absent';
+  };
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payment_status }) => updateEntity('ProjectApplication', id, { payment_status }),
@@ -52,9 +115,10 @@ export default function ProjectPayrollTab({ projectId, project }) {
       a.freelancer_phone || '',
       project?.payout || 0,
       a.payment_status || 'pending',
-      a.created_date ? format(new Date(a.created_date), 'yyyy-MM-dd') : ''
+      a.created_date ? format(new Date(a.created_date), 'yyyy-MM-dd') : '',
+      getAttendanceStatus(a.freelancer_email)
     ]);
-    const headers = ['Name', 'Email', 'Phone', 'Payout (₹)', 'Payment Status', 'Applied Date'];
+    const headers = ['Name', 'Email', 'Phone', 'Payout (₹)', 'Payment Status', 'Applied Date', `Attendance (${projectStartDate || 'Start Date'})`];
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -147,54 +211,67 @@ export default function ProjectPayrollTab({ projectId, project }) {
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Phone</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Payout</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Attendance ({projectStartDate || '—'})</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Payment Status</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-slate-500">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(app => (
-                    <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <Checkbox
-                          checked={selectedIds.includes(app.id)}
-                          onCheckedChange={() => toggleSelect(app.id)}
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-medium text-slate-800">{app.freelancer_name}</td>
-                      <td className="px-4 py-3 text-slate-600 text-sm">{app.freelancer_email}</td>
-                      <td className="px-4 py-3 text-slate-600 text-sm">{app.freelancer_phone || '-'}</td>
-                      <td className="px-4 py-3 font-semibold text-indigo-700">₹{totalPayout?.toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <Badge className={app.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
-                          {app.payment_status === 'paid' ? (
-                            <><CheckCircle className="w-3 h-3 mr-1 inline" />Paid</>
+                  {filtered.map(app => {
+                    const attendance = getAttendanceStatus(app.freelancer_email);
+                    return (
+                      <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={selectedIds.includes(app.id)}
+                            onCheckedChange={() => toggleSelect(app.id)}
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-medium text-slate-800">{app.freelancer_name}</td>
+                        <td className="px-4 py-3 text-slate-600 text-sm">{app.freelancer_email}</td>
+                        <td className="px-4 py-3 text-slate-600 text-sm">{app.freelancer_phone || '-'}</td>
+                        <td className="px-4 py-3 font-semibold text-indigo-700">₹{totalPayout?.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          {attendance === 'Present' ? (
+                            <Badge className="bg-green-100 text-green-700">Present</Badge>
+                          ) : attendance === 'Absent' ? (
+                            <Badge className="bg-red-100 text-red-700">Absent</Badge>
                           ) : (
-                            <><Clock className="w-3 h-3 mr-1 inline" />Pending</>
+                            <span className="text-slate-400 text-sm">N/A</span>
                           )}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        {app.payment_status !== 'paid' ? (
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-xs"
-                            onClick={() => updateMutation.mutate({ id: app.id, payment_status: 'paid' })}
-                          >
-                            Mark Paid
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs text-amber-600 border-amber-300"
-                            onClick={() => updateMutation.mutate({ id: app.id, payment_status: 'pending' })}
-                          >
-                            Mark Pending
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={app.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
+                            {app.payment_status === 'paid' ? (
+                              <><CheckCircle className="w-3 h-3 mr-1 inline" />Paid</>
+                            ) : (
+                              <><Clock className="w-3 h-3 mr-1 inline" />Pending</>
+                            )}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          {app.payment_status !== 'paid' ? (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-xs"
+                              onClick={() => updateMutation.mutate({ id: app.id, payment_status: 'paid' })}
+                            >
+                              Mark Paid
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-amber-600 border-amber-300"
+                              onClick={() => updateMutation.mutate({ id: app.id, payment_status: 'pending' })}
+                            >
+                              Mark Pending
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
