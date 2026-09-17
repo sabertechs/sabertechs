@@ -29,7 +29,8 @@ import {
   User,
   MapPin,
   Briefcase,
-  MessageCircle
+  MessageCircle,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -401,6 +402,18 @@ export default function Freelancers() {
 
   const generateOfferLetterPDF = (emp) => {
     generatePDFWithMonkey(emp, 'offer');
+  };
+
+  const [syncingPerm, setSyncingPerm] = useState(null);
+  const syncPermissions = async (emp) => {
+    setSyncingPerm(emp.id);
+    try {
+      await base44.functions.invoke('syncUserPermissions', { email: emp.email });
+      toast.success(`Permissions synced for ${emp.full_name}`);
+    } catch (error) {
+      toast.error('Failed to sync permissions: ' + (error.message || 'Unknown error'));
+    }
+    setSyncingPerm(null);
   };
 
   const generateBGVHTML = (emp, standalone = true) => {
@@ -1262,6 +1275,10 @@ export default function Freelancers() {
                           <DropdownMenuItem onClick={() => downloadAllDocsAsZip(emp)} disabled={generatingPdf[`${emp.id}-zip`]}>
                             {generatingPdf[`${emp.id}-zip`] ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Archive className="w-4 h-4 mr-2" />}
                             Download All (ZIP)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => syncPermissions(emp)} disabled={syncingPerm === emp.id}>
+                            {syncingPerm === emp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2 text-blue-600" />}
+                            Sync Permissions
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
