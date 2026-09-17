@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle, CreditCard, X } from "lucide-react";
+import { Building2, Upload, CheckCircle, Loader2, User, FileText, AlertCircle, CreditCard, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ export default function Registration() {
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [existingEmployee, setExistingEmployee] = useState(null);
   const [rejectedDocs, setRejectedDocs] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     father_name: "",
@@ -115,6 +116,13 @@ export default function Registration() {
             redirecting = true;
             const dashboard = getDesignationDashboard(emp);
             window.location.replace(createPageUrl(dashboard));
+            return;
+          }
+          
+          if (emp.status === 'inactive' && !hasRejectedDocs && !hasMissingDocs) {
+            // Registration already submitted, awaiting admin approval
+            setSubmitted(true);
+            setInitialLoading(false);
             return;
           }
           
@@ -409,23 +417,21 @@ export default function Registration() {
           ...employeeData,
           employee_id: existing.employee_id || newEmployeeId,
           employment_type: existing.employment_type || "contractual",
-          status: "pending",
+          status: "inactive",
           document_review_status: updatedDocStatus,
           document_rejection_reasons: updatedRejectionReasons
         }, { context: 'self' });
         
-        // Redirect based on their designation
-        const dashboard = getDesignationDashboard(existing, []);
-        navigate(createPageUrl(dashboard));
+        setSubmitted(true);
       } else {
-        // Create new freelancer
+        // Create new freelancer — inactive until admin verifies and activates
         await createEntity('Employee', {
           ...employeeData,
           employee_id: newEmployeeId,
           employment_type: "contractual",
-          status: "pending"
+          status: "inactive"
         }, { context: 'self' });
-        navigate(createPageUrl("FreelancerDashboard"));
+        setSubmitted(true);
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -448,6 +454,34 @@ export default function Registration() {
           <Building2 className="w-12 h-12 text-indigo-600 mx-auto mb-4 animate-pulse" />
           <p className="text-slate-500">Checking your profile...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+        <Card className="max-w-md w-full mx-4 shadow-xl border-0">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-3">Registration Submitted!</h2>
+            <p className="text-slate-600 mb-2">Your details have been saved successfully.</p>
+            <p className="text-slate-500 text-sm mb-6">
+              Your account is currently <span className="font-semibold text-amber-600">inactive</span>.
+              An admin will verify your information and activate your account.
+              You'll be able to log in and access the platform once activated.
+            </p>
+            <Button
+              onClick={() => base44.auth.logout()}
+              className="w-full bg-indigo-600 hover:bg-indigo-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

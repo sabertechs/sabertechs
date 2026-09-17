@@ -239,6 +239,31 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  // Self-registered freelancers are inactive until an admin verifies and
+  // activates them. Block app access and show an awaiting-approval screen.
+  if (employeeData?.status === 'inactive' && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center max-w-md mx-4">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-3">Account Pending Approval</h2>
+          <p className="text-slate-600 mb-2">
+            Hi {user?.full_name?.split(' ')[0] || 'there'}, your registration has been submitted.
+          </p>
+          <p className="text-slate-500 text-sm mb-6">
+            An admin needs to verify your details and activate your account before you can access the platform. Please check back later.
+          </p>
+          <Button onClick={() => base44.auth.logout()} className="bg-indigo-600 hover:bg-indigo-700">
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Route protection: hidden sidebar items must not be directly accessible by
   // URL. Uses the same central resolver (can) as the sidebar.
   const requiredPerm = PAGE_PERMISSIONS[currentPageName];

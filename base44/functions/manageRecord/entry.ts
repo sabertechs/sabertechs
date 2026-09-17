@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     // For self-service create, verify the ownership field matches the user
     if (ownershipField && action === 'create' && data) {
-      if (data[ownershipField] !== user.email) {
+      if (String(data[ownershipField] || '').toLowerCase() !== String(user.email || '').toLowerCase()) {
         return Response.json({ error: 'You can only create records for yourself' }, { status: 403 });
       }
     }
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // For self-service update/delete, fetch the record and verify ownership
     if (ownershipField && (action === 'update' || action === 'delete') && id) {
       const record = await entityApi.get(id);
-      if (record[ownershipField] !== user.email) {
+      if (String(record[ownershipField] || '').toLowerCase() !== String(user.email || '').toLowerCase()) {
         return Response.json({ error: 'You can only modify your own records' }, { status: 403 });
       }
     }
