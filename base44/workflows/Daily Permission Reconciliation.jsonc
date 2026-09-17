@@ -1,6 +1,6 @@
 {
   "name": "Daily Permission Reconciliation",
-  "description": "Daily safety-net scan at 2 AM IST that fixes any User.data permission fields that drifted from Employee records",
+  "description": "Daily safety-net scan at 2 AM IST that fixes any User.data permission fields that drifted from Employee records. Processes employees in batches, chaining up to 3 calls to cover all records.",
   "trigger": {
     "condition": null,
     "config": {
@@ -27,16 +27,86 @@
     },
     "do": [
       {
-        "reconcile": {
+        "reconcile_1": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "reconcileUserPermissions",
-            "args": {}
+            "args": {
+              "start_skip": 0
+            }
+          },
+          "then": "check_more_1",
+          "x-base44": {
+            "title": "Reconcile Batch 1",
+            "description": "Process first batch of employees"
+          }
+        }
+      },
+      {
+        "check_more_1": {
+          "switch": [
+            {
+              "when": "${ .reconcile_1.has_more == true }",
+              "then": "reconcile_2"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Check More 1",
+            "description": "Continue if more employees remain"
+          }
+        }
+      },
+      {
+        "reconcile_2": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reconcileUserPermissions",
+            "args": {
+              "start_skip": "${ .reconcile_1.next_skip }"
+            }
+          },
+          "then": "check_more_2",
+          "x-base44": {
+            "title": "Reconcile Batch 2",
+            "description": "Process next batch of employees"
+          }
+        }
+      },
+      {
+        "check_more_2": {
+          "switch": [
+            {
+              "when": "${ .reconcile_2.has_more == true }",
+              "then": "reconcile_3"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "Check More 2",
+            "description": "Continue if more employees remain"
+          }
+        }
+      },
+      {
+        "reconcile_3": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reconcileUserPermissions",
+            "args": {
+              "start_skip": "${ .reconcile_2.next_skip }"
+            }
           },
           "then": "end",
           "x-base44": {
-            "title": "Reconcile Permissions",
-            "description": "Fix any drifted User.data fields"
+            "title": "Reconcile Batch 3",
+            "description": "Process final batch of employees"
           }
         }
       }
