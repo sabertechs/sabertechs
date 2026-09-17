@@ -2,8 +2,9 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { getEmployeePermissionData, needsSync } from "../../shared/userPermissionSync.ts";
 
 /**
- * Daily safety-net reconciliation: scans ALL Employee records and syncs any
- * User.data permission fields that drifted from the Employee source of truth.
+ * Daily safety-net reconciliation: scans Employee records in batches and
+ * syncs any User.data permission fields that drifted from the Employee source
+ * of truth.
  *
  * Called by the "Daily Permission Reconciliation" scheduled workflow.
  * Catches cases that fall through the entity/auth trigger cracks:
@@ -11,70 +12,102 @@ import { getEmployeePermissionData, needsSync } from "../../shared/userPermissio
  * - Users who registered before their Employee record was created
  * - Any data corruption or manual database edits
  *
- * Processes in batches of 100 to stay within function timeout limits.
+ * Time-budgeted: processes in batches of 50 with 800ms delays, targeting
+ * completion within the function timeout. If it can't finish all employees in
+ * one run, it processes as many as it can and reports has_more=true — the
+ * next daily run picks up where it left off (sorted by -created_date so the
+ * oldest un-synced records are processed first on subsequent runs).
  */
 export default async function (req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    const startSkip = body.start_skip || 0;
+    const BATCH_SIZE = 50;
+    const TIME_BUDGET_MS = 25000; // 25-second self-imposed budget
+    const startTime = Date.now();
 
-    // Load all employees (paginated)
-    const employees = [];
-    let skip = 0;
-    while (true) {
-      const batch = await base44.asServiceRole.entities.Employee.filter(
-        {},
-        "-created_date",
-        1000,
-        skip
-      );
-      employees.push(...batch);
-      if (batch.length < 1000) break;
-      skip += 1000;
-    }
-
-    // Build email → permission data map
-    const empMap = {};
-    for (const emp of employees) {
-      const email = emp.email?.toString().trim().toLowerCase();
-      if (email) empMap[email] = getEmployeePermissionData(emp);
-    }
-
-    // Process users in batches of 100
-    const allEmails = Object.keys(empMap);
+    let skip = startSkip;
     let synced = 0;
     let alreadyInSync = 0;
     let noUserAccount = 0;
+    let totalProcessed = 0;
+    let hasMore = false;
 
-    for (let i = 0; i < allEmails.length; i += 100) {
-      const chunk = allEmails.slice(i, i + 100);
-      const users = await base44.asServiceRole.entities.User.filter({
-        email: { $in: chunk },
-      });
+    while (Date.now() - startTime < TIME_BUDGET_MS) {
+      // Load a batch of employees
+      const empBatch = await base44.asServiceRole.entities.Employee.filter(
+        {},
+        "-created_date",
+        BATCH_SIZE,
+        skip
+      );
 
-      for (const user of users) {
-        const email = user.email?.toString().trim().toLowerCase();
-        const empData = empMap[email];
-        if (!empData) continue;
+      if (empBatch.length === 0) break;
 
-        if (needsSync(user.data, empData)) {
-          const newData = { ...(user.data || {}), ...empData };
-          await base44.asServiceRole.entities.User.update(user.id, {
-            data: newData,
-          });
-          synced++;
-        } else {
-          alreadyInSync++;
+      // Build email → permission data map for this batch
+      const empMap = {};
+      const batchEmails = [];
+      for (const emp of empBatch) {
+        const email = emp.email?.toString().trim().toLowerCase();
+        if (email) {
+          empMap[email] = getEmployeePermissionData(emp);
+          batchEmails.push(email);
         }
       }
-      noUserAccount += chunk.length - users.length;
+
+      // Look up users for this batch
+      if (batchEmails.length > 0) {
+        const users = await base44.asServiceRole.entities.User.filter({
+          email: { $in: batchEmails },
+        });
+
+        const toUpdate = [];
+        for (const user of users) {
+          const email = user.email?.toString().trim().toLowerCase();
+          const empData = empMap[email];
+          if (!empData) continue;
+
+          if (needsSync(user.data, empData)) {
+            const newData = { ...(user.data || {}), ...empData };
+            toUpdate.push({ id: user.id, data: newData });
+          } else {
+            alreadyInSync++;
+          }
+        }
+        noUserAccount += batchEmails.length - users.length;
+
+        // Bulk update mismatched users in this batch
+        if (toUpdate.length > 0) {
+          await base44.asServiceRole.entities.User.bulkUpdate(toUpdate);
+          synced += toUpdate.length;
+        }
+      }
+
+      totalProcessed += empBatch.length;
+      skip += empBatch.length;
+
+      // Check if there are more employees to process
+      if (empBatch.length < BATCH_SIZE) {
+        hasMore = false;
+        break;
+      }
+      hasMore = true;
+
+      // Delay between batches to avoid rate limits
+      await new Promise((resolve) => setTimeout(resolve, 800));
     }
 
     return Response.json({
       success: true,
-      total_employees: employees.length,
+      start_skip: startSkip,
+      processed: totalProcessed,
       synced,
       already_in_sync: alreadyInSync,
       no_user_account: noUserAccount,
+      has_more: hasMore,
+      next_skip: skip,
+      elapsed_ms: Date.now() - startTime,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
