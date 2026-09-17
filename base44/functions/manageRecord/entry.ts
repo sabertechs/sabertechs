@@ -43,7 +43,9 @@ Deno.serve(async (req) => {
     // Authorize these with 'freelancers.manage' (the FreelancerUpload page permission)
     // instead of 'hr.employees.manage', so users who can access the page can actually
     // create the records.
-    if (entity === 'Employee' && baseAction === 'create') {
+    // SKIP for self-service (context='self') — self-registration uses the
+    // self-service permission (null = any authenticated user) with ownership check.
+    if (entity === 'Employee' && baseAction === 'create' && context !== 'self') {
       const records = Array.isArray(data) ? data : [data];
       if (records.some((r: any) => r?.employment_type === 'contractual')) {
         permission = 'freelancers.manage';

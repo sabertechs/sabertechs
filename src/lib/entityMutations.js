@@ -19,9 +19,18 @@
 import { base44 } from '@/api/base44Client';
 
 async function callManageRecord(payload) {
-  const res = await base44.functions.invoke('manageRecord', payload);
-  if (res?.data?.error) throw new Error(res.data.error);
-  return res?.data?.data;
+  try {
+    const res = await base44.functions.invoke('manageRecord', payload);
+    if (res?.data?.error) throw new Error(res.data.error);
+    return res?.data?.data;
+  } catch (error) {
+    // Extract the actual backend error message from the response body
+    const backendMsg = error?.response?.data?.error
+      || error?.response?.data?.message
+      || error?.data?.error;
+    if (backendMsg) throw new Error(backendMsg);
+    throw error;
+  }
 }
 
 export function createEntity(entity, data, options = {}) {
