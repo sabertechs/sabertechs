@@ -1,0 +1,45 @@
+{
+  "name": "Daily Permission Reconciliation",
+  "description": "Daily safety-net scan at 2 AM IST that fixes any User.data permission fields that drifted from Employee records",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 2 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Kolkata",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_permission_reconciliation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "reconcile": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "reconcileUserPermissions",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Reconcile Permissions",
+            "description": "Fix any drifted User.data fields"
+          }
+        }
+      }
+    ]
+  }
+}

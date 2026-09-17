@@ -1,0 +1,41 @@
+{
+  "name": "Sync Employee Permissions",
+  "description": "Syncs Employee designation/employment_type/department to platform User.data when an Employee record is created or any permission-driving field is updated",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Employee",
+      "events": [
+        "create",
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.event_type == \"create\" or (.trigger.changed_fields | index(\"designation\") != null) or (.trigger.changed_fields | index(\"department\") != null) or (.trigger.changed_fields | index(\"employment_type\") != null) }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_employee_permissions",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_user": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncUserPermissions",
+            "args": {
+              "email": "${ .trigger.data.email }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sync Employee to User",
+            "description": "Update User.data permission fields"
+          }
+        }
+      }
+    ]
+  }
+}

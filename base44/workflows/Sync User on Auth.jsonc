@@ -1,0 +1,40 @@
+{
+  "name": "Sync User on Auth",
+  "description": "Syncs Employee permission data to User.data when a user logs in or signs up, ensuring new registrants get correct permissions immediately",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "app_user_auth",
+      "events": [
+        "login",
+        "signup"
+      ]
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_user_on_auth",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sync_user": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncUserPermissions",
+            "args": {
+              "email": "${ .trigger.email }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sync User from Employee",
+            "description": "Update User.data on login/signup"
+          }
+        }
+      }
+    ]
+  }
+}
