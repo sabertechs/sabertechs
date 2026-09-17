@@ -142,6 +142,18 @@ export default function FreelancerUpload() {
     return res.ok ? null : res.error;
   };
 
+  // Normalize work_type variants to the canonical enum values. Accepts
+  // "centre based", "center_based", "center", "centre", "online", "both" (case-
+  // and space/underscore-insensitive). Anything unrecognized falls back to
+  // "online" to match the previous default behaviour.
+  const normalizeWorkType = (raw) => {
+    const v = (raw || '').toLowerCase().replace(/[\s_-]+/g, '');
+    if (['centre', 'centrebased', 'center', 'centerbased'].includes(v)) return 'centre';
+    if (v === 'both') return 'both';
+    if (v === 'online') return 'online';
+    return 'online';
+  };
+
   const validateRow = (row, lineNumber) => {
     const errors = [];
     
@@ -273,7 +285,7 @@ export default function FreelancerUpload() {
               department: data.department?.trim() || '',
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
-              work_type: ['online', 'centre', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: normalizeWorkType(data.work_type),
               status: data.status?.toLowerCase() || existing.status || 'pending',
             });
             updatedCount++;
@@ -377,7 +389,7 @@ export default function FreelancerUpload() {
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
               employment_type: 'contractual',
-              work_type: ['online', 'centre', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: normalizeWorkType(data.work_type),
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
