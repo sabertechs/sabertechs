@@ -95,7 +95,7 @@
       "type": "string",
       "enum": [
         "online",
-        "center_based",
+        "centre",
         "both"
       ],
       "description": "For freelancers: type of work they can do"

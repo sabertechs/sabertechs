@@ -151,7 +151,7 @@ export default function ProjectReport({ onBack }) {
                 <SelectContent>
                   <SelectItem value="all">All Modes</SelectItem>
                   <SelectItem value="online">Online</SelectItem>
-                  <SelectItem value="center_based">Center Based</SelectItem>
+                  <SelectItem value="centre">Center Based</SelectItem>
                 </SelectContent>
               </Select>
             </div>

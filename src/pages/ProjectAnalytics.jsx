@@ -143,7 +143,7 @@ export default function ProjectAnalytics() {
       return acc;
     }, {});
     return Object.entries(byMode).map(([key, count]) => ({
-      name: key === "center_based" ? "Centre Based" : key.charAt(0).toUpperCase() + key.slice(1),
+      name: key === "centre" ? "Centre Based" : key.charAt(0).toUpperCase() + key.slice(1),
       value: count,
     }));
   }, [filtered]);
@@ -398,7 +398,7 @@ export default function ProjectAnalytics() {
               <SelectContent>
                 <SelectItem value="all">All Modes</SelectItem>
                 <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="center_based">Centre Based</SelectItem>
+                <SelectItem value="centre">Centre Based</SelectItem>
               </SelectContent>
             </Select>
           </div>

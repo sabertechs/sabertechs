@@ -1200,8 +1200,8 @@ export default function Freelancers() {
                     </td>
                     <td className="px-4 py-4 capitalize text-slate-600">{emp.department || '-'}</td>
                     <td className="px-4 py-4">
-                      <Badge variant="outline" className={emp.work_type === 'online' ? 'text-blue-700 border-blue-200' : emp.work_type === 'center_based' ? 'text-orange-700 border-orange-200' : 'text-green-700 border-green-200'}>
-                        {emp.work_type === 'center_based' ? 'Centre Based' : emp.work_type === 'both' ? 'Both' : emp.work_type ? 'Online' : '-'}
+                      <Badge variant="outline" className={emp.work_type === 'online' ? 'text-blue-700 border-blue-200' : emp.work_type === 'centre' ? 'text-orange-700 border-orange-200' : 'text-green-700 border-green-200'}>
+                        {emp.work_type === 'centre' ? 'Centre Based' : emp.work_type === 'both' ? 'Both' : emp.work_type ? 'Online' : '-'}
                       </Badge>
                     </td>
                     <td className="px-4 py-4 text-slate-600">{emp.designation || '-'}</td>
@@ -1418,7 +1418,7 @@ export default function Freelancers() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="online">Online</SelectItem>
-                  <SelectItem value="center_based">Centre Based</SelectItem>
+                  <SelectItem value="centre">Centre Based</SelectItem>
                   <SelectItem value="both">Both</SelectItem>
                 </SelectContent>
               </Select>
@@ -1549,8 +1549,8 @@ export default function Freelancers() {
                   </div>
                   <div className="p-4 bg-slate-50 rounded-xl">
                     <p className="text-sm text-slate-500">Work Type</p>
-                    <Badge className={selectedEmployee.work_type === 'online' ? 'bg-blue-100 text-blue-700' : selectedEmployee.work_type === 'center_based' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
-                      {selectedEmployee.work_type === 'center_based' ? 'Centre Based' : selectedEmployee.work_type === 'both' ? 'Both' : 'Online'}
+                    <Badge className={selectedEmployee.work_type === 'online' ? 'bg-blue-100 text-blue-700' : selectedEmployee.work_type === 'centre' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+                      {selectedEmployee.work_type === 'centre' ? 'Centre Based' : selectedEmployee.work_type === 'both' ? 'Both' : 'Online'}
                     </Badge>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-xl">

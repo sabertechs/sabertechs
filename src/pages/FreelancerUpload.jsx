@@ -273,7 +273,7 @@ export default function FreelancerUpload() {
               department: data.department?.trim() || '',
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
-              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: ['online', 'centre', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
               status: data.status?.toLowerCase() || existing.status || 'pending',
             });
             updatedCount++;
@@ -377,7 +377,7 @@ export default function FreelancerUpload() {
               designation: data.designation?.trim() || '',
               date_of_joining: parseDate(data.date_of_joining),
               employment_type: 'contractual',
-              work_type: ['online', 'center_based', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
+              work_type: ['online', 'centre', 'both'].includes(data.work_type?.toLowerCase()) ? data.work_type.toLowerCase() : 'online',
               status: data.status?.toLowerCase() || 'pending',
               bg_verification_status: 'pending'
             });
@@ -500,7 +500,7 @@ export default function FreelancerUpload() {
                 <li>• address, locality, city, state, pincode</li>
                 <li>• aadhaar_number (12 digits), pan_number</li>
                 <li>• department, designation, date_of_joining (DD/MM/YYYY)</li>
-                <li>• <strong>work_type</strong> (online/center_based/both)</li>
+                <li>• <strong>work_type</strong> (online/centre/both)</li>
                 <li>• status (pending/active/inactive)</li>
               </ul>
             </div>

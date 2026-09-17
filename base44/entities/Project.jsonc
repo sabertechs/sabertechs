@@ -14,9 +14,9 @@
       "type": "string",
       "enum": [
         "online",
-        "center_based"
+        "centre"
       ],
-      "description": "Whether project is online or center-based"
+      "description": "Whether project is online or centre-based"
     },
     "start_date": {
       "type": "string",

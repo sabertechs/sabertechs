@@ -33,7 +33,7 @@ export default function ProjectManagement() {
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: '',
-    work_mode: 'center_based',
+    work_mode: 'centre',
     start_date: '',
     end_date: '',
     application_start_date: '',
@@ -111,7 +111,7 @@ export default function ProjectManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
-      work_mode: 'center_based',
+      work_mode: 'centre',
       start_date: '',
       end_date: '',
       application_start_date: '',
@@ -144,7 +144,7 @@ export default function ProjectManagement() {
     
     setFormData({
       name: project.name,
-      work_mode: project.work_mode || 'center_based',
+      work_mode: project.work_mode || 'centre',
       start_date: project.start_date,
       end_date: project.end_date,
       application_start_date: appStartDate ? appStartDate.toISOString().split('T')[0] : '',
@@ -559,7 +559,7 @@ export default function ProjectManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="center_based">Centre Based</SelectItem>
+                <SelectItem value="centre">Centre Based</SelectItem>
               </SelectContent>
             </Select>
           </div>

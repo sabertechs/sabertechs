@@ -48,7 +48,7 @@ export default function FreelancerProjects() {
     // projects whose work_mode matches the freelancer's work_type.
     if (!myWorkType || myWorkType === 'both') return true;
     if (myWorkType === 'online') return p.work_mode === 'online';
-    if (myWorkType === 'center_based') return p.work_mode === 'center_based';
+    if (myWorkType === 'centre') return p.work_mode === 'centre';
     return true;
   });
   const projects = useMemo(() => {
