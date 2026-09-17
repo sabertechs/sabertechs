@@ -71,6 +71,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: `Unknown entity: ${entity}` }, { status: 400 });
     }
 
+    // Only admins can delete Employee (freelancer) records.
+    if (entity === 'Employee' && baseAction === 'delete') {
+      if (String(user.data?.designation || '').toLowerCase() !== 'admin') {
+        return Response.json({ error: 'Only admins can delete employee records' }, { status: 403 });
+      }
+    }
+
     // For self-service create, verify the ownership field matches the user
     if (ownershipField && action === 'create' && data) {
       if (String(data[ownershipField] || '').toLowerCase() !== String(user.email || '').toLowerCase()) {

@@ -337,6 +337,10 @@
       ]
     },
     "update": {},
-    "delete": {}
+    "delete": {
+      "user_condition": {
+        "data.designation": "Admin"
+      }
+    }
   }
 }

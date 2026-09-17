@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -74,6 +74,12 @@ export default function Freelancers() {
   const [bulkStatus, setBulkStatus] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const isAdmin = currentUser?.data?.designation?.toLowerCase() === 'admin';
+
+  useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
   const [downloading, setDownloading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -1119,6 +1125,7 @@ export default function Freelancers() {
                   {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                   Download Docs
                 </Button>
+                {isAdmin && (
                 <Button 
                   size="sm" 
                   variant="outline"
@@ -1135,6 +1142,7 @@ export default function Freelancers() {
                   <Trash2 className="w-4 h-4 mr-1" />
                   Deactivate Selected
                 </Button>
+                )}
                 <Button 
                   size="sm" 
                   variant="ghost"
@@ -1281,6 +1289,7 @@ export default function Freelancers() {
                             Sync Permissions
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {isAdmin && (
                           <DropdownMenuItem
                             onClick={() => {
                               if (confirm(`Deactivate "${emp.full_name}"? Their details (Aadhaar, PAN, documents) will be preserved and can be re-activated later by editing the status back to Active.`)) {
@@ -1291,6 +1300,7 @@ export default function Freelancers() {
                           >
                             <Trash2 className="w-4 h-4 mr-2" /> Deactivate
                           </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
