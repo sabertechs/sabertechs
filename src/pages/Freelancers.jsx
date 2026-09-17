@@ -85,6 +85,7 @@ export default function Freelancers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
   const [whatsAppEmployee, setWhatsAppEmployee] = useState(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
   const employeesPerPage = 40;
   const [formData, setFormData] = useState({
     full_name: "",
@@ -202,6 +203,17 @@ export default function Freelancers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['freelancers'] });
       toast.success('Freelancer deactivated — details preserved');
+    }
+  });
+
+  const permanentDeleteMutation = useMutation({
+    // Hard-delete: permanently removes the record and all stored documents.
+    // Admin-only — gated in the UI and enforced by the manageRecord backend.
+    mutationFn: (id) => deleteEntity('Employee', id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['freelancers'] });
+      setPermanentDeleteTarget(null);
+      toast.success('Freelancer permanently deleted');
     }
   });
 
@@ -1301,6 +1313,17 @@ export default function Freelancers() {
                             <Trash2 className="w-4 h-4 mr-2" /> Deactivate
                           </DropdownMenuItem>
                           )}
+                          {isAdmin && (
+                          <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setPermanentDeleteTarget(emp)}
+                            className="text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete Permanently
+                          </DropdownMenuItem>
+                          </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -1714,6 +1737,34 @@ export default function Freelancers() {
               </TabsContent>
             </Tabs>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Permanent Delete Confirmation */}
+      <Dialog open={!!permanentDeleteTarget} onOpenChange={(open) => !open && setPermanentDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Permanently?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-slate-600">
+              You are about to <span className="font-semibold text-red-600">permanently delete</span> <span className="font-semibold">{permanentDeleteTarget?.full_name}</span>'s record.
+            </p>
+            <p className="text-sm text-slate-500">
+              This action is irreversible. All stored data — including Aadhaar, PAN, education certificates, profile photo, and bank details — will be permanently lost and cannot be recovered.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPermanentDeleteTarget(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => permanentDeleteTarget && permanentDeleteMutation.mutate(permanentDeleteTarget.id)}
+              disabled={permanentDeleteMutation.isPending}
+            >
+              {permanentDeleteMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
+              Delete Permanently
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
