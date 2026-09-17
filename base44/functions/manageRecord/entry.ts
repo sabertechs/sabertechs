@@ -39,16 +39,30 @@ Deno.serve(async (req) => {
     const baseAction = (action.startsWith('bulk') ? action.replace('bulk', '').toLowerCase() : action) as 'create' | 'update' | 'delete';
     let permission = getPermission(entity, baseAction, context);
 
-    // Freelancer bulk-upload creates Employee records with employment_type=contractual.
-    // Authorize these with 'freelancers.manage' (the FreelancerUpload page permission)
-    // instead of 'hr.employees.manage', so users who can access the page can actually
-    // create the records.
+    const entityApi = base44.asServiceRole.entities[entity];
+    if (!entityApi) {
+      return Response.json({ error: `Unknown entity: ${entity}` }, { status: 400 });
+    }
+
+    // Freelancer (Employee with employment_type=contractual) create/update authorize
+    // with 'freelancers.manage' (the Freelancers/FreelancerUpload page permission)
+    // instead of 'hr.employees.manage', so users who can access those pages can
+    // actually perform the action. bulkCreate maps to baseAction 'create' below.
     // SKIP for self-service (context='self') — self-registration uses the
     // self-service permission (null = any authenticated user) with ownership check.
-    if (entity === 'Employee' && baseAction === 'create' && context !== 'self') {
-      const records = Array.isArray(data) ? data : [data];
-      if (records.some((r: any) => r?.employment_type === 'contractual')) {
-        permission = 'freelancers.manage';
+    if (entity === 'Employee' && context !== 'self') {
+      if (baseAction === 'create') {
+        const records = Array.isArray(data) ? data : [data];
+        if (records.some((r: any) => r?.employment_type === 'contractual')) {
+          permission = 'freelancers.manage';
+        }
+      } else if (baseAction === 'update') {
+        // Fetch the existing record to check its employment_type — the update
+        // payload may not include it.
+        const existing = await entityApi.get(id);
+        if (existing?.employment_type === 'contractual') {
+          permission = 'freelancers.manage';
+        }
       }
     }
 
@@ -66,10 +80,6 @@ Deno.serve(async (req) => {
 
     // Self-service ownership verification
     const ownershipField = context === 'self' ? getOwnershipField(entity) : undefined;
-    const entityApi = base44.asServiceRole.entities[entity];
-    if (!entityApi) {
-      return Response.json({ error: `Unknown entity: ${entity}` }, { status: 400 });
-    }
 
     // Only admins can delete Employee (freelancer) records.
     if (entity === 'Employee' && baseAction === 'delete') {
