@@ -210,6 +210,7 @@ export default function FreelancerTasksView({ projectId, userEmail, userName }) 
 
       {selectedTask && (
         <FreelancerTaskSubmit
+          key={selectedTask.id}
           task={selectedTask}
           existingResponse={getResponse(selectedTask.id)}
           userEmail={userEmail}

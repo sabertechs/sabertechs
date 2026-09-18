@@ -40,6 +40,21 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
   const [cameraActive, setCameraActive] = useState(false);
   const videoRef = React.useRef(null);
   const canvasRef = React.useRef(null);
+  const mountedRef = React.useRef(true);
+  const pendingStreamRef = React.useRef(null);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // Stop any camera stream that was acquired but never assigned to state
+      // (e.g. dialog closed while getUserMedia was still pending)
+      if (pendingStreamRef.current) {
+        pendingStreamRef.current.getTracks().forEach(t => t.stop());
+        pendingStreamRef.current = null;
+      }
+    };
+  }, []);
 
   const reverseGeocode = async (lat, lng) => {
     try {
@@ -104,6 +119,13 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      // If the dialog closed while the camera was opening, release the stream
+      // immediately so it doesn't block the camera for other tasks.
+      if (!mountedRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+      pendingStreamRef.current = stream;
       setCameraStream(stream);
       setCameraActive(true);
     } catch (err) {
@@ -156,12 +178,19 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     canvas.toBlob(async (blob) => {
       const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
       setUploading(true);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setUploadedFiles(prev => [...prev, { url: file_url, name: file.name }]);
-      setUploading(false);
-      toast.success('Photo captured and uploaded!');
-      uploadToDrive(file_url, file.name);
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        if (!mountedRef.current) return;
+        setUploadedFiles(prev => [...prev, { url: file_url, name: file.name }]);
+        toast.success('Photo captured and uploaded!');
+        uploadToDrive(file_url, file.name);
+      } catch (err) {
+        if (mountedRef.current) toast.error('Failed to upload photo. Please try again.');
+      } finally {
+        if (mountedRef.current) setUploading(false);
+      }
       cameraStream.getTracks().forEach(t => t.stop());
+      pendingStreamRef.current = null;
       setCameraStream(null);
       setCameraActive(false);
     }, 'image/jpeg', 0.9);
@@ -169,6 +198,7 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
 
   const closeCamera = () => {
     if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+    pendingStreamRef.current = null;
     setCameraStream(null);
     setCameraActive(false);
   };
@@ -206,16 +236,22 @@ export default function FreelancerTaskSubmit({ task, existingResponse, userEmail
     const files = Array.from(e.target.files);
     if (!files.length) return;
     setUploading(true);
-    const results = await Promise.all(files.map(async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      return { url: file_url, name: file.name };
-    }));
-    setUploadedFiles(prev => [...prev, ...results]);
-    setUploading(false);
-    toast.success(`${results.length} file(s) uploaded!`);
-    results.forEach(({ url, name }) => uploadToDrive(url, name));
-    // Reset input so same file can be re-added if needed
-    e.target.value = '';
+    try {
+      const results = await Promise.all(files.map(async (file) => {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return { url: file_url, name: file.name };
+      }));
+      if (!mountedRef.current) return;
+      setUploadedFiles(prev => [...prev, ...results]);
+      toast.success(`${results.length} file(s) uploaded!`);
+      results.forEach(({ url, name }) => uploadToDrive(url, name));
+    } catch (err) {
+      if (mountedRef.current) toast.error('Failed to upload file(s). Please try again.');
+    } finally {
+      if (mountedRef.current) setUploading(false);
+      // Reset input so same file can be re-added if needed
+      e.target.value = '';
+    }
   };
 
   // Sync uploaded file to Google Drive (non-blocking, silent fail)
