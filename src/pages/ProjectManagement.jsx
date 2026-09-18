@@ -175,6 +175,8 @@ export default function ProjectManagement() {
     else if (isNaN(formData.payout) || parseFloat(formData.payout) <= 0) newErrors.payout = 'Payout must be a positive number';
     if (!formData.location?.trim()) newErrors.location = 'Location is required';
     if (!formData.description?.trim()) newErrors.description = 'Description is required';
+    if (!formData.total_slots) newErrors.total_slots = 'Total requirement is required';
+    else if (isNaN(formData.total_slots) || parseInt(formData.total_slots) <= 0) newErrors.total_slots = 'Total requirement must be a positive number';
 
     // Date validations
     if (formData.start_date && formData.end_date && formData.end_date < formData.start_date) {
@@ -689,13 +691,22 @@ export default function ProjectManagement() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Total Requirement</Label>
+                <Label>Total Requirement *</Label>
                 <Input
                   type="number"
                   value={formData.total_slots}
-                  onChange={(e) => setFormData({ ...formData, total_slots: e.target.value })}
-                  placeholder="Optional"
+                  onChange={(e) => {
+                    setFormData({ ...formData, total_slots: e.target.value });
+                    if (errors.total_slots) setErrors({ ...errors, total_slots: null });
+                  }}
+                  placeholder="e.g., 10"
+                  className={errors.total_slots ? 'border-red-500' : ''}
                 />
+                {errors.total_slots && (
+                  <p className="text-red-500 text-xs flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.total_slots}
+                  </p>
+                )}
               </div>
             </div>
 
