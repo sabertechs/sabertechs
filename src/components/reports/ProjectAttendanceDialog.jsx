@@ -6,7 +6,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Users, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Calendar, Users, CheckCircle, XCircle, Download } from "lucide-react";
+import { downloadCSV } from "./reportUtils";
 
 export default function ProjectAttendanceDialog({ project, open, onOpenChange }) {
   // Fetch all tasks for the project (paginated to bypass ~100 record cap)
@@ -94,6 +96,28 @@ export default function ProjectAttendanceDialog({ project, open, onOpenChange })
 
   const loading = loadingTasks || loadingResponses;
 
+  const handleDownloadCSV = () => {
+    const rows = actualDays.map((day) => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      const presentSet = dailyCheckins[dateStr] || new Set();
+      const present = [...presentSet].filter((e) => assignedEmails.includes(e)).length;
+      const assigned = assignedEmails.length;
+      const absent = assigned - present;
+      const rate = assigned > 0 ? Math.round((present / assigned) * 100) : 0;
+      const upcoming = isFuture(day) && !isToday(day);
+      return {
+        Date: format(day, "MMM d, yyyy"),
+        Day: format(day, "EEE"),
+        Assigned: assigned,
+        Present: upcoming ? "" : present,
+        Absent: upcoming ? "" : absent,
+        Rate: upcoming ? "upcoming" : `${rate}%`,
+      };
+    });
+    const safeName = (project?.name || "project").replace(/[^a-z0-9]+/gi, "_");
+    downloadCSV(rows, `attendance_${safeName}.csv`);
+  };
+
   // Overall summary across actual days (only past/today days count toward expected)
   const summary = useMemo(() => {
     const today = new Date();
@@ -122,6 +146,17 @@ export default function ProjectAttendanceDialog({ project, open, onOpenChange })
             ({project?.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "-"} –{" "}
             {project?.end_date ? format(parseISO(project.end_date), "MMM d, yyyy") : "-"})
           </DialogDescription>
+          {!loading && actualDays.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadCSV}
+              className="absolute right-4 top-4"
+            >
+              <Download className="w-4 h-4 mr-1.5 text-indigo-600" />
+              Download CSV
+            </Button>
+          )}
         </DialogHeader>
 
         {loading ? (
