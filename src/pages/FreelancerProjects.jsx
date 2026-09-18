@@ -116,12 +116,12 @@ export default function FreelancerProjects() {
   return (
     <div className="min-h-screen bg-slate-50 pb-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold">Projects</h1>
-        <p className="text-blue-100 text-sm">Browse, apply & submit tasks</p>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 md:p-4 sticky top-0 z-10">
+        <h1 className="text-lg md:text-xl font-bold">Projects</h1>
+        <p className="text-blue-100 text-xs md:text-sm">Browse, apply & submit tasks</p>
       </div>
 
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         <Tabs defaultValue="browse">
           <TabsList className="w-full mb-4">
             <TabsTrigger value="browse" className="flex-1">Browse Projects</TabsTrigger>
@@ -155,44 +155,44 @@ export default function FreelancerProjects() {
 
                   return (
                     <Card key={project.id} className="border-0 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-bold text-lg mb-1">{project.name}</h3>
-                            <div className="flex flex-wrap gap-2">
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex justify-between items-start mb-2 md:mb-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-base md:text-lg mb-1">{project.name}</h3>
+                            <div className="flex flex-wrap gap-1.5 md:gap-2">
                               {project.priority === 'high' && (
-                                <Badge className="bg-red-100 text-red-700">High Priority</Badge>
+                                <Badge className="bg-red-100 text-red-700 text-xs">High Priority</Badge>
                               )}
-                              <Badge className="bg-blue-100 text-blue-700">{project.status}</Badge>
+                              <Badge className="bg-blue-100 text-blue-700 text-xs">{project.status}</Badge>
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-2 mb-4 text-sm">
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <MapPin className="w-4 h-4 flex-shrink-0" />
-                            <span>{project.location}</span>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 md:gap-y-2 mb-3 md:mb-4 text-xs md:text-sm">
+                          <div className="flex items-center gap-1.5 text-slate-600 min-w-0">
+                            <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                            <span className="truncate">{project.location}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <IndianRupee className="w-4 h-4 flex-shrink-0" />
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <IndianRupee className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
                             <span className="font-semibold">₹{project.payout?.toLocaleString()}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Calendar className="w-4 h-4 flex-shrink-0" />
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
                             <span>{format(new Date(project.start_date), 'MMM d')} - {format(new Date(project.end_date), 'MMM d, yyyy')}</span>
                           </div>
                           {project.total_slots && (
-                            <div className="flex items-center gap-2 text-slate-600">
-                              <Users className="w-4 h-4 flex-shrink-0" />
-                              <span>{project.filled_slots || 0}/{project.total_slots} requirement filled</span>
+                            <div className="flex items-center gap-1.5 text-slate-600">
+                              <Users className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                              <span>{project.filled_slots || 0}/{project.total_slots} filled</span>
                             </div>
                           )}
                         </div>
 
-                        <p className="text-sm text-slate-600 mb-4 line-clamp-3">{project.description}</p>
+                        <p className="text-xs md:text-sm text-slate-600 mb-3 md:mb-4 line-clamp-2 md:line-clamp-3">{project.description}</p>
 
-                        <div className="bg-slate-50 rounded-lg p-3 mb-4 text-xs">
-                          <p className="text-slate-500 font-medium mb-1">Application Period</p>
+                        <div className="bg-slate-50 rounded-lg p-2 md:p-3 mb-3 md:mb-4 text-xs">
+                          <p className="text-slate-500 font-medium mb-0.5 md:mb-1">Application Period</p>
                           <p className="text-slate-700">
                             {format(new Date(project.application_start_date), 'MMM d, h:mm a')} - {format(new Date(project.application_end_date), 'MMM d, yyyy h:mm a')}
                           </p>

@@ -97,23 +97,23 @@ export default function FreelancerDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 md:p-8 text-white">
-        <div className="flex items-center gap-4">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-4 md:p-8 text-white">
+        <div className="flex items-center gap-3 md:gap-4">
           {employee?.profile_photo ? (
-            <img src={employee.profile_photo} alt="" className="w-20 h-20 rounded-full object-cover border-4 border-white/30" />
+            <img src={employee.profile_photo} alt="" className="w-14 h-14 md:w-20 md:h-20 rounded-full object-cover border-2 md:border-4 border-white/30 flex-shrink-0" />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-bold">
+            <div className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white/20 flex items-center justify-center text-xl md:text-3xl font-bold flex-shrink-0">
               {user?.full_name?.[0] || 'F'}
             </div>
           )}
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-3xl font-bold truncate">
               Welcome, {user?.full_name?.split(' ')[0] || 'Freelancer'}!
             </h1>
-            <p className="text-purple-100 mt-1">
+            <p className="text-purple-100 mt-0.5 md:mt-1 text-xs md:text-base">
               {format(new Date(), 'EEEE, MMMM d, yyyy')}
             </p>
-            <Badge className="mt-2 bg-white/20 text-white border-white/30">
+            <Badge className="mt-1.5 md:mt-2 bg-white/20 text-white border-white/30 text-xs">
               Contractual Employee
             </Badge>
           </div>
@@ -121,35 +121,35 @@ export default function FreelancerDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Briefcase className="w-5 h-5 text-purple-600" />
+          <CardContent className="p-3 md:pt-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 bg-purple-100 rounded-lg md:rounded-xl flex-shrink-0">
+                <Briefcase className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">
+              <div className="min-w-0">
+                <p className="text-xl md:text-2xl font-bold text-slate-800">
                   {employee?.date_of_joining ? 
                     Math.floor((new Date() - new Date(employee.date_of_joining)) / (1000 * 60 * 60 * 24)) 
                     : 0}
                 </p>
-                <p className="text-sm text-slate-500">Days with us</p>
+                <p className="text-xs md:text-sm text-slate-500">Days with us</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Link to={createPageUrl("FreelancerProjects")} className="block">
-          <Card className="border-0 shadow-sm hover:shadow-md hover:border-amber-300 border transition-all cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-amber-100 rounded-xl">
-                  <Briefcase className="w-5 h-5 text-amber-600" />
+          <Card className="border-0 shadow-sm hover:shadow-md hover:border-amber-300 border transition-all cursor-pointer h-full">
+            <CardContent className="p-3 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-3 bg-amber-100 rounded-lg md:rounded-xl flex-shrink-0">
+                  <Briefcase className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">{openProjects.length}</p>
-                  <p className="text-sm text-slate-500">Open Projects</p>
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold text-slate-800">{openProjects.length}</p>
+                  <p className="text-xs md:text-sm text-slate-500">Open Projects</p>
                 </div>
               </div>
             </CardContent>
@@ -157,49 +157,49 @@ export default function FreelancerDashboard() {
         </Link>
 
         <Card className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <Award className="w-5 h-5 text-green-600" />
+          <CardContent className="p-3 md:pt-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 md:p-3 bg-green-100 rounded-lg md:rounded-xl flex-shrink-0">
+                <Award className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">
+              <div className="min-w-0">
+                <p className="text-base md:text-2xl font-bold text-slate-800">
                   {employee?.status === 'active' ? 'Active' : 'Pending'}
                 </p>
-                <p className="text-sm text-slate-500">Status</p>
+                <p className="text-xs md:text-sm text-slate-500">Status</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Link to={createPageUrl("FreelancerProjects")} className="block">
-          <Card className="border-0 shadow-sm hover:shadow-md hover:border-indigo-300 border transition-all cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-indigo-100 rounded-xl">
-                  <ListTodo className="w-5 h-5 text-indigo-600" />
+          <Card className="border-0 shadow-sm hover:shadow-md hover:border-indigo-300 border transition-all cursor-pointer h-full">
+            <CardContent className="p-3 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-3 bg-indigo-100 rounded-lg md:rounded-xl flex-shrink-0">
+                  <ListTodo className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">{pendingTasksCount}</p>
-                  <p className="text-sm text-slate-500">Pending Tasks</p>
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold text-slate-800">{pendingTasksCount}</p>
+                  <p className="text-xs md:text-sm text-slate-500">Pending Tasks</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </Link>
 
-        <Link to={`${createPageUrl("FreelancerPayrollView")}?month=${encodeURIComponent(lastMonth)}`} className="block">
-          <Card className="border-0 shadow-sm hover:shadow-md hover:border-emerald-300 border transition-all cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-emerald-100 rounded-xl">
-                  <IndianRupee className="w-5 h-5 text-emerald-600" />
+        <Link to={`${createPageUrl("FreelancerPayrollView")}?month=${encodeURIComponent(lastMonth)}`} className="block col-span-2 md:col-span-1">
+          <Card className="border-0 shadow-sm hover:shadow-md hover:border-emerald-300 border transition-all cursor-pointer h-full">
+            <CardContent className="p-3 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-3 bg-emerald-100 rounded-lg md:rounded-xl flex-shrink-0">
+                  <IndianRupee className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-800">
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold text-slate-800">
                     {lastMonthEarnings > 0 ? `₹${lastMonthEarnings.toLocaleString('en-IN')}` : '—'}
                   </p>
-                  <p className="text-sm text-slate-500">Last Month Payout</p>
+                  <p className="text-xs md:text-sm text-slate-500">Last Month Payout</p>
                   <p className="text-xs text-emerald-600 font-medium">{lastMonth}</p>
                 </div>
               </div>
@@ -282,7 +282,27 @@ export default function FreelancerDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Mobile card layout */}
+            <div className="md:hidden space-y-3">
+              {testResults.map((result) => (
+                <div key={result.id} className="p-3 rounded-lg border border-slate-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-semibold text-slate-800 text-sm">{result.test_title}</h4>
+                    <Badge className={result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                      {result.passed ? 'Passed' : 'Failed'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-slate-500">Score:</span> <span className="font-semibold">{result.score}/{result.total_marks}</span></div>
+                    <div><span className="text-slate-500">Percentage:</span> <span className="font-semibold">{result.percentage}%</span></div>
+                    <div><span className="text-slate-500">Time:</span> <span className="font-semibold">{Math.floor(result.time_taken_seconds / 60)}:{(result.time_taken_seconds % 60).toString().padStart(2, '0')}</span></div>
+                    <div><span className="text-slate-500">Date:</span> <span className="font-semibold">{format(new Date(result.created_date), 'MMM d, yyyy')}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop table layout */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-left border-b border-slate-100">
