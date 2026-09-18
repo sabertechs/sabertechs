@@ -37,6 +37,88 @@ export default function ProjectReport({ onBack }) {
     queryFn: () => base44.entities.ProjectGroup.list("-created_date", 1000),
   });
 
+  // Attendance tasks (selfie/attendance/geotag) across all projects
+  const { data: attTasks = [] } = useQuery({
+    queryKey: ["project-att-tasks-all"],
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      while (true) {
+        const batch = await base44.entities.ProjectTask.filter({}, "created_date", 1000, skip);
+        all.push(...batch);
+        if (batch.length < 1000) break;
+        skip += 1000;
+      }
+      return all.filter((t) => /selfie|attendance|geotag/i.test(t.title || ""));
+    },
+  });
+
+  // All task responses (paginated) for attendance computation
+  const { data: attResponses = [] } = useQuery({
+    queryKey: ["project-att-responses-all"],
+    queryFn: async () => {
+      const all = [];
+      let skip = 0;
+      while (true) {
+        const batch = await base44.entities.TaskResponse.filter({}, "-created_date", 1000, skip);
+        all.push(...batch);
+        if (batch.length < 1000) break;
+        skip += 1000;
+      }
+      return all;
+    },
+  });
+
+  // Per-project attendance summary: { assigned, totalPresent, totalExpected, rate, daysTracked }
+  const attendanceByProject = useMemo(() => {
+    const attTaskIds = new Set(attTasks.map((t) => t.id));
+    const assignedByProject = {};
+    applications.forEach((a) => {
+      if (a.status === "accepted") {
+        assignedByProject[a.project_id] = (assignedByProject[a.project_id] || 0) + 1;
+      }
+    });
+    // date -> project -> set of emails
+    const checkins = {};
+    attResponses.forEach((r) => {
+      if (!attTaskIds.has(r.task_id) || !r.submission_date) return;
+      const d = new Date(r.submission_date);
+      const key = `${r.project_id}|${d.toISOString().slice(0, 10)}`;
+      if (!checkins[key]) checkins[key] = new Set();
+      checkins[key].add(r.freelancer_email);
+    });
+    const summary = {};
+    projects.forEach((p) => {
+      const assigned = assignedByProject[p.id] || 0;
+      if (!p.start_date || !p.end_date || assigned === 0) {
+        summary[p.id] = { assigned, totalPresent: 0, totalExpected: 0, rate: 0, daysTracked: 0 };
+        return;
+      }
+      const start = new Date(p.start_date);
+      const end = new Date(p.end_date);
+      if (isNaN(start) || isNaN(end) || start > end) {
+        summary[p.id] = { assigned, totalPresent: 0, totalExpected: 0, rate: 0, daysTracked: 0 };
+        return;
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let totalExpected = 0;
+      let totalPresent = 0;
+      let daysTracked = 0;
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (d > today) break;
+        daysTracked++;
+        totalExpected += assigned;
+        const key = `${p.id}|${d.toISOString().slice(0, 10)}`;
+        const presentSet = checkins[key];
+        if (presentSet) totalPresent += Math.min(presentSet.size, assigned);
+      }
+      const rate = totalExpected > 0 ? Math.round((totalPresent / totalExpected) * 100) : 0;
+      summary[p.id] = { assigned, totalPresent, totalExpected, rate, daysTracked };
+    });
+    return summary;
+  }, [attTasks, attResponses, applications, projects]);
+
   // Build app counts per project
   const appCounts = useMemo(() => {
     const counts = {};
@@ -89,6 +171,7 @@ export default function ProjectReport({ onBack }) {
   const handleDownload = () => {
     const rows = filtered.map(p => {
       const counts = appCounts[p.id] || {};
+      const att = attendanceByProject[p.id] || { assigned: 0, daysTracked: 0, totalPresent: 0, totalExpected: 0, rate: 0 };
       const fillPct = p.total_slots ? Math.round(((p.filled_slots || 0) / p.total_slots) * 100) : 0;
       return {
         Project_Code: p.project_code || "",
@@ -113,6 +196,11 @@ export default function ProjectReport({ onBack }) {
         Supervisor_Email: p.supervisor_email || "",
         App_Start: formatDate(p.application_start_date),
         App_End: formatDate(p.application_end_date),
+        Assigned_Freelancers: att.assigned,
+        Days_Tracked: att.daysTracked,
+        Total_Checkins: att.totalPresent,
+        Expected_Checkins: att.totalExpected,
+        Attendance_Rate: att.rate + "%",
       };
     });
     downloadCSV(rows, "Project_Report.csv");
