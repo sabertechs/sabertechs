@@ -184,7 +184,7 @@ export default function FreelancerProjects() {
                           {project.total_slots && (
                             <div className="flex items-center gap-2 text-slate-600">
                               <Users className="w-4 h-4 flex-shrink-0" />
-                              <span>{project.filled_slots || 0}/{project.total_slots} slots filled</span>
+                              <span>{project.filled_slots || 0}/{project.total_slots} requirement filled</span>
                             </div>
                           )}
                         </div>

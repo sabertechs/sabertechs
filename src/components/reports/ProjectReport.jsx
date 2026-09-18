@@ -182,7 +182,7 @@ export default function ProjectReport({ onBack }) {
         Location: p.location || "",
         Start_Date: formatDate(p.start_date),
         End_Date: formatDate(p.end_date),
-        Total_Slots: p.total_slots ?? "",
+        Total_Requirement: p.total_slots ?? "",
         Filled_Slots: p.filled_slots ?? "",
         Fill_Percentage: fillPct + "%",
         Payout: p.payout ?? "",
@@ -277,7 +277,7 @@ export default function ProjectReport({ onBack }) {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 sticky top-0">
                 <tr>
-                  {["Code", "Project", "Status", "Mode", "Priority", "Location", "Dates", "Slots", "Applications", "Payout", "Attendance"].map(h => (
+                  {["Code", "Project", "Status", "Mode", "Priority", "Location", "Dates", "Requirement", "Applications", "Payout", "Attendance"].map(h => (
                     <th key={h} className="text-left px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
