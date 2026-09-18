@@ -689,7 +689,7 @@ export default function ProjectManagement() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Total Slots</Label>
+                <Label>Total Requirement</Label>
                 <Input
                   type="number"
                   value={formData.total_slots}

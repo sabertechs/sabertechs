@@ -209,17 +209,24 @@ export default function ProjectAnalytics() {
         name: p.name.length > 20 ? p.name.slice(0, 20) + '…' : p.name,
         fullName: p.name,
         location: p.location,
+        requirement: p.total_slots || 0,
         assigned: assigned.length,
         checkedIn: checkedIn.length,
         absent: assigned.length - checkedIn.length,
         rate: assigned.length > 0 ? Math.round((checkedIn.length / assigned.length) * 100) : 0,
+        requirementMet: (p.total_slots || 0) > 0 ? assigned.length >= p.total_slots : true,
+        shortfall: (p.total_slots || 0) > 0 ? Math.max(0, p.total_slots - assigned.length) : 0,
       };
-    }).filter(p => p.assigned > 0);
+    }).filter(p => p.assigned > 0 || p.requirement > 0);
   }, [filtered, acceptedByProject, attendanceTaskIdsByProject, allResponses, dateFrom, dateTo]);
 
   const totalAssignedToday = attendanceByProject.reduce((s, p) => s + p.assigned, 0);
   const totalCheckedInToday = attendanceByProject.reduce((s, p) => s + p.checkedIn, 0);
   const totalAbsentToday = attendanceByProject.reduce((s, p) => s + p.absent, 0);
+  const totalRequirement = attendanceByProject.reduce((s, p) => s + p.requirement, 0);
+  const totalShortfall = attendanceByProject.reduce((s, p) => s + p.shortfall, 0);
+  const requirementMetCount = attendanceByProject.filter(p => p.requirementMet).length;
+  const requirementNotMetCount = attendanceByProject.length - requirementMetCount;
   const overallAttendanceRate = totalAssignedToday > 0 ? Math.round((totalCheckedInToday / totalAssignedToday) * 100) : 0;
 
   // Task metrics per project
@@ -562,6 +569,17 @@ export default function ProjectAnalytics() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Card className="border border-slate-200">
               <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  <Briefcase className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Total Requirement</p>
+                  <p className="text-xl font-bold text-slate-800">{totalRequirement}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-indigo-50">
                   <Users className="w-5 h-5 text-indigo-600" />
                 </div>
@@ -584,23 +602,61 @@ export default function ProjectAnalytics() {
             </Card>
             <Card className="border border-slate-200">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-50">
-                  <XCircle className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Not Checked In</p>
-                  <p className="text-xl font-bold text-slate-800">{totalAbsentToday}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-slate-200">
-              <CardContent className="p-4 flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-amber-50">
                   <Camera className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Overall Attendance</p>
                   <p className="text-xl font-bold text-slate-800">{overallAttendanceRate}%</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Requirement vs Assigned status banner */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="border border-slate-200">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500 mb-1">Requirement vs Assigned</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-800">{totalAssignedToday}</span>
+                  <span className="text-sm text-slate-400">/ {totalRequirement} required</span>
+                </div>
+                <div className="mt-2 h-2 bg-slate-100 rounded-full">
+                  <div
+                    className="h-2 rounded-full"
+                    style={{
+                      width: `${totalRequirement > 0 ? Math.min(100, Math.round((totalAssignedToday / totalRequirement) * 100)) : 100}%`,
+                      backgroundColor: totalShortfall === 0 ? "#22c55e" : totalAssignedToday >= totalRequirement ? "#22c55e" : "#f59e0b",
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {totalShortfall === 0
+                    ? "Requirement fully met"
+                    : `Short by ${totalShortfall} freelancer${totalShortfall !== 1 ? 's' : ''}`}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-50">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Requirements Met</p>
+                  <p className="text-xl font-bold text-slate-800">{requirementMetCount} <span className="text-sm font-normal text-slate-400">projects</span></p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-50">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Requirements Not Met</p>
+                  <p className="text-xl font-bold text-slate-800">{requirementNotMetCount} <span className="text-sm font-normal text-slate-400">projects</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -621,9 +677,11 @@ export default function ProjectAnalytics() {
                     <tr className="border-b border-slate-100 bg-slate-50">
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Project</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Location</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Requirement</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Assigned</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Checked In</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Absent</th>
+                      <th className="text-left px-3 py-2 text-slate-500 font-medium">Status</th>
                       <th className="text-left px-3 py-2 text-slate-500 font-medium">Rate</th>
                     </tr>
                   </thead>
@@ -632,9 +690,19 @@ export default function ProjectAnalytics() {
                       <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
                         <td className="px-3 py-2 font-medium text-slate-800">{p.fullName}</td>
                         <td className="px-3 py-2 text-slate-600">{p.location || '—'}</td>
+                        <td className="px-3 py-2 text-slate-600 font-medium">{p.requirement || '—'}</td>
                         <td className="px-3 py-2 text-slate-600">{p.assigned}</td>
                         <td className="px-3 py-2 text-green-600 font-medium">{p.checkedIn}</td>
                         <td className="px-3 py-2 text-red-500 font-medium">{p.absent}</td>
+                        <td className="px-3 py-2">
+                          {p.requirement > 0 ? (
+                            <Badge className={p.requirementMet ? "bg-green-100 text-green-700 text-xs" : "bg-amber-100 text-amber-700 text-xs"}>
+                              {p.requirementMet ? "Met" : `Short by ${p.shortfall}`}
+                            </Badge>
+                          ) : (
+                            <span className="text-slate-400 text-xs">No req.</span>
+                          )}
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-slate-100 rounded-full w-20">
