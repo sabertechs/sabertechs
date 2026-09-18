@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import ReportShell from "./ReportShell";
+import ProjectAttendanceDialog from "./ProjectAttendanceDialog";
 import { downloadCSV, formatDate } from "./reportUtils";
+import { Calendar } from "lucide-react";
 
 export default function ProjectReport({ onBack }) {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -17,6 +20,7 @@ export default function ProjectReport({ onBack }) {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [attendanceProject, setAttendanceProject] = useState(null);
 
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
     queryKey: ["projects-report"],
@@ -185,14 +189,14 @@ export default function ProjectReport({ onBack }) {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 sticky top-0">
                 <tr>
-                  {["Code", "Project", "Status", "Mode", "Priority", "Location", "Dates", "Slots", "Applications", "Payout"].map(h => (
+                  {["Code", "Project", "Status", "Mode", "Priority", "Location", "Dates", "Slots", "Applications", "Payout", "Attendance"].map(h => (
                     <th key={h} className="text-left px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={10} className="text-center py-10 text-slate-400">No records found</td></tr>
+                  <tr><td colSpan={11} className="text-center py-10 text-slate-400">No records found</td></tr>
                 ) : filtered.map(p => {
                   const counts = appCounts[p.id] || {};
                   const fillPct = p.total_slots ? Math.round(((p.filled_slots || 0) / p.total_slots) * 100) : 0;
@@ -218,6 +222,17 @@ export default function ProjectReport({ onBack }) {
                         </div>
                       </td>
                       <td className="px-4 py-3 font-semibold text-green-700">₹{p.payout?.toLocaleString("en-IN") ?? "-"}</td>
+                      <td className="px-4 py-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAttendanceProject(p)}
+                          className="h-8"
+                        >
+                          <Calendar className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                          View
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -226,6 +241,14 @@ export default function ProjectReport({ onBack }) {
           </div>
         </CardContent>
       </Card>
+
+      {attendanceProject && (
+        <ProjectAttendanceDialog
+          project={attendanceProject}
+          open={!!attendanceProject}
+          onOpenChange={(v) => !v && setAttendanceProject(null)}
+        />
+      )}
     </ReportShell>
   );
 }
