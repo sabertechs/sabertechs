@@ -21,15 +21,28 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { updateEntity } from "@/lib/entityMutations";
+import { fetchAllRecords } from "@/lib/paginatedFetch";
 
 export default function ProjectApplicationsTab({ projectId, applications, status }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
+  // When an application is accepted/rejected, recalculate the project's
+  // filled_slots counter from the full accepted-application set so the
+  // Project Management and Analytics pages stay in sync. Without this,
+  // filled_slots stays at 0 forever and assigned-freelancer counts are wrong.
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => updateEntity('ProjectApplication', id, { status }),
+    mutationFn: async ({ id, status, projectId: pid }) => {
+      await updateEntity('ProjectApplication', id, { status });
+      const allApps = await fetchAllRecords(base44.entities.ProjectApplication, { project_id: pid });
+      const acceptedCount = allApps.filter(a => a.status === 'accepted').length;
+      await updateEntity('Project', pid, { filled_slots: acceptedCount });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['projectApplications']);
+      queryClient.invalidateQueries(['projects']);
+      queryClient.invalidateQueries(['project']);
+      queryClient.invalidateQueries(['allApplications']);
       toast.success('Application status updated');
     }
   });
@@ -122,7 +135,7 @@ export default function ProjectApplicationsTab({ projectId, applications, status
                          <>
                            <Button
                              size="sm"
-                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })}
+                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted', projectId: app.project_id })}
                              className="bg-green-600 hover:bg-green-700"
                            >
                              <CheckCircle className="w-4 h-4" />
@@ -130,7 +143,7 @@ export default function ProjectApplicationsTab({ projectId, applications, status
                            <Button
                              size="sm"
                              variant="outline"
-                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
+                             onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected', projectId: app.project_id })}
                              className="text-red-600 hover:bg-red-50"
                            >
                              <XCircle className="w-4 h-4" />
@@ -155,7 +168,7 @@ export default function ProjectApplicationsTab({ projectId, applications, status
                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                <AlertDialogAction
                                  className="bg-red-600 hover:bg-red-700"
-                                 onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
+                                 onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected', projectId: app.project_id })}
                                >
                                  Unassign
                                </AlertDialogAction>
@@ -167,7 +180,7 @@ export default function ProjectApplicationsTab({ projectId, applications, status
                          <Button
                            size="sm"
                            variant="outline"
-                           onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted' })}
+                           onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'accepted', projectId: app.project_id })}
                            className="text-green-600 hover:bg-green-50 border-green-200"
                          >
                            <CheckCircle className="w-4 h-4 mr-1" /> Re-assign
