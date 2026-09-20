@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, isAfter } from "date-fns";
+import { fetchAllRecords } from "@/lib/paginatedFetch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -31,36 +32,28 @@ export default function ProjectAnalytics() {
   const [workMode, setWorkMode] = useState("all");
   const [priority, setPriority] = useState("all");
 
+  // All four data sources are paginated through fetchAllRecords to bypass the
+  // ~100 record default cap on list()/filter(). Without this, approved
+  // applications and attendance tasks beyond the first ~100 records are
+  // silently dropped, causing undercounted metrics.
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
-    queryFn: () => base44.entities.Project.list("-created_date"),
+    queryFn: () => fetchAllRecords(base44.entities.Project),
   });
 
   const { data: applications = [] } = useQuery({
     queryKey: ["allApplications"],
-    queryFn: () => base44.entities.ProjectApplication.list("-created_date", 500),
+    queryFn: () => fetchAllRecords(base44.entities.ProjectApplication),
   });
 
   const { data: allTasks = [] } = useQuery({
     queryKey: ["allProjectTasks"],
-    queryFn: () => base44.entities.ProjectTask.list("-created_date", 1000),
+    queryFn: () => fetchAllRecords(base44.entities.ProjectTask),
   });
 
-  // Fetch all task responses (paginated to bypass ~100 record cap)
   const { data: allResponses = [] } = useQuery({
     queryKey: ["allTaskResponses"],
-    queryFn: async () => {
-      const all = [];
-      let skip = 0;
-      const pageSize = 1000;
-      while (true) {
-        const batch = await base44.entities.TaskResponse.filter({}, "-created_date", pageSize, skip);
-        all.push(...batch);
-        if (batch.length < pageSize) break;
-        skip += pageSize;
-      }
-      return all;
-    },
+    queryFn: () => fetchAllRecords(base44.entities.TaskResponse),
   });
 
   // Apply filters
