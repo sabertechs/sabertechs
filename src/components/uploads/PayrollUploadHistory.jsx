@@ -66,15 +66,20 @@ export default function PayrollUploadHistory() {
     setDeleting(true);
     setDeleteProgress(5);
     try {
-      // 1. Count associated payroll records
+      // 1. Fetch all payroll record IDs for this batch
       const records = await fetchAllRecords(base44.entities.FreelancerPayroll, { upload_batch: confirmDelete.batch_id });
-      setDeleteProgress(30);
+      const total = records.length;
+      setDeleteProgress(15);
 
-      // 2. Delete all FreelancerPayroll records linked to this batch
-      if (records.length > 0) {
-        await base44.entities.FreelancerPayroll.deleteMany({ upload_batch: confirmDelete.batch_id });
+      // 2. Delete in chunks of 500 (deleteMany caps large batches)
+      if (total > 0) {
+        const CHUNK = 500;
+        for (let i = 0; i < total; i += CHUNK) {
+          const ids = records.slice(i, i + CHUNK).map(r => r.id);
+          await base44.entities.FreelancerPayroll.deleteMany({ id: { $in: ids } });
+          setDeleteProgress(15 + Math.min(75, Math.round(((i + CHUNK) / total) * 75)));
+        }
       }
-      setDeleteProgress(70);
 
       // 3. Delete the UploadHistory record itself
       await base44.entities.UploadHistory.delete(confirmDelete.id);
