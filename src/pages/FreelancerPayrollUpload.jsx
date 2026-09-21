@@ -1,17 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Upload, Trash2, FileSpreadsheet, Users, Download, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { parseSpreadsheetDate } from "@/lib/spreadsheetDateUtils";
-import { deleteEntity } from "@/lib/entityMutations";
+import PayrollUploadHistory from "@/components/uploads/PayrollUploadHistory";
 
 function downloadSample() {
   const headers = ['Date (YYYY-MM-DD)', 'Proctor Name', 'Mobile Number', 'Email ID', 'Client Name', 'Drive timing', 'Role', 'Payment'];
@@ -48,28 +46,11 @@ export default function FreelancerPayrollUpload() {
   const [uploadError, setUploadError] = useState(null);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null); // { validRecords, rejectedRows, totalRows, batchId, fileName }
-  const [confirmDeleteBatch, setConfirmDeleteBatch] = useState(null);
-  const [deleteProgress, setDeleteProgress] = useState(0);
-  const [deleting, setDeleting] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const { data: records = [] } = useQuery({
-    queryKey: ['freelancerPayrollAll'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('getPayrollRecords', {});
-      return res.data?.records || [];
-    },
-    staleTime: 30 * 1000,
-  });
-
-  // Group by batch
-  const batches = records.reduce((acc, r) => {
-    const key = r.upload_batch || 'unknown';
-    if (!acc[key]) acc[key] = { batch: key, month: r.project_month, count: 0, freelancers: new Set(), created: r.created_date };
-    acc[key].count++;
-    acc[key].freelancers.add(r.proctor_email);
-    return acc;
-  }, {});
-  const batchList = Object.values(batches).sort((a, b) => new Date(b.created) - new Date(a.created));
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   const parseFileToRows = (file) => {
     return new Promise((resolve, reject) => {
@@ -229,6 +210,35 @@ export default function FreelancerPayrollUpload() {
       });
 
       if (inserted > 0) {
+        // Save original file to private storage for admin auditing
+        let fileUri = null;
+        try {
+          const uploadRes = await base44.integrations.Core.UploadPrivateFile({ file });
+          fileUri = uploadRes.file_uri;
+        } catch (e) {
+          console.warn('Could not save original file:', e.message);
+        }
+
+        // Create UploadHistory record linking to this batch
+        try {
+          await base44.entities.UploadHistory.create({
+            upload_type: 'payroll',
+            file_name: preview.fileName,
+            file_uri: fileUri,
+            batch_id: preview.batchId,
+            uploaded_by_email: user?.email || '',
+            uploaded_by_name: user?.full_name || '',
+            upload_timestamp: new Date().toISOString(),
+            total_records: totalRows,
+            success_count: inserted,
+            failed_count: insertErrors.length,
+            skipped_count: rejectedRows.length,
+          });
+          queryClient.invalidateQueries(['payrollUploadHistory']);
+        } catch (e) {
+          console.warn('Could not create upload history:', e.message);
+        }
+
         toast.success(`Uploaded ${inserted} of ${totalRows} records successfully`);
         setFile(null);
         setPreview(null);
@@ -239,34 +249,6 @@ export default function FreelancerPayrollUpload() {
     } finally {
       setUploading(false);
       setTimeout(() => setProgress(0), 2000);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!confirmDeleteBatch) return;
-    const batchId = confirmDeleteBatch.batch;
-    setDeleting(true);
-    setDeleteProgress(5);
-    try {
-      const toDelete = await base44.entities.FreelancerPayroll.filter({ upload_batch: batchId });
-      if (toDelete.length === 0) {
-        toast.error('No records found for this batch');
-        return;
-      }
-      let deleted = 0;
-      for (let i = 0; i < toDelete.length; i++) {
-        await deleteEntity('FreelancerPayroll', toDelete[i].id);
-        deleted++;
-        setDeleteProgress(Math.round((deleted / toDelete.length) * 100));
-      }
-      queryClient.invalidateQueries(['freelancerPayrollAll']);
-      toast.success(`Deleted ${deleted} records from batch`);
-    } catch (e) {
-      toast.error('Delete failed: ' + e.message);
-    } finally {
-      setDeleting(false);
-      setDeleteProgress(0);
-      setConfirmDeleteBatch(null);
     }
   };
 
@@ -465,82 +447,7 @@ export default function FreelancerPayrollUpload() {
       )}
 
       {/* Upload History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Upload History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {batchList.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">No uploads yet</p>
-          ) : (
-            <div className="space-y-3">
-              {batchList.map((b) => (
-                <div key={b.batch} className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-white">
-                  <div className="flex items-center gap-4">
-                    <FileSpreadsheet className="w-8 h-8 text-green-500" />
-                    <div>
-                      <p className="font-medium text-slate-800">{b.batch}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        {b.month && <Badge variant="outline">{b.month}</Badge>}
-                        <span className="text-sm text-slate-500 flex items-center gap-1">
-                          <Users className="w-3 h-3" /> {b.freelancers.size} freelancers · {b.count} records
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          {b.created ? format(new Date(b.created), 'dd MMM yyyy, h:mm a') : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:bg-red-50"
-                    onClick={() => setConfirmDeleteBatch(b)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!confirmDeleteBatch} onOpenChange={() => { if (!deleting) setConfirmDeleteBatch(null); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
-              <Trash2 className="w-5 h-5" /> Delete Batch
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete all <strong>{confirmDeleteBatch?.count} records</strong> from batch <strong>{confirmDeleteBatch?.batch}</strong>?
-              {confirmDeleteBatch?.month && <> (Month: <strong>{confirmDeleteBatch.month}</strong>)</>}
-              <br /><span className="text-red-600 font-medium">This action cannot be undone.</span>
-            </DialogDescription>
-          </DialogHeader>
-
-          {deleting && (
-            <div className="space-y-2 py-2">
-              <Progress value={deleteProgress} className="h-2" />
-              <p className="text-xs text-slate-500 text-center">Deleting records… {deleteProgress}%</p>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteBatch(null)} disabled={deleting}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleConfirmDelete}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting...' : 'Yes, Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PayrollUploadHistory />
     </div>
   );
 }

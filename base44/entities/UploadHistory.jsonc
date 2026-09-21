@@ -14,6 +14,10 @@
       "type": "string",
       "description": "Private-storage URI of the original uploaded file, for admin download"
     },
+    "batch_id": {
+      "type": "string",
+      "description": "Batch ID linking to associated FreelancerPayroll records (for payroll uploads)"
+    },
     "uploaded_by_email": {
       "type": "string",
       "format": "email",
