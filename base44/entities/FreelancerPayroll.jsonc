@@ -75,6 +75,11 @@
         },
         {
           "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        },
+        {
+          "user_condition": {
             "data.designation": "HR Head"
           }
         },
@@ -86,11 +91,6 @@
         {
           "user_condition": {
             "data.designation": "Assistant Manager"
-          }
-        },
-        {
-          "user_condition": {
-            "email": "jasmeet@sabertechs.com"
           }
         }
       ]
