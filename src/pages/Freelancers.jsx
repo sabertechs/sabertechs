@@ -30,7 +30,8 @@ import {
   MapPin,
   Briefcase,
   MessageCircle,
-  RefreshCw
+  RefreshCw,
+  Landmark
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1539,10 +1540,11 @@ export default function Freelancers() {
           </DialogHeader>
           {selectedEmployee && (
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="basic"><User className="w-4 h-4 mr-2" />Basic</TabsTrigger>
                 <TabsTrigger value="personal"><CreditCard className="w-4 h-4 mr-2" />Personal</TabsTrigger>
                 <TabsTrigger value="address"><MapPin className="w-4 h-4 mr-2" />Address</TabsTrigger>
+                <TabsTrigger value="banking"><Landmark className="w-4 h-4 mr-2" />Banking</TabsTrigger>
                 <TabsTrigger value="documents"><FileText className="w-4 h-4 mr-2" />Documents</TabsTrigger>
               </TabsList>
 
@@ -1660,6 +1662,31 @@ export default function Freelancers() {
                       <p className="text-sm text-slate-500">Pincode</p>
                       <p className="font-medium">{selectedEmployee.pincode || '-'}</p>
                     </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="banking" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Bank Name</p>
+                    <p className="font-medium">{selectedEmployee.bank_name || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Account Holder Name</p>
+                    <p className="font-medium">{selectedEmployee.account_holder_name || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">Account Number</p>
+                    <p className="font-medium">{selectedEmployee.bank_account_number || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-sm text-slate-500">IFSC Code</p>
+                    <p className="font-medium">{selectedEmployee.bank_ifsc || '-'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl col-span-2">
+                    <p className="text-sm text-slate-500">Bank Branch</p>
+                    <p className="font-medium">{selectedEmployee.bank_branch || '-'}</p>
                   </div>
                 </div>
               </TabsContent>

@@ -93,7 +93,7 @@ export default function AddEmployee() {
         full_name: formData.full_name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
-        department: formData.department.toLowerCase(),
+        department: formData.department.trim(),
         designation: formData.designation.trim(),
         date_of_joining: formData.date_of_joining,
         employee_id: newEmployeeId,
@@ -208,16 +208,18 @@ export default function AddEmployee() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Department *</Label>
-                  <Select value={formData.department} onValueChange={(v) => setFormData({...formData, department: v})}>
-                    <SelectTrigger className={errors.department ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map(d => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    list="department-list"
+                    value={formData.department}
+                    onChange={(e) => setFormData({...formData, department: e.target.value})}
+                    placeholder="Select or type department"
+                    className={errors.department ? "border-red-500" : ""}
+                  />
+                  <datalist id="department-list">
+                    {departments.map(d => (
+                      <option key={d.id} value={d.name} />
+                    ))}
+                  </datalist>
                   {errors.department && <p className="text-xs text-red-600">{errors.department}</p>}
                 </div>
                 <div className="space-y-2">

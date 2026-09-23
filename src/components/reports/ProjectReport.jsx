@@ -139,6 +139,22 @@ export default function ProjectReport({ onBack }) {
     return counts;
   }, [groups]);
 
+  // Accepted freelancer details per project for CSV export
+  const acceptedFreelancersByProject = useMemo(() => {
+    const map = {};
+    applications.forEach(app => {
+      if (app.status === 'accepted') {
+        if (!map[app.project_id]) map[app.project_id] = [];
+        map[app.project_id].push({
+          name: app.freelancer_name || '',
+          email: app.freelancer_email || '',
+          phone: app.freelancer_phone || ''
+        });
+      }
+    });
+    return map;
+  }, [applications]);
+
   const filtered = useMemo(() => {
     return projects.filter(p => {
       if (statusFilter !== "all" && p.status !== statusFilter) return false;
@@ -201,6 +217,9 @@ export default function ProjectReport({ onBack }) {
         Total_Checkins: att.totalPresent,
         Expected_Checkins: att.totalExpected,
         Attendance_Rate: att.rate + "%",
+        Accepted_Freelancers: (acceptedFreelancersByProject[p.id] || []).map(f => f.name).join('; '),
+        Freelancer_Emails: (acceptedFreelancersByProject[p.id] || []).map(f => f.email).join('; '),
+        Freelancer_Phones: (acceptedFreelancersByProject[p.id] || []).map(f => f.phone).join('; '),
       };
     });
     downloadCSV(rows, "Project_Report.csv");
