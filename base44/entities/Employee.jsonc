@@ -91,6 +91,11 @@
       "format": "date",
       "description": "End date for contractual employees"
     },
+    "termination_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date employee was terminated or left \u2014 used for mid-month exit salary proration"
+    },
     "work_type": {
       "type": "string",
       "enum": [

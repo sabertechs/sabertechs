@@ -1,0 +1,174 @@
+{
+  "name": "PayrollSettings",
+  "type": "object",
+  "properties": {
+    "setting_key": {
+      "type": "string",
+      "description": "Unique key \u2014 use 'default' for company-wide settings"
+    },
+    "weekly_offs": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Day of week (0=Sun, 1=Mon, ..., 6=Sat) that are weekly offs. Empty array = all days working.",
+      "default": []
+    },
+    "proration_basis": {
+      "type": "string",
+      "enum": [
+        "scheduled_working_days",
+        "calendar_days",
+        "no_proration_full_month"
+      ],
+      "default": "no_proration_full_month",
+      "description": "How salary is prorated when an employee works part of a month"
+    },
+    "half_day_pay_factor": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Fraction of a full day's pay for half-day attendance"
+    },
+    "holiday_is_paid": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether holidays are counted as paid days"
+    },
+    "weekly_off_is_paid": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether weekly offs are counted as paid days"
+    },
+    "pf_employee_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Employee PF contribution rate (% of basic, capped at pf_wage_threshold). 0 = disabled. Requires payroll-specialist validation."
+    },
+    "pf_wage_threshold": {
+      "type": "number",
+      "default": 15000,
+      "description": "Monthly wage ceiling for PF calculation (INR). PF is calculated on min(basic, threshold)."
+    },
+    "esi_employee_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Employee ESI contribution rate (% of gross). 0 = disabled. Requires payroll-specialist validation."
+    },
+    "esi_threshold": {
+      "type": "number",
+      "default": 21000,
+      "description": "Monthly gross salary threshold (INR). ESI applies only if gross <= threshold."
+    },
+    "pt_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed monthly professional tax (INR). 0 = disabled. Varies by state \u2014 requires specialist validation."
+    },
+    "lwf_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Fixed monthly Labour Welfare Fund deduction (INR). 0 = disabled. Varies by state."
+    },
+    "tds_mode": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "percentage"
+      ],
+      "default": "manual",
+      "description": "manual = TDS set per-payslip externally; percentage = tds_rate % of gross"
+    },
+    "tds_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "TDS rate (% of gross) when tds_mode is 'percentage'. 0 = no TDS."
+    },
+    "rounding_mode": {
+      "type": "string",
+      "enum": [
+        "round",
+        "floor",
+        "ceil",
+        "none"
+      ],
+      "default": "round",
+      "description": "Rounding mode for all monetary values"
+    },
+    "rounding_decimals": {
+      "type": "number",
+      "default": 0,
+      "description": "Decimal places for rounding (0 = nearest rupee)"
+    },
+    "treat_pending_as_absent": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, unmarked attendance (pending) is treated as absent. If false, flags as incomplete and skips payslip."
+    }
+  },
+  "required": [
+    "setting_key"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        },
+        {
+          "user_condition": {
+            "data.designation": "HR Head"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "data.designation": "Admin"
+          }
+        },
+        {
+          "user_condition": {
+            "email": "jasmeet@sabertechs.com"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -30,6 +30,10 @@
       ],
       "default": "present"
     },
+    "leave_type": {
+      "type": "string",
+      "description": "Leave type code or name (references LeaveType entity). Used when status is 'leave' to determine paid vs unpaid."
+    },
     "working_hours": {
       "type": "number"
     },

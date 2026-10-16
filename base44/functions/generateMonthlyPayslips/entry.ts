@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import { can } from '../../shared/permissions.ts';
+import { calculatePayroll, DEFAULT_PAYROLL_SETTINGS } from '../../shared/payrollCalc.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -9,142 +10,167 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    // Generating payslips is a protected employee-payroll operation.
     if (!(await can(base44, user, 'payroll.employee.edit'))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { month, year } = await req.json();
-
+    const { month, year, employee_emails } = await req.json();
     if (!month || !year) {
       return Response.json({ error: 'Month and year are required' }, { status: 400 });
     }
 
-    // Get all active permanent employees (exclude freelancers)
-    const allEmployees = await base44.asServiceRole.entities.Employee.list();
-    const employees = allEmployees.filter(emp => 
-      emp.status === 'active' && 
-      emp.employment_type === 'permanent'
-    );
-
-    // Calculate days in month (UTC — never use local Date, it shifts the date in IST)
-    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
     const monthStr = String(month).padStart(2, '0');
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
     const startDateStr = `${year}-${monthStr}-01`;
     const endDateStr = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+
+    // --- Load payroll settings ---
+    const settingsRecords = await base44.asServiceRole.entities.PayrollSettings.filter({ setting_key: 'default' });
+    const settings = settingsRecords.length > 0
+      ? { ...DEFAULT_PAYROLL_SETTINGS, ...settingsRecords[0] }
+      : { ...DEFAULT_PAYROLL_SETTINGS };
+
+    // --- Load holidays for the month ---
+    const holidays = await base44.asServiceRole.entities.Holiday.filter({
+      date: { $gte: startDateStr, $lte: endDateStr }
+    });
+
+    // --- Load leave types (build lookup map: code/name -> is_paid) ---
+    const leaveTypesRaw = await base44.asServiceRole.entities.LeaveType.filter({ is_active: true });
+    const leaveTypes: Record<string, boolean> = {};
+    for (const lt of leaveTypesRaw) {
+      if (lt.code) leaveTypes[lt.code] = lt.is_paid;
+      if (lt.name) leaveTypes[lt.name] = lt.is_paid;
+    }
+
+    // --- Fetch all permanent employees (active + terminated during this month) ---
+    const allEmployees = await base44.asServiceRole.entities.Employee.list();
+    const employees = allEmployees.filter(emp => {
+      if (emp.employment_type !== 'permanent') return false;
+      // If employee_emails filter is provided, only process those employees
+      if (employee_emails && Array.isArray(employee_emails) && !employee_emails.includes(emp.email)) return false;
+      if (emp.status === 'active') return true;
+      // Include employees terminated during this month
+      if ((emp.status === 'inactive' || emp.status === 'terminated') && emp.termination_date) {
+        return emp.termination_date >= startDateStr && emp.termination_date <= endDateStr;
+      }
+      return false;
+    });
 
     const results = {
       success: [],
       failed: [],
-      incomplete_attendance: []
+      skipped: [],
     };
 
     for (const emp of employees) {
       try {
-        // Check if all days have attendance marked
+        // --- Prevent duplicate payslips ---
+        const payslipKey = `${emp.email}|${monthStr}|${year}`;
+        const existing = await base44.asServiceRole.entities.Payslip.filter({
+          employee_email: emp.email,
+          month: monthStr,
+          year: year,
+        });
+
+        if (existing.length > 0) {
+          results.skipped.push({
+            employee_name: emp.full_name,
+            reason: 'Payslip already exists for this period',
+          });
+          continue;
+        }
+
+        // --- Load attendance for the month ---
         const attendance = await base44.asServiceRole.entities.Attendance.filter({
           employee_email: emp.email,
-          date: {
-            $gte: startDateStr,
-            $lte: endDateStr
-          }
+          date: { $gte: startDateStr, $lte: endDateStr },
         });
 
-        // Check if attendance is complete (all days marked)
-        if (attendance.length < daysInMonth) {
-          results.incomplete_attendance.push({
-            employee_name: emp.full_name,
-            employee_email: emp.email,
-            marked_days: attendance.length,
-            total_days: daysInMonth,
-            missing_days: daysInMonth - attendance.length
-          });
-          continue;
-        }
+        // --- Calculate payroll ---
+        const calc = calculatePayroll(emp, attendance, holidays, leaveTypes, settings, month, year);
 
-        // Check if payslip already exists
-        const existingPayslips = await base44.asServiceRole.entities.Payslip.filter({
-          employee_email: emp.email,
-          month: month.toString().padStart(2, '0'),
-          year: year
-        });
-
-        if (existingPayslips.length > 0) {
+        // --- Check for calculation errors ---
+        if (calc.errors.length > 0) {
           results.failed.push({
             employee_name: emp.full_name,
-            reason: 'Payslip already exists'
+            reason: calc.errors.join('; '),
           });
           continue;
         }
 
-        // Calculate salary based on attendance
-        const presentDays = attendance.filter(a => a.status === 'present').length;
-        const leaveDays = attendance.filter(a => a.status === 'leave').length;
-        const halfDays = attendance.filter(a => a.status === 'half_day').length;
-        const holidays = attendance.filter(a => a.status === 'holiday').length;
+        // --- Check for incomplete attendance (when treat_pending_as_absent = false) ---
+        if (calc.pending_days > 0 && !settings.treat_pending_as_absent) {
+          results.skipped.push({
+            employee_name: emp.full_name,
+            reason: `Incomplete attendance: ${calc.pending_days} day(s) not marked`,
+          });
+          continue;
+        }
 
-        // Working days = present + leave + half_day/2 + holidays
-        const workingDays = presentDays + leaveDays + (halfDays * 0.5) + holidays;
-
-        // Get salary components
-        const components = emp.salary_components || {};
-        const deductions = emp.deductions || { pf: 12, esi: 0, pt: 200, tds: 0 };
-
-        // Calculate full month gross
-        const fullGrossSalary = Object.values(components).reduce((sum, val) => sum + (val || 0), 0);
-
-        // Pro-rate based on working days
-        const proRataFactor = workingDays / daysInMonth;
-        const proRatedBasic = (components.basic || 0) * proRataFactor;
-        const proRatedHra = (components.hra || 0) * proRataFactor;
-        const proRatedDa = (components.da || 0) * proRataFactor;
-        const proRatedOther = ((components.medical || 0) + (components.transport || 0) + 
-                               (components.special || 0) + (components.other || 0)) * proRataFactor;
-
-        const grossSalary = proRatedBasic + proRatedHra + proRatedDa + proRatedOther;
-
-        // Calculate deductions
-        const pfDeduction = (proRatedBasic * (deductions.pf || 0)) / 100;
-        const esiDeduction = (grossSalary * (deductions.esi || 0)) / 100;
-        const ptDeduction = workingDays > 0 ? (deductions.pt || 0) : 0;
-        const tdsDeduction = (grossSalary * (deductions.tds || 0)) / 100;
-
-        const totalDeductions = pfDeduction + esiDeduction + ptDeduction + tdsDeduction;
-        const netSalary = grossSalary - totalDeductions;
-
-        // Create payslip
+        // --- Create payslip (finalized — never recalculated) ---
         await base44.asServiceRole.entities.Payslip.create({
           employee_id: emp.employee_id,
           employee_email: emp.email,
           employee_name: emp.full_name,
-          month: month.toString().padStart(2, '0'),
+          month: monthStr,
           year: year,
-          basic_salary: Math.round(proRatedBasic),
-          hra: Math.round(proRatedHra),
-          da: Math.round(proRatedDa),
-          other_allowances: Math.round(proRatedOther),
-          gross_salary: Math.round(grossSalary),
-          pf_deduction: Math.round(pfDeduction),
-          tax_deduction: Math.round(tdsDeduction + ptDeduction),
-          other_deductions: Math.round(esiDeduction),
-          net_salary: Math.round(netSalary),
+          payslip_key: payslipKey,
+
+          // Earnings breakdown
+          basic_salary: calc.earnings.basic,
+          hra: calc.earnings.hra,
+          da: calc.earnings.da,
+          other_allowances: calc.earnings.other_allowances,
+          gross_salary: calc.earnings.gross,
+
+          // Deductions breakdown (each per its own rule)
+          pf_deduction: calc.deductions.pf,
+          esi_deduction: calc.deductions.esi,
+          pt_deduction: calc.deductions.pt,
+          tds_deduction: calc.deductions.tds,
+          lwf_deduction: calc.deductions.lwf,
+          total_deductions: calc.deductions.total,
+
+          // Legacy backward-compatible fields
+          tax_deduction: calc.deductions.tds + calc.deductions.pt,
+          other_deductions: calc.deductions.esi + calc.deductions.lwf,
+
+          net_salary: calc.net_salary,
+
+          // Days breakdown
+          calendar_days: calc.calendar_days,
+          scheduled_working_days: calc.scheduled_working_days,
+          payable_days: calc.payable_days,
+          present_days: calc.present_days,
+          half_days: calc.half_days,
+          paid_leave_days: calc.paid_leave_days,
+          unpaid_leave_days: calc.unpaid_leave_days,
+          holiday_days: calc.holiday_days,
+          weekly_off_days: calc.weekly_off_days,
+          absent_days: calc.absent_days,
+
+          // Metadata
+          prorated: calc.prorated,
+          proration_factor: calc.prorated ? calc.proration_factor : 1,
+          status: 'finalized',
           payment_status: 'pending',
-          working_days: workingDays,
-          total_days: daysInMonth
+          warnings: calc.warnings,
         });
 
         results.success.push({
           employee_name: emp.full_name,
           employee_email: emp.email,
-          net_salary: Math.round(netSalary),
-          working_days: workingDays
+          net_salary: calc.net_salary,
+          payable_days: calc.payable_days,
+          scheduled_working_days: calc.scheduled_working_days,
+          prorated: calc.prorated,
         });
-
       } catch (error) {
         console.error(`Error processing ${emp.full_name}:`, error);
         results.failed.push({
           employee_name: emp.full_name,
-          reason: error.message
+          reason: error.message,
         });
       }
     }
@@ -155,16 +181,12 @@ Deno.serve(async (req) => {
         total_employees: employees.length,
         generated: results.success.length,
         failed: results.failed.length,
-        incomplete_attendance: results.incomplete_attendance.length
+        skipped: results.skipped.length,
       },
-      details: results
+      details: results,
     });
-
   } catch (error) {
     console.error('Generate payslips error:', error);
-    return Response.json({ 
-      error: error.message,
-      success: false 
-    }, { status: 500 });
+    return Response.json({ error: error.message, success: false }, { status: 500 });
   }
 });

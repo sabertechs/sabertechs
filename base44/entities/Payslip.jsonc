@@ -17,6 +17,10 @@
     "year": {
       "type": "number"
     },
+    "payslip_key": {
+      "type": "string",
+      "description": "Unique key: employee_email|month|year \u2014 used for duplicate prevention"
+    },
     "basic_salary": {
       "type": "number"
     },
@@ -35,14 +39,94 @@
     "pf_deduction": {
       "type": "number"
     },
+    "esi_deduction": {
+      "type": "number",
+      "description": "Employee ESI contribution"
+    },
+    "pt_deduction": {
+      "type": "number",
+      "description": "Professional tax"
+    },
+    "tds_deduction": {
+      "type": "number",
+      "description": "Tax Deducted at Source"
+    },
+    "lwf_deduction": {
+      "type": "number",
+      "description": "Labour Welfare Fund"
+    },
+    "total_deductions": {
+      "type": "number",
+      "description": "Sum of all deductions"
+    },
     "tax_deduction": {
-      "type": "number"
+      "type": "number",
+      "description": "Legacy combined field: tds + pt (kept for backward compatibility)"
     },
     "other_deductions": {
-      "type": "number"
+      "type": "number",
+      "description": "Legacy combined field: esi + lwf (kept for backward compatibility)"
     },
     "net_salary": {
       "type": "number"
+    },
+    "calendar_days": {
+      "type": "number",
+      "description": "Total calendar days in the month"
+    },
+    "scheduled_working_days": {
+      "type": "number",
+      "description": "Scheduled working days in the active period (excludes weekly offs and holidays)"
+    },
+    "payable_days": {
+      "type": "number",
+      "description": "Days used for salary proration: present + half_day*factor + paid_leave + paid_holidays + paid_weekly_offs"
+    },
+    "present_days": {
+      "type": "number"
+    },
+    "half_days": {
+      "type": "number"
+    },
+    "paid_leave_days": {
+      "type": "number"
+    },
+    "unpaid_leave_days": {
+      "type": "number"
+    },
+    "holiday_days": {
+      "type": "number"
+    },
+    "weekly_off_days": {
+      "type": "number"
+    },
+    "absent_days": {
+      "type": "number"
+    },
+    "prorated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the salary was prorated (partial month, absences, or unpaid leave)"
+    },
+    "proration_factor": {
+      "type": "number",
+      "description": "Factor applied to full-month salary (1.0 = no proration)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "finalized"
+      ],
+      "default": "finalized",
+      "description": "finalized payslips are locked and never recalculated"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Non-fatal warnings from the calculation engine"
     },
     "payment_status": {
       "type": "string",
