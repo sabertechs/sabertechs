@@ -19,12 +19,12 @@ Deno.serve(async (req) => {
         }
 
         // Fetch employee data
-        const employees = await base44.entities.Employee.filter({ id: employeeId });
-        if (employees.length === 0) {
+        let emp;
+        try {
+            emp = await base44.entities.Employee.get(employeeId);
+        } catch {
             return Response.json({ error: 'Employee not found' }, { status: 404 });
         }
-        
-        const emp = employees[0];
         
         // Fetch offer letter if exists
         const offerLetters = await base44.entities.OfferLetter.filter({ employee_email: emp.email });
