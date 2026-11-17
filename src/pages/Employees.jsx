@@ -151,17 +151,6 @@ export default function Employees() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: appSettings = [] } = useQuery({
-    queryKey: ['appSettings'],
-    queryFn: () => base44.entities.AppSettings.list(),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const settingsDepartments = useMemo(() => {
-    const setting = appSettings.find(s => s.setting_key === 'departments');
-    return setting?.setting_value || [];
-  }, [appSettings]);
-
   const { data: designationPermissions = [] } = useQuery({
     queryKey: ['designation-permissions'],
     queryFn: () => base44.entities.DesignationPermission.list('display_order'),
@@ -1627,6 +1616,7 @@ export default function Employees() {
             <div className="space-y-2">
               <Label>Full Name *</Label>
               <Input
+                placeholder="e.g. Ananya Sharma"
                 value={formData.full_name}
                 onChange={(e) => {
                   setFormData({ ...formData, full_name: e.target.value });
@@ -1651,6 +1641,7 @@ export default function Employees() {
               <Label>Email *</Label>
               <Input
                 type="email"
+                placeholder="name@company.com"
                 value={formData.email}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
@@ -1667,6 +1658,7 @@ export default function Employees() {
             <div className="space-y-2">
               <Label>Phone *</Label>
               <Input
+                placeholder="10-digit mobile number"
                 value={formData.phone}
                 onChange={(e) => {
                   setFormData({ ...formData, phone: e.target.value });
@@ -1680,18 +1672,9 @@ export default function Employees() {
                 <p className="text-red-500 text-xs">{validationErrors.phone}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Department</Label>
-              <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {settingsDepartments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id} className="capitalize">{dept.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="col-span-2">
+              <h3 className="font-semibold text-slate-700 mt-2">Employment Details</h3>
+              <p className="text-xs text-slate-500">Designations are created and given access in Designation Access</p>
             </div>
             <div className="space-y-2">
               <Label>Designation</Label>
