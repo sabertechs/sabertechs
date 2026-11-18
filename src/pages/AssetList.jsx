@@ -133,7 +133,9 @@ export default function AssetList() {
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['assets'],
-    queryFn: () => base44.entities.Asset.list(),
+    queryFn: () => base44.entities.Asset.list('-created_date'),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Check URL for action param
