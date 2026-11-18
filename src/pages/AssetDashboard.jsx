@@ -17,7 +17,8 @@ import {
   Smartphone,
   Armchair,
   Server,
-  FileText
+  FileText,
+  ScanLine
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,11 @@ export default function AssetDashboard() {
           <p className="text-slate-500">Track and manage company assets</p>
         </div>
         <div className="flex gap-2">
+          <Link to={createPageUrl("AssetList") + "?action=scan"}>
+            <Button variant="outline">
+              <ScanLine className="w-4 h-4 mr-2" /> Scan Asset
+            </Button>
+          </Link>
           <Link to={createPageUrl("AssetList")}>
             <Button variant="outline">View All Assets</Button>
           </Link>

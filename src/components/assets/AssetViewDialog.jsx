@@ -11,7 +11,8 @@ import {
   Shield,
   TrendingDown,
   Wrench,
-  RotateCcw
+  RotateCcw,
+  ScanLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -133,6 +134,12 @@ export default function AssetViewDialog({ asset, open, onClose }) {
                 <FileText className="w-4 h-4" /> Serial Number
               </div>
               <p className="font-medium">{asset.serial_number || '-'}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                <ScanLine className="w-4 h-4" /> Barcode
+              </div>
+              <p className="font-medium font-mono">{asset.barcode || '-'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-lg">
               <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">

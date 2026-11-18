@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -21,7 +21,8 @@ import {
   FileText,
   Upload,
   X,
-  QrCode
+  QrCode,
+  ScanLine
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ import {
 import AssetAssignDialog from "@/components/assets/AssetAssignDialog";
 import AssetViewDialog from "@/components/assets/AssetViewDialog";
 import QRScanner from "@/components/assets/QRScanner";
+import BarcodeScanPanel from "@/components/assets/BarcodeScanPanel";
 import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 
 const categoryIcons = {
@@ -107,12 +109,15 @@ export default function AssetList() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const scanPanelRef = useRef(null);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     category: "laptop",
     serial_number: "",
+    barcode: "",
     image_url: "",
     purchase_date: "",
     purchase_cost: "",
@@ -136,6 +141,9 @@ export default function AssetList() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'add') {
       setShowAddDialog(true);
+    }
+    if (params.get('action') === 'scan') {
+      setShowBarcodeScanner(true);
     }
   }, []);
 
@@ -172,6 +180,7 @@ export default function AssetList() {
       name: "",
       category: "laptop",
       serial_number: "",
+      barcode: "",
       image_url: "",
       purchase_date: "",
       purchase_cost: "",
@@ -224,6 +233,7 @@ export default function AssetList() {
       name: asset.name || "",
       category: asset.category || "laptop",
       serial_number: asset.serial_number || "",
+      barcode: asset.barcode || "",
       image_url: asset.image_url || "",
       purchase_date: asset.purchase_date || "",
       purchase_cost: asset.purchase_cost?.toString() || "",
@@ -246,11 +256,19 @@ export default function AssetList() {
     setUploading(false);
   };
 
+  const handleCreateFromCode = (code) => {
+    resetForm();
+    setFormData(prev => ({ ...prev, barcode: code, serial_number: code }));
+    setSelectedAsset(null);
+    setShowAddDialog(true);
+  };
+
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = 
       asset.name?.toLowerCase().includes(search.toLowerCase()) ||
       asset.asset_id?.toLowerCase().includes(search.toLowerCase()) ||
-      asset.serial_number?.toLowerCase().includes(search.toLowerCase());
+      asset.serial_number?.toLowerCase().includes(search.toLowerCase()) ||
+      asset.barcode?.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     return matchesSearch && matchesCategory && matchesStatus;
@@ -263,7 +281,10 @@ export default function AssetList() {
           <h2 className="text-2xl font-bold text-slate-800">Assets</h2>
           <p className="text-slate-500">{filteredAssets.length} assets found</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setShowBarcodeScanner(v => !v)} variant="outline">
+            <ScanLine className="w-4 h-4 mr-2" /> Scan Barcode
+          </Button>
           <Button onClick={() => setShowQRScanner(true)} variant="outline">
             <QrCode className="w-4 h-4 mr-2" /> Scan QR
           </Button>
@@ -272,6 +293,17 @@ export default function AssetList() {
           </Button>
         </div>
       </div>
+
+      {/* Barcode scanning (hardware scanner / typed code) */}
+      {showBarcodeScanner && (
+        <BarcodeScanPanel
+          ref={scanPanelRef}
+          assets={assets}
+          onFound={(asset) => { setSelectedAsset(asset); setShowViewDialog(true); }}
+          onCreateNew={handleCreateFromCode}
+          onClose={() => setShowBarcodeScanner(false)}
+        />
+      )}
 
       {/* Filters */}
       <Card className="border-0 shadow-sm">
@@ -447,6 +479,15 @@ export default function AssetList() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Barcode</Label>
+              <Input
+                value={formData.barcode}
+                onChange={(e) => setFormData(prev => ({ ...prev, barcode: e.target.value }))}
+                placeholder="Click here and scan the asset label"
+              />
+              <p className="text-xs text-slate-400">What the scanner reads to open this asset</p>
+            </div>
+            <div className="space-y-2">
               <Label>Location</Label>
               <Input
                 value={formData.location}
@@ -573,7 +614,11 @@ export default function AssetList() {
         <AssetViewDialog
           asset={selectedAsset}
           open={showViewDialog}
-          onClose={() => { setShowViewDialog(false); setSelectedAsset(null); }}
+          onClose={() => {
+            setShowViewDialog(false);
+            setSelectedAsset(null);
+            if (showBarcodeScanner) scanPanelRef.current?.focusInput();
+          }}
         />
       )}
 

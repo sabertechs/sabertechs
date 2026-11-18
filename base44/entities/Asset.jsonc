@@ -29,6 +29,10 @@
     "serial_number": {
       "type": "string"
     },
+    "barcode": {
+      "type": "string",
+      "description": "Barcode value printed on the asset label \u2014 scanned to open this asset"
+    },
     "image_url": {
       "type": "string",
       "description": "Asset image"
