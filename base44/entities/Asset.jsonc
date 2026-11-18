@@ -114,37 +114,9 @@
     "category"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "data.designation": "Admin"
-      }
-    },
-    "read": {
-      "$or": [
-        {
-          "data.assigned_to_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "data.designation": "Admin"
-          }
-        },
-        {
-          "user_condition": {
-            "data.designation": "HR Head"
-          }
-        }
-      ]
-    },
-    "update": {
-      "user_condition": {
-        "data.designation": "Admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "data.designation": "Admin"
-      }
-    }
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {}
   }
 }
