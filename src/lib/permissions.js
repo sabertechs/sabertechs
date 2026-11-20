@@ -84,7 +84,6 @@ export const PERMISSIONS = {
   'assets.manage':           { label: 'Manage Assets',          module: 'assets',        description: 'Full asset lifecycle management' },
 
   // ── COMMUNICATION ────────────────────────────────────
-  'comm.notifications':      { label: 'Notifications Center',   module: 'communication', description: 'Send and schedule notifications' },
   'comm.policies.manage':    { label: 'Manage Policies',        module: 'communication', description: 'Upload and edit company policies' },
   'comm.policies.view':      { label: 'View Policies',          module: 'communication', description: 'View company policies' },
 
@@ -255,7 +254,6 @@ export const PAGE_PERMISSIONS = {
   AssetReports: 'assets.manage',
   // Communication
   PolicyManagement: 'comm.policies.manage',
-  NotificationCenter: 'comm.notifications',
   CompanyPolicies: 'comm.policies.view',
   // Reports
   Reports: 'reports.view',

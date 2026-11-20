@@ -77,8 +77,6 @@ import MyAssets from './pages/MyAssets';
 import MyAttendance from './pages/MyAttendance';
 import MyExpenses from './pages/MyExpenses';
 import MyPayslips from './pages/MyPayslips';
-import NotificationCenter from './pages/NotificationCenter';
-import Notifications from './pages/Notifications';
 import OfferLetterManagement from './pages/OfferLetterManagement';
 import OfficeOpsArena from './pages/OfficeOpsArena';
 import OnboardingTemplates from './pages/OnboardingTemplates';
@@ -127,8 +125,6 @@ export const PAGES = {
     "MyAttendance": MyAttendance,
     "MyExpenses": MyExpenses,
     "MyPayslips": MyPayslips,
-    "NotificationCenter": NotificationCenter,
-    "Notifications": Notifications,
     "OfferLetterManagement": OfferLetterManagement,
     "OfficeOpsArena": OfficeOpsArena,
     "OnboardingTemplates": OnboardingTemplates,

@@ -106,14 +106,6 @@ export default function AssetRequests() {
         rejection_reason: status === 'rejected' ? rejectionReason : null
       });
 
-      await base44.entities.Notification.create({
-        recipient_email: selectedRequest.requester_email,
-        title: `Asset Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
-        message: status === 'approved' 
-          ? `Your request for ${selectedRequest.asset_category} has been approved.`
-          : `Your request for ${selectedRequest.asset_category} was rejected. Reason: ${rejectionReason}`,
-        type: status === 'approved' ? 'success' : 'alert'
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assetRequests'] });

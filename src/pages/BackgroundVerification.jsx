@@ -57,16 +57,6 @@ export default function BackgroundVerification() {
         status: 'active'
       });
       
-      const emp = employees.find(e => e.id === id);
-      if (emp) {
-        await base44.entities.Notification.create({
-          recipient_email: emp.email,
-          title: 'Background Verification Approved',
-          message: 'Your background verification has been completed and approved. You are now an active employee.',
-          type: 'success'
-        });
-      }
-      
       if (total > 1) {
         setBulkProgress({ current: i + 1, total, action: 'Approving' });
       }
@@ -88,16 +78,6 @@ export default function BackgroundVerification() {
     for (let i = 0; i < employeeIds.length; i++) {
       const id = employeeIds[i];
       await updateEntity('Employee', id, { bg_verification_status: 'rejected' });
-      
-      const emp = employees.find(e => e.id === id);
-      if (emp) {
-        await base44.entities.Notification.create({
-          recipient_email: emp.email,
-          title: 'Background Verification Update',
-          message: 'Your background verification could not be approved. Please contact HR for more details.',
-          type: 'alert'
-        });
-      }
       
       if (total > 1) {
         setBulkProgress({ current: i + 1, total, action: 'Rejecting' });

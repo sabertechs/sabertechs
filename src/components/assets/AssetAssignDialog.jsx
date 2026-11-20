@@ -49,13 +49,6 @@ export default function AssetAssignDialog({ asset, open, onClose }) {
         notes
       });
 
-      // Create notification
-      await base44.entities.Notification.create({
-        recipient_email: selectedEmployee.email,
-        title: 'Asset Assigned',
-        message: `You have been assigned: ${asset.name} (${asset.asset_id})`,
-        type: 'info'
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });

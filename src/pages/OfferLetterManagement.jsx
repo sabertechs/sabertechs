@@ -105,14 +105,6 @@ export default function OfferLetterManagement() {
         // Update status
         await updateEntity('OfferLetter', letterId, { status: 'sent' });
 
-        // Create in-app notification
-        await base44.entities.Notification.create({
-          recipient_email: letter.employee_email,
-          title: 'Offer Letter Received',
-          message: `Your offer letter for ${letter.designation} position has been sent.`,
-          type: 'info'
-        });
-
         // Send professional email
         const emailBody = getOfferLetterEmail({
           recipientName: letter.employee_name,
@@ -260,13 +252,7 @@ export default function OfferLetterManagement() {
                             variant="outline"
                             onClick={async () => {
                               updateMutation.mutate({ id: letter.id, data: { status: 'sent' }});
-                              await base44.entities.Notification.create({
-                                recipient_email: letter.employee_email,
-                                title: 'Offer Letter Received',
-                                message: `Your offer letter for ${letter.designation} position has been sent.`,
-                                type: 'info'
-                              });
-                              
+
                               // Send professional email
                               const emailBody = getOfferLetterEmail({
                                 recipientName: letter.employee_name,

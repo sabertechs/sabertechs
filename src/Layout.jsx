@@ -13,7 +13,6 @@ import {
   Receipt,
   Mail,
   ShieldCheck,
-  Bell,
   Menu,
   X,
   LogOut,
@@ -23,7 +22,6 @@ import {
   UserPlus,
   Shield,
   Settings,
-  Megaphone,
   Newspaper,
   BookOpen,
   Package,
@@ -39,9 +37,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import NotificationPopup from "@/components/notifications/NotificationPopup";
-import ScheduledNotificationProcessor from "@/components/notifications/ScheduledNotificationProcessor";
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -106,14 +101,6 @@ export default function Layout({ children, currentPageName }) {
     };
     fetchUser();
   }, [currentPageName]);
-
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', user?.email],
-    queryFn: () => base44.entities.Notification.filter({ recipient_email: user?.email, is_read: false }, '-created_date', 10),
-    enabled: !!user?.email,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-  });
 
   const { data: moduleSettings } = useQuery({
     queryKey: ['module-settings'],
@@ -209,7 +196,6 @@ export default function Layout({ children, currentPageName }) {
     // Communication
     if (can('feed.manage') && isModuleEnabled('company_feed')) items.push({ name: "Company Feed", icon: Newspaper, page: "CompanyFeed" });
     if (can('comm.policies.manage')) items.push({ name: "Policies", icon: BookOpen, page: "PolicyManagement" });
-    if (can('comm.notifications')) items.push({ name: "Notifications", icon: Megaphone, page: "NotificationCenter" });
 
     // Reports
     if (can('reports.view')) items.push({ name: "Reports", icon: BarChart2, page: "Reports" });
@@ -284,13 +270,6 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Notification Popup */}
-                  <NotificationPopup userEmail={user?.email} />
-
-                  {/* Background processor for scheduled notifications */}
-                  {can('comm.notifications') && (
-                    <ScheduledNotificationProcessor />
-                  )}
       
       <style>{`
         :root {
@@ -317,16 +296,7 @@ export default function Layout({ children, currentPageName }) {
           <Building2 className="w-6 h-6 text-indigo-600" />
           <span className="font-bold text-base text-slate-800">SaberTechs</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Link to={createPageUrl("Notifications")} className="relative p-2 rounded-lg active:bg-slate-100">
-            <Bell className="w-5 h-5 text-slate-600" />
-            {notifications.length > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-red-500 text-xs">
-                {notifications.length}
-              </Badge>
-            )}
-          </Link>
-        </div>
+        <div className="w-9" />
       </header>
 
       {/* Mobile Sidebar Overlay */}
@@ -470,14 +440,6 @@ export default function Layout({ children, currentPageName }) {
             {navItems.find(item => item.page === currentPageName)?.name || currentPageName}
           </h1>
           <div className="flex items-center gap-4">
-            <Link to={createPageUrl("Notifications")} className="relative p-2 hover:bg-slate-100 rounded-lg">
-              <Bell className="w-5 h-5 text-slate-600" />
-              {notifications.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-xs">
-                  {notifications.length}
-                </Badge>
-              )}
-            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Plus, Edit, Trash2, FileText, Image, MapPin, Hash, AlertCircle, CheckCircle, Clock, GitBranch, ArrowRight, LayoutTemplate, ChevronDown, ChevronUp, UserMinus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { format, differenceInDays, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { createEntity, updateEntity, deleteEntity } from "@/lib/entityMutations";
 import GroupTaskCard from "./GroupTaskCard";
@@ -110,9 +110,6 @@ export default function ProjectTasksTab({ projectId, project }) {
         // group_id filter in FreelancerTasksView. Each member submits their own
         // TaskResponse with their freelancer_email, so per-member status is
         // tracked via TaskResponse records (not per-member task copies).
-        const grp = groups.find(g => g.id === data.group_id);
-        const members = grp?.members || [];
-
         const task = await createEntity('ProjectTask', {
           ...baseTask,
           assigned_to: '',
@@ -120,33 +117,11 @@ export default function ProjectTasksTab({ projectId, project }) {
           group_id: data.group_id,
         });
 
-        // Notify all group members
-        if (members.length > 0) {
-          await Promise.all(members.map(email =>
-            base44.entities.Notification.create({
-              recipient_email: email,
-              title: 'New Task Assigned',
-              message: `You have been assigned task: ${data.title} in project ${project.name}`,
-              type: 'info',
-              link: `/FreelancerProjects`
-            })
-          ));
-        }
-
         return task;
       }
 
       // Individual assignment
       const task = await createEntity('ProjectTask', baseTask);
-      if (data.assigned_to) {
-        await base44.entities.Notification.create({
-          recipient_email: data.assigned_to,
-          title: 'New Task Assigned',
-          message: `You have been assigned task: ${data.title} in project ${project.name}`,
-          type: 'info',
-          link: `/FreelancerProjects`
-        });
-      }
       return task;
     },
     onSuccess: (result) => {
@@ -206,34 +181,6 @@ export default function ProjectTasksTab({ projectId, project }) {
       toast.success('Group task deleted for all members');
     }
   });
-
-  // Auto-send deadline notifications
-  useEffect(() => {
-    const checkDeadlines = async () => {
-      const today = new Date();
-      for (const task of tasks) {
-        if (task.due_date && task.assigned_to && task.status !== 'completed') {
-          const dueDate = new Date(task.due_date);
-          const daysUntilDue = differenceInDays(dueDate, today);
-          
-          // Send notification 3 days before deadline
-          if (daysUntilDue === 3) {
-            await base44.entities.Notification.create({
-              recipient_email: task.assigned_to,
-              title: 'Task Deadline Approaching',
-              message: `Task "${task.title}" is due in 3 days`,
-              type: 'alert',
-              link: `/ProjectDetails?id=${projectId}`
-            });
-          }
-        }
-      }
-    };
-
-    if (tasks.length > 0) {
-      checkDeadlines();
-    }
-  }, [tasks, projectId]);
 
   const resetForm = () => {
     setFormData({

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Plus, Search, Download, Send, Edit, Trash2, FileText, Zap, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { Plus, Search, Download, Edit, Trash2, FileText, Zap, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -372,29 +372,6 @@ export default function PayslipManagement() {
     doc.save(`Payslip_${employee_name?.replace(/\s+/g, '_')}_${monthName}_${year}.pdf`);
   };
 
-  const sendPayslipNotification = async (payslip) => {
-    // Check if notification already sent for this payslip period to avoid duplicates
-    const existing = await base44.entities.Notification.filter({
-      recipient_email: payslip.employee_email,
-      title: 'Payslip Available',
-    });
-    const alreadySent = existing.some(n => n.message?.includes(`${payslip.month} ${payslip.year}`));
-    if (alreadySent) {
-      toast.info('Notification already sent for this payslip');
-      return;
-    }
-
-    // Send in-app notification only (email/PDF is handled by the automation on payslip create)
-    await base44.entities.Notification.create({
-      recipient_email: payslip.employee_email,
-      title: 'Payslip Available',
-      message: `Your payslip for ${payslip.month} ${payslip.year} is now available. Gross: ₹${payslip.gross_salary?.toLocaleString()}, Net: ₹${payslip.net_salary?.toLocaleString()}`,
-      type: 'info'
-    });
-
-    toast.success(`Notification sent to ${payslip.employee_name}`);
-  };
-
   const filteredPayslips = payslips.filter(p => {
     const matchesSearch = p.employee_name?.toLowerCase().includes(search.toLowerCase()) ||
                          p.employee_email?.toLowerCase().includes(search.toLowerCase());
@@ -491,9 +468,6 @@ export default function PayslipManagement() {
                       <div className="flex items-center justify-end gap-2">
                       <Button size="sm" variant="outline" title="Download Payslip PDF" onClick={() => downloadPayslipPDF(payslip)}>
                         <Download className="w-4 h-4 text-indigo-600" />
-                      </Button>
-                      <Button size="sm" variant="outline" title="Send Notification" onClick={() => sendPayslipNotification(payslip)}>
-                        <Send className="w-4 h-4" />
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => handleEdit(payslip)}>
                         <Edit className="w-4 h-4" />
