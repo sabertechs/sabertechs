@@ -66,6 +66,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Feed engagement: any signed-in user may bump a post's like/comment
+    // counters. Editing the post content itself still requires 'feed.manage'.
+    if (entity === 'CompanyPost' && baseAction === 'update' && data && typeof data === 'object') {
+      const keys = Object.keys(data);
+      if (keys.length > 0 && keys.every((k: string) => k === 'likes_count' || k === 'comments_count')) {
+        permission = null;
+      }
+    }
+
     // undefined = entity not in permission map at all
     if (permission === undefined) {
       return Response.json({ error: `Entity ${entity} not supported by manageRecord` }, { status: 400 });
@@ -74,7 +83,14 @@ Deno.serve(async (req) => {
     // null = any authenticated user (self-service). Non-null = require permission.
     if (permission !== null) {
       if (!(await can(base44, user, permission))) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
+        console.warn(`403 ${entity}.${action} needs '${permission}' — user=${user.email} designation=${user.data?.designation || 'none'} role=${user.role}`);
+        return Response.json({
+          error: 'Forbidden',
+          entity,
+          action,
+          required_permission: permission,
+          designation: user.data?.designation || null,
+        }, { status: 403 });
       }
     }
 
@@ -84,6 +100,7 @@ Deno.serve(async (req) => {
     // Only admins can delete Employee (freelancer) records.
     if (entity === 'Employee' && baseAction === 'delete') {
       if (String(user.data?.designation || '').toLowerCase() !== 'admin') {
+        console.warn(`403 Employee.delete — user=${user.email} designation=${user.data?.designation || 'none'}`);
         return Response.json({ error: 'Only admins can delete employee records' }, { status: 403 });
       }
     }
@@ -91,6 +108,7 @@ Deno.serve(async (req) => {
     // For self-service create, verify the ownership field matches the user
     if (ownershipField && action === 'create' && data) {
       if (String(data[ownershipField] || '').toLowerCase() !== String(user.email || '').toLowerCase()) {
+        console.warn(`403 ${entity}.create ownership — field=${ownershipField} value=${data[ownershipField]} user=${user.email}`);
         return Response.json({ error: 'You can only create records for yourself' }, { status: 403 });
       }
     }
@@ -99,6 +117,7 @@ Deno.serve(async (req) => {
     if (ownershipField && (action === 'update' || action === 'delete') && id) {
       const record = await entityApi.get(id);
       if (String(record[ownershipField] || '').toLowerCase() !== String(user.email || '').toLowerCase()) {
+        console.warn(`403 ${entity}.${action} ownership — record ${id} ${ownershipField}=${record[ownershipField]} user=${user.email}`);
         return Response.json({ error: 'You can only modify your own records' }, { status: 403 });
       }
     }
